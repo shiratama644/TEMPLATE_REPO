@@ -1,11 +1,11 @@
 # Hook: Sandbox Rebuild Recovery
 
-> **トリガー**: Sandbox 再構築を検知した時。AGENT.md §4.1.1 の手順実体版。
+> **トリガー**: Sandbox 再構築を検知した時。AGENTS.md §4.1.1 の手順実体版。
 > **検知ヒント**: `git log --oneline` が起点コミット 1 件のみ / `git status` が「大量の削除 + 大量の未追跡」/ `node_modules` が無い。
 
 ## 背景
 
-Arena の Sandbox は再構築されることがあり、その場合ワークツリーは
+サンドボックス型の作業環境（Arena 等）は再構築されることがあり、その場合ワークツリーは
 「起点コミットのファイル」＋「push 済みコミットで追加されたファイルの未追跡バージョン」が混在した状態で立ち上がる。
 ファイルは破損していないので、以下で確実に復旧する。
 
@@ -28,11 +28,13 @@ bash .agent/hooks/restore-sandbox-env.sh
 
 ```bash
 git log --oneline -5          # push 済みコミットが見えること
-pnpm test:unit                # テストが通ること
+pnpm test:unit                # テストが通ること（スクリプト名は package.json に合わせる）
 ```
+
 → 問題なければ作業再開。
 
 ## 注意
 
-- `.archive/vite/` が「未追跡」になっている場合も、`git reset --hard FETCH_HEAD` で追跡状態に戻る（新規にファイルを触らないこと, §4.5）。
-- `git reset --hard` は**この例外场景以外では厳禁**（§4.3）。誤用に注意。
+- `git reset --hard` は**この例外場景以外では厳禁**（AGENTS.md §4.3）。誤用に注意。
+- 復旧スクリプト `restore-sandbox-env.sh` は pnpm + `.nvmrc` 前提。パッケージマネージャが
+  異なるプロジェクトでは手動 2 行（`corepack enable` + install）に置き換えること。
