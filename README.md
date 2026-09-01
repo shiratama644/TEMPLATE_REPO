@@ -13,6 +13,7 @@ GitHub の「Use this template」から新しいリポジトリを作成し、�
 | `.agent/hooks/` | トリガー別の定型手順（タスク開始時の現状把握 / commit 直前の検証 / タスク完了時のログ記録 / サンドボックス再構築からの復旧） |
 | `.agent/skills/` | コードベース知識（事実・仕様・暗黙了解）の置き場。**最初は空**。学習した知識をここに蓄積する |
 | `.agent/logs/` | タスク実行ログの置き場。**最初は空**。タスク完了ごとに 4 セクション形式で追記する |
+| `docs/` | ドキュメント規約（目次・命名規則）+ タスク管理の正本 + 計画書テンプレート。`docs/README.md` / `docs/task-list.md` / `docs/planning/_TEMPLATE.md` |
 | `LICENSE` | MIT License |
 
 ## 使い方
@@ -24,6 +25,7 @@ GitHub の「Use this template」から新しいリポジトリを作成し、�
    - フレームワーク / Lint / UI の実装ルール（§6.4〜6.6）
    - ドキュメント運用（§6.7）
 3. 開発を進めながら、学んだコードベース知識を `.agent/skills/` に、実行記録を `.agent/logs/` に蓄積していく
+4. タスクの計画・進捗管理は `docs/task-list.md`（正本）+ `docs/planning/`（計画書テンプレート `_TEMPLATE.md` 準拠）で行う。ドキュメントの書き方・命名規則は `docs/README.md` を参照
 
 ## 仕組みの概要
 
