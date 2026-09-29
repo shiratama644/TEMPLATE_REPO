@@ -1,0 +1,68 @@
+name: ✨ Feature Request
+description: 新機能や改善を提案する
+title: "feat: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        機能要望ありがとうございます！テンプレートをより良くするためのアイデアを教えてください。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい課題
+      description: どのような課題・不便さを解決したいか
+      placeholder: |
+        例: 現在は手動で...する必要があるが、自動化したい
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案する解決策
+      description: どのような機能・変更を提案するか
+      placeholder: |
+        例: Renovateを導入して...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: カテゴリ
+      options:
+        - DX向上 (開発体験)
+        - CI / 自動化
+        - 品質ツール (lint, test, etc)
+        - セキュリティ
+        - ドキュメント
+        - Docker / 環境構築
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 代替案
+      description: 検討した他の解決策があれば
+      placeholder: |
+        例: Dependabotでも可能だが、Renovateの方が...
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 追加情報
+      description: 参考リンク、スクリーンショットなど
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 確認事項
+      options:
+        - label: 既存のIssueやDiscussionを検索し、重複がないことを確認した
+          required: true
+        - label: この要望がテンプレートの汎用性を損なわないことを確認した
+          required: false

@@ -1,0 +1,16 @@
+packages:
+  # Generic monorepo support: works for single package, Vite, Next.js, or monorepo
+  # - Single package: root package.json
+  # - Vite: root or apps/web
+  # - Next.js: root or apps/web
+  # - Monorepo: packages/* (shared libs) + apps/* (apps)
+  - "packages/*"
+  - "apps/*"
+  # Uncomment if you use additional globs:
+  # - "examples/*"
+  # - "tools/*"
+
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - lint-staged@17.6.0

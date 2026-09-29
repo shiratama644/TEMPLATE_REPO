@@ -1,11 +1,11 @@
 # Hook: Pre-Task（タスク開始時）
 
-> **トリガー**: ユーザーから指示を受け、作業を開始する直前。
+> **トリガー**: ユーザーから指示を受け、作業を開始する直前。`settings.json` の `UserPromptSubmit` でも自動実行。
 > **目的**: 現状を把握し、必要な知識だけを読み込み、スコープ違い/履歴破壊を防ぐ。
 
 ## 手順
 
-### 1. 現状把握（AGENTS.md §4.1）
+### 1. 現状把握（AGENTS.md §4.1 + rules/02_git-workflow.md）
 
 ```bash
 git status
@@ -15,14 +15,15 @@ git log -5 --oneline
 
 - ※ セッション型環境ではブランチ名がセッションごとに変わる。必ず `git branch --show-current` で確認する（AGENTS.md §4.4）。
 - 未コミット変更があれば勝手に破棄・混入しない。
-- ログが起点 1 件のみ / `git status` が大量の削除+未追跡 / `node_modules` 無 → **Sandbox 再構築**。→ [`sandbox-rebuild-recovery.md`](./sandbox-rebuild-recovery.md)。
+- ログが起点 1 件のみ / `git status` が大量の削除+未追跡 / `node_modules` 無 → **Sandbox 再構築**。→ [`sandbox-recovery.md`](./sandbox-recovery.md)。
 
 ### 2. 知識のピンポイント読込（本 hook の核心）
 
 [`../skills/index.md`](../skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。
 - 全スキルを常に読まない（コンテキスト浪費）。
-- 初回/全体把握が必要な時だけ `project-overview.md` + `architecture-and-data-flow.md`（未作成なら作成を検討）。
-- 例: 状態管理を触る → `state-and-storage.md`（スキル名は各プロジェクトの index に従う）。
+- 初回/全体把握が必要な時だけ `project-overview/SKILL.md` を読む（公式準拠のディレクトリ形式）。
+- 例: 環境トラブル → `sandbox-constraints/SKILL.md`、ドキュメント編集 → `verify-doc-integrity/SKILL.md`
+- ルールは `rules/` を参照。`paths` フロントマターで発火条件を絞っているため、該当ファイル編集時のみ自動で読まれる。
 
 ### 3. リポジトリ固有の制約の確認
 
@@ -40,4 +41,4 @@ git log -5 --oneline
 
 ## 完了後
 
-→ 実装 → [`verify-before-commit.md`](./verify-before-commit.md) で検証 → commit/push → [`log-task.md`](./log-task.md) でログ記録。
+→ 実装 → [`verify-commit.md`](./verify-commit.md) で検証 → commit/push → [`log-task.md`](./log-task.md) でログ記録。

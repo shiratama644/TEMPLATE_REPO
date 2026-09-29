@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.turbo/
+.vite/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# Env files
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Logs
+logs/
+.agent/logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Agent personal overrides (official .claude/ equivalent)
+.agent/settings.local.json
+.claude/settings.local.json
+
+# Agent auto memory (if not committed)
+.agent/agent-memory/
+.claude/projects/
+
+# Misc
+*.tgz
+*.zip
+uploads/
+tmp/
+temp/
+test-results/
+playwright-report/

@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "reporters": ["html", "clear-text", "progress", "json"],
+  "testRunner": "vitest",
+  "testRunner_comment": "Vitest runner for Stryker",
+  "coverageAnalysis": "perTest",
+  "checkers": ["typescript"],
+  "tsconfigFile": "tsconfig.json",
+  "mutate": [
+    "src/**/*.ts",
+    "scripts/lib/**/*.ts",
+    "!src/**/*.test.ts",
+    "!scripts/**/*.test.ts",
+    "!**/*.d.ts",
+    "!**/__tests__/**",
+    "!**/e2e/**",
+    "!**/bench/**"
+  ],
+  "ignorePatterns": ["node_modules", "dist", ".next", "coverage", "reports"],
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 50
+  },
+  "vitest": {
+    "configFile": "vitest.config.ts"
+  },
+  "timeoutMS": 10000,
+  "timeoutFactor": 2,
+  "maxConcurrentTestRunners": 4,
+  "tempDirName": ".stryker-tmp",
+  "cleanTempDir": true,
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  }
+}

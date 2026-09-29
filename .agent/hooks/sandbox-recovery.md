@@ -21,7 +21,7 @@ git fetch origin <session-branch>
 git reset --hard FETCH_HEAD
 
 # 3. 依存を再構築（下記スクリプト、または手動 2 行）
-bash .agent/hooks/restore-sandbox-env.sh
+bash .agent/hooks/restore-env.sh
 ```
 
 ## 復旧後の健全性確認
@@ -36,5 +36,5 @@ pnpm test:unit                # テストが通ること（スクリプト名は
 ## 注意
 
 - `git reset --hard` は**この例外場景以外では厳禁**（AGENTS.md §4.3）。誤用に注意。
-- 復旧スクリプト `restore-sandbox-env.sh` は pnpm + `.nvmrc` 前提。パッケージマネージャが
+- 復旧スクリプト `restore-env.sh` は pnpm + `.nvmrc` 前提。パッケージマネージャが
   異なるプロジェクトでは手動 2 行（`corepack enable` + install）に置き換えること。

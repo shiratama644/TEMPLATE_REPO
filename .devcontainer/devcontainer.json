@@ -1,0 +1,65 @@
+{
+  "name": "template-repo (Node 24 LTS + pnpm, Vite/Next.js/monorepo ready)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "target": "development",
+    "args": {
+      "NODE_VERSION": "24"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "biomejs.biome",
+        "streetsidesoftware.code-spell-checker",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "GitHub.vscode-pull-request-github",
+        "ms-vscode-remote.remote-containers"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "biomejs.biome",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.biome": "explicit",
+          "source.organizeImports.biome": "explicit"
+        },
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true
+      }
+    }
+  },
+  "forwardPorts": [3000, 5173],
+  "portsAttributes": {
+    "3000": {
+      "label": "Dev Server (Next.js / generic)",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "pnpm install --frozen-lockfile",
+  "postStartCommand": "pnpm check:determinism",
+  "remoteUser": "node",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  "mounts": ["source=pnpm-store-template-repo,target=/pnpm/store,type=volume"],
+  "remoteEnv": {
+    "PNPM_HOME": "/pnpm",
+    "PATH": "/pnpm:${containerEnv:PATH}"
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "16gb"
+  }
+}

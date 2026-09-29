@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# restore-sandbox-env.sh
-# Sandbox 再構築後の環境復旧（§4.1.1）。sandbox-rebuild-recovery.md から呼出。
+# restore-env.sh
+# Sandbox 再構築後の環境復旧（§4.1.1）。sandbox-recovery.md から呼出。
 #
 # やること:
 #   1. Node.js を .nvmrc のメジャー版 (最新 LTS) に置換
@@ -17,14 +17,14 @@ set -euo pipefail
 # 最新パッチを npm registry の node-linux-x64 パッケージから取得して置き換える。
 
 NODE_MAJOR="$(tr -d '[:space:]' < .nvmrc)"
-echo "[restore-sandbox-env] .nvmrc major: ${NODE_MAJOR}"
+echo "[restore-env] .nvmrc major: ${NODE_MAJOR}"
 
 # 現在の node が既に要求メジャー版ならスキップ
 CURRENT_MAJOR="$(node --version | sed 's/^v//' | cut -d. -f1)"
 if [ "${CURRENT_MAJOR}" = "${NODE_MAJOR}" ]; then
-  echo "[restore-sandbox-env] node is already v${NODE_MAJOR}: $(node --version)"
+  echo "[restore-env] node is already v${NODE_MAJOR}: $(node --version)"
 else
-  echo "[restore-sandbox-env] resolving latest ${NODE_MAJOR}.x from npm registry (nodejs.org is unreachable) ..."
+  echo "[restore-env] resolving latest ${NODE_MAJOR}.x from npm registry (nodejs.org is unreachable) ..."
   NODE_FULL_VERSION="$(node -e "
 fetch('https://registry.npmjs.org/node-linux-x64')
   .then((r) => r.json())
@@ -37,9 +37,9 @@ fetch('https://registry.npmjs.org/node-linux-x64')
   })
   .catch((e) => { console.error(e.message); process.exit(1); });
 ")"
-  echo "[restore-sandbox-env] target: node v${NODE_FULL_VERSION}"
+  echo "[restore-env] target: node v${NODE_FULL_VERSION}"
 
-  echo "[restore-sandbox-env] downloading node-linux-x64@${NODE_FULL_VERSION} ..."
+  echo "[restore-env] downloading node-linux-x64@${NODE_FULL_VERSION} ..."
   curl -sL "https://registry.npmjs.org/node-linux-x64/-/node-linux-x64-${NODE_FULL_VERSION}.tgz" -o /tmp/node-target.tgz
 
   rm -rf /tmp/node-target && mkdir -p /tmp/node-target
@@ -51,22 +51,22 @@ fetch('https://registry.npmjs.org/node-linux-x64')
   rm -rf /tmp/node-target /tmp/node-target.tgz
 fi
 
-echo "[restore-sandbox-env] node: $(node --version)"
+echo "[restore-env] node: $(node --version)"
 
 # ============================================================================
 # 2. corepack + pnpm
 # ============================================================================
-echo "[restore-sandbox-env] enabling pnpm via corepack ..."
+echo "[restore-env] enabling pnpm via corepack ..."
 corepack enable pnpm >/dev/null 2>&1 || true
 # package.json の packageManager フィールドから pnpm バージョンを解決
 PNPM_SPEC=$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).packageManager")
 corepack prepare "${PNPM_SPEC}" --activate >/dev/null 2>&1 || true
-echo "[restore-sandbox-env] pnpm: $(pnpm --version)"
+echo "[restore-env] pnpm: $(pnpm --version)"
 
 # ============================================================================
 # 3. 依存インストール
 # ============================================================================
-echo "[restore-sandbox-env] installing dependencies (frozen-lockfile) ..."
+echo "[restore-env] installing dependencies (frozen-lockfile) ..."
 pnpm install --frozen-lockfile
 
-echo "[restore-sandbox-env] done. verify with: pnpm test:unit"
+echo "[restore-env] done. verify with: pnpm test:unit"

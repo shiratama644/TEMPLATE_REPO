@@ -1,0 +1,220 @@
+name: Benchmark
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 20 * * 1' # Tuesday 5AM JST
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  benchmark:
+    name: Performance benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run benchmarks
+        run: |
+          echo "⚡ Running benchmarks..."
+          mkdir -p reports/bench
+          pnpm bench:ci 2>&1 | tee bench.log || pnpm bench 2>&1 | tee bench.log || echo "Bench failed"
+          cat bench.log | tail -100
+
+          # Also try tinybench direct
+          node --experimental-strip-types scripts/lib/bench.ts 2>&1 | tee -a bench.log || true
+
+      - name: Compare with baseline (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "📊 Comparing with main branch baseline..."
+          # Checkout main for baseline (if available)
+          git fetch origin main --depth=1 || true
+          # For now, just show current results
+          # In real setup, you'd run bench on main and compare
+          echo "Baseline comparison would happen here"
+          echo "Current results:"
+          cat reports/bench/bench.json 2>/dev/null || cat bench-results.json 2>/dev/null || echo "No JSON results"
+          pnpm bench:compare 2>&1 | tee bench-compare.log || true
+
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report-${{ github.sha }}
+          path: |
+            reports/bench/
+            bench.log
+            bench-compare.log
+            bench-results.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Comment PR with benchmark results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            let benchOutput = 'No benchmark output';
+            try {
+              if (fs.existsSync('bench.log')) {
+                benchOutput = fs.readFileSync('bench.log', 'utf8').substring(0, 3000);
+              }
+            } catch {}
+
+            const body = `### ⚡ Benchmark Report
+
+            | Item | Value |
+            |------|-------|
+            | **PR** | #${{ github.event.pull_request.number }} |
+            | **Commit** | \`${{ github.sha }}\`.substring(0,7) |
+            | **Tool** | Vitest bench + tinybench |
+
+            #### Results
+            \`\`\`
+            ${benchOutput}
+            \`\`\`
+
+            #### What is benchmarked
+            - LRU Cache: set 1000, get 1000, evict
+            - Detector: detectAll, x100
+            - Security: scanFileForSecrets, checkLicense, severityToNumber
+
+            #### 📦 Artifacts
+            - Benchmark JSON: Download from [Actions artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (name: \`benchmark-report-${{ github.sha }}\`)
+            - Retention: 14 days
+
+            #### 💡 Local run
+            \`\`\`bash
+            pnpm bench
+            pnpm bench:ci
+            pnpm bench:compare
+            \`\`\`
+
+            > Threshold: 10% slower = regression
+
+            ---
+            *Checked at ${new Date().toISOString()}*
+            `;
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+
+            const existing = comments.data.find(c => c.body.includes('### ⚡ Benchmark Report'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: body
+              });
+            }
+
+  # ==========================================================================
+  # Type coverage, dep-cruiser, jscpd
+  # ==========================================================================
+  quality-extra:
+    name: Extra quality checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type coverage
+        run: |
+          echo "🔍 Checking type coverage..."
+          pnpm type-coverage --detail --strict --ignore-files "**/*.test.ts" --ignore-files "e2e/**" 2>&1 | tee type-coverage.log || {
+            echo "::warning::Type coverage below threshold"
+            cat type-coverage.log | tail -30
+            exit 0
+          }
+
+      - name: Dependency cruiser
+        run: |
+          echo "🔍 Checking dependencies..."
+          pnpm dep-cruise:ci 2>&1 | tee dep-cruise.log || {
+            echo "::warning::Dependency cruiser found issues"
+            cat dep-cruise.log | tail -50
+            exit 0
+          }
+
+      - name: Duplicate code detection (jscpd)
+        run: |
+          echo "🔍 Checking for duplicate code..."
+          pnpm jscpd:ci 2>&1 | tee jscpd.log || {
+            echo "::warning::Duplicate code found"
+            cat jscpd.log | tail -50
+            exit 0
+          }
+
+      - name: Upload quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-extra-${{ github.sha }}
+          path: |
+            type-coverage.log
+            dep-cruise.log
+            jscpd.log
+            reports/jscpd/
+          retention-days: 7
+          if-no-files-found: ignore

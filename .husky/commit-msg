@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# commit-msg hook: commitlintでConventional Commitsを検証
+
+pnpm exec commitlint --edit "$1"

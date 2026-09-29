@@ -1,0 +1,48 @@
+name: ❓ Question
+description: 質問・相談する
+title: "question: "
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        質問ありがとうございます！Discussionの方が適している場合もありますが、まずはここでどうぞ。
+
+  - type: textarea
+    id: question
+    attributes:
+      label: 質問内容
+      description: 質問を具体的に記入してください
+      placeholder: |
+        例: execute.tsの機能差分判定をカスタマイズしたいのですが...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 関連エリア
+      options:
+        - 使い方 / How to use
+        - カスタマイズ / Customization
+        - CI / GitHub Actions
+        - pnpm / dependencies
+        - その他
+    validations:
+      required: false
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: 試したこと
+      description: 既に試したこと、調べたことがあれば
+      placeholder: |
+        - READMEを読んだ
+        - docs/を確認した
+        - ...
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境情報（任意）
+      render: markdown

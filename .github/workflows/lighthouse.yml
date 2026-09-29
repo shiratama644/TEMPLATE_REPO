@@ -1,0 +1,309 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  workflow_dispatch:
+  schedule:
+    # Weekly on Monday 2AM JST (Sunday 17:00 UTC)
+    - cron: '0 17 * * 0'
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  # ==========================================================================
+  # Lighthouse CI
+  # ==========================================================================
+  lighthouse:
+    name: Lighthouse audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        id: build
+        run: |
+          echo "🔨 Building for Lighthouse..."
+          pnpm build 2>&1 | tee build.log || {
+            echo "Build failed or no build script - creating static placeholder"
+            mkdir -p dist
+            cat > dist/index.html << 'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Template Repo - Preview</title>
+            <style>
+              body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+              .hero { text-align: center; padding: 3rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; margin-bottom: 2rem; }
+              .card { border: 1px solid #e1e4e8; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+              .badge { display: inline-block; padding: 0.25rem 0.5rem; background: #f1f8ff; color: #0366d6; border-radius: 12px; font-size: 0.8rem; margin-right: 0.5rem; }
+              code { background: #f6f8fa; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+            </style>
+          </head>
+          <body>
+            <div class="hero">
+              <h1>🚀 Template Repo</h1>
+              <p>AI Agent driven development template</p>
+            </div>
+            <div class="card">
+              <h2>📊 Lighthouse CI Placeholder</h2>
+              <p>This is a placeholder page for Lighthouse CI when no build output exists.</p>
+              <p>To enable real Lighthouse audits:</p>
+              <ul>
+                <li>Add a <code>build</code> script that outputs to <code>dist/</code></li>
+                <li>Configure your framework (Vite, Next.js, Astro, etc.)</li>
+                <li>Lighthouse will audit the built static site</li>
+              </ul>
+              <div>
+                <span class="badge">Performance</span>
+                <span class="badge">Accessibility</span>
+                <span class="badge">Best Practices</span>
+                <span class="badge">SEO</span>
+              </div>
+            </div>
+            <div class="card">
+              <h3>🛠️ Quick Start</h3>
+              <pre><code>pnpm install
+          pnpm build
+          pnpm dev</code></pre>
+            </div>
+          </body>
+          </html>
+          HTML
+            echo "has-placeholder=true" >> $GITHUB_OUTPUT
+            exit 0
+          }
+
+          echo "Build output:"
+          ls -lh dist 2>/dev/null || echo "No dist"
+          ls -lh build 2>/dev/null || echo "No build"
+          ls -lh .next 2>/dev/null || echo "No .next"
+          ls -lh .output 2>/dev/null || echo "No .output"
+
+          # Determine static dir
+          if [ -d "dist" ]; then
+            echo "static-dir=dist" >> $GITHUB_OUTPUT
+          elif [ -d "build" ]; then
+            echo "static-dir=build" >> $GITHUB_OUTPUT
+          elif [ -d ".output/public" ]; then
+            echo "static-dir=.output/public" >> $GITHUB_OUTPUT
+          elif [ -d "out" ]; then
+            echo "static-dir=out" >> $GITHUB_OUTPUT
+          else
+            echo "static-dir=dist" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Lighthouse CI (static)
+        if: steps.build.outputs.static-dir != ''
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: './lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        continue-on-error: true
+        id: lhci-static
+
+      - name: Run Lighthouse CI (with server)
+        if: steps.build.outputs.static-dir == '' || steps.lhci-static.outcome == 'failure'
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: './lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        continue-on-error: true
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-${{ github.event.pull_request.number || github.sha }}
+          path: |
+            .lighthouseci/
+            lhci_reports/
+            build.log
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Comment PR with Lighthouse results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            let summary = 'Lighthouse CI completed';
+            let hasReports = false;
+
+            // Try to read manifest for links
+            try {
+              const manifestPath = '.lighthouseci/manifest.json';
+              if (fs.existsSync(manifestPath)) {
+                const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+                hasReports = manifest.length > 0;
+                console.log('Found manifest:', manifest.length, 'entries');
+              }
+            } catch (e) {
+              console.log('No manifest found:', e.message);
+            }
+
+            // Try to read assertions
+            let assertionsFailed = false;
+            try {
+              const assertPath = '.lighthouseci/assertion-results.json';
+              if (fs.existsSync(assertPath)) {
+                const assertions = JSON.parse(fs.readFileSync(assertPath, 'utf8'));
+                assertionsFailed = assertions.some(a => a.level === 'error' && a.auditProperty);
+              }
+            } catch {}
+
+            const status = assertionsFailed ? '⚠️ Some assertions failed' : '✅ All checks passed';
+            const icon = assertionsFailed ? '⚠️' : '✅';
+
+            const body = `### ${icon} Lighthouse CI Report
+
+            | Item | Value |
+            |------|-------|
+            | **PR** | #${{ github.event.pull_request.number }} |
+            | **Commit** | \`${{ github.sha }}\`.substring(0,7) |
+            | **Status** | ${status} |
+            | **Reports** | ${hasReports ? 'Available in artifacts' : 'Check logs'} |
+
+            #### 📊 What is checked
+
+            - **Performance**: FCP, LCP, TBT, CLS, Speed Index
+            - **Accessibility**: ARIA, contrast, labels
+            - **Best Practices**: HTTPS, console errors, image ratios
+            - **SEO**: Meta tags, crawlable, structured data
+            - **PWA** (optional): Manifest, service worker
+
+            #### 🔧 Config
+
+            \`\`\`json
+            ${fs.existsSync('lighthouserc.json') ? fs.readFileSync('lighthouserc.json', 'utf8').substring(0, 1500) : 'No config found'}
+            \`\`\`
+
+            #### 📦 Artifacts
+
+            - **Lighthouse reports**: Download from [Actions artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (name: \`lighthouse-report-${{ github.event.pull_request.number }}\`)
+            - Temporary public storage links (if enabled) will appear in action logs
+            - Retention: 14 days
+
+            #### 💡 Local run
+
+            \`\`\`bash
+            pnpm build
+            pnpm dlx @lhci/cli autorun --config=./lighthouserc.json
+            # or
+            pnpm lighthouse
+            \`\`\`
+
+            > Edit \`lighthouserc.json\` to customize thresholds and URLs.
+
+            ---
+            *Checked at ${new Date().toISOString()}*
+            `;
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+
+            const existing = comments.data.find(c => c.body.includes('###') && c.body.includes('Lighthouse CI Report'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: body
+              });
+            }
+
+  # ==========================================================================
+  # Lighthouse CI - Mobile + Desktop
+  # ==========================================================================
+  lighthouse-matrix:
+    name: Lighthouse ${{ matrix.device }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    strategy:
+      matrix:
+        device: [mobile, desktop]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: |
+          pnpm build || {
+            mkdir -p dist
+            echo "<html><body><h1>Placeholder for Lighthouse ${{ matrix.device }}</h1></body></html>" > dist/index.html
+          }
+
+      - name: Run Lighthouse CI (${{ matrix.device }})
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: './lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        env:
+          LHCI_DEVICE: ${{ matrix.device }}

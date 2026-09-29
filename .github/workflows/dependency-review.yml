@@ -1,0 +1,79 @@
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail on high severity vulnerabilities
+          fail-on-severity: high
+          # Fail on incompatible licenses (optional)
+          fail-on-scopes: runtime
+          # Allow GPL? Set to false to be strict
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, CC0-1.0, Unlicense, BlueOak-1.0.0, MIT-0
+          # Deny these licenses
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-1.0, AGPL-3.0, SSPL-1.0
+          # Comment on PR with summary
+          comment-summary-in-pr: always
+          # Show vulnerability details
+          show-openssf-scorecard: true
+          # Warn only for these severities (don't fail)
+          warn-on-openssf-scorecard-level: 5
+
+  # Additional check: pnpm audit on PR
+  audit:
+    name: PNPM Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm audit
+        run: |
+          echo "🔍 Running pnpm audit..."
+          pnpm audit --audit-level=moderate || {
+            echo "⚠️ Vulnerabilities found"
+            pnpm audit || true
+            # Don't fail PR on moderate, only on high/critical
+            pnpm audit --audit-level=high && echo "✅ No high/critical vulnerabilities" || {
+              echo "❌ High/critical vulnerabilities found"
+              exit 1
+            }
+          }
+
+      - name: Check for outdated dependencies
+        run: |
+          echo "📦 Checking for outdated dependencies..."
+          pnpm outdated || echo "ℹ️ Some dependencies are outdated (non-blocking)"

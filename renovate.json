@@ -1,0 +1,86 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "group:allNonMajor",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":separateMajorReleases"
+  ],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Group pnpm and Node.js toolchain",
+      "matchManagers": ["node-version", "nvm", "pnpm"],
+      "groupName": "node toolchain",
+      "matchPackageNames": ["node", "pnpm"]
+    },
+    {
+      "description": "Group TypeScript and related tooling",
+      "matchPackageNames": ["typescript", "@types/node", "@types/bun"],
+      "groupName": "typescript"
+    },
+    {
+      "description": "Group Biome (linter/formatter)",
+      "matchPackageNames": ["@biomejs/biome"],
+      "groupName": "biome"
+    },
+    {
+      "description": "Group Vitest ecosystem",
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8", "@vitest/coverage-istanbul"],
+      "groupName": "vitest"
+    },
+    {
+      "description": "Group Playwright",
+      "matchPackageNames": ["@playwright/test", "playwright"],
+      "groupName": "playwright"
+    },
+    {
+      "description": "Group commit tooling",
+      "matchPackageNames": [
+        "commitizen",
+        "cz-conventional-changelog",
+        "@commitlint/cli",
+        "@commitlint/config-conventional"
+      ],
+      "groupName": "commit tooling"
+    },
+    {
+      "description": "Group cspell/knip/husky/lint-staged",
+      "matchPackageNames": ["cspell", "knip", "husky", "lint-staged"],
+      "groupName": "quality tooling"
+    },
+    {
+      "description": "Group size-limit/publint/taze",
+      "matchPackageNames": ["size-limit", "@size-limit/preset-small-lib", "publint", "taze"],
+      "groupName": "dx tooling"
+    },
+    {
+      "description": "Group changesets",
+      "matchPackageNames": ["@changesets/cli", "@changesets/changelog-github"],
+      "groupName": "changesets"
+    },
+    {
+      "description": "Pin GitHub Actions to digests for security",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    }
+  ],
+  "pnpm": {
+    "enabled": true
+  },
+  "rangeStrategy": "bump",
+  "dependencyDashboardTitle": "Dependency Dashboard (Renovate)",
+  "commitMessagePrefix": "chore:",
+  "commitMessageTopic": "{{depName}}",
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 8,
+  "schedule": ["before 3am on Monday"],
+  "timezone": "Asia/Tokyo",
+  "ignorePaths": [".agent/**", "docs/**", ".husky/_/**"],
+  "postUpdateOptions": ["pnpmDedupe"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 3am on Monday"]
+  }
+}

@@ -1,0 +1,21 @@
+# CODEOWNERS — レビュー必須オーナーを定義
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# デフォルトオーナー（全ファイル）
+* @shiratama644
+
+# 重要設定ファイルはオーナーの明示的レビュー必須
+/.github/ @shiratama644
+/.agent/ @shiratama644
+/scripts/ @shiratama644
+/renovate.json @shiratama644
+/.changeset/ @shiratama644
+/Dockerfile @shiratama644
+/docker-compose.yml @shiratama644
+/.devcontainer/ @shiratama644
+
+# ドキュメント
+/docs/ @shiratama644
+/README.md @shiratama644
+/CONTRIBUTING.md @shiratama644
+/SECURITY.md @shiratama644
