@@ -118,20 +118,20 @@ export function printDevHelp() {
   --help, -h             このヘルプを表示
 
 🔍 対応フレームワーク（自動検出）:
-  • Vite         → vite dev       (http://localhost:5173)
-  • Next.js      → next dev       (http://localhost:3000)
-  • Astro        → astro dev      (http://localhost:4321)
-  • SvelteKit    → vite dev       (http://localhost:5173)
-  • Nuxt         → nuxt dev       (http://localhost:3000)
-  • Remix        → remix dev      (http://localhost:3000)
-  • Hono         → wrangler dev   (http://localhost:8787)
-  • Turbo        → turbo dev      (monorepo)
-  • Plain TS     → tsx watch / node --watch
+  🔹 Vite         ➡️ vite dev       (http://localhost:5173)
+  🔹 Next.js      ➡️ next dev       (http://localhost:3000)
+  🔹 Astro        ➡️ astro dev      (http://localhost:4321)
+  🔹 SvelteKit    ➡️ vite dev       (http://localhost:5173)
+  🔹 Nuxt         ➡️ nuxt dev       (http://localhost:3000)
+  🔹 Remix        ➡️ remix dev      (http://localhost:3000)
+  🔹 Hono         ➡️ wrangler dev   (http://localhost:8787)
+  🔹 Turbo        ➡️ turbo dev      (monorepo)
+  🔹 Plain TS     ➡️ tsx watch / node --watch
 
 💡 Tips:
-  • Ctrl+C で終了
-  • Termux環境では自動最適化（Webpack fallback）
-  • 対応フレームワークがない場合は package.json の dev スクリプトを確認
+  🔹 Ctrl+C で終了
+  🔹 Termux環境では自動最適化（Webpack fallback）
+  🔹 対応フレームワークがない場合は package.json の dev スクリプトを確認
 
 📚 Docs: https://github.com/shiratama644/TEMPLATE_REPO#dev
 `)
@@ -236,7 +236,7 @@ export async function main(): Promise<void> {
 
   if (existsSync("turbo.json")) {
     logSection("Turbo Dev")
-    loggers.dev.start("Detected turbo.json → monorepo (turbo) with cache")
+    loggers.dev.start("Detected turbo.json ➡️ monorepo (turbo) with cache")
     loggers.dev.info("💡 All apps will start in parallel")
     run(["pnpm", "exec", "turbo", "dev", "--cache-dir=.turbo/cache"], process.cwd(), {
       TURBO_CACHE_DIR: ".turbo/cache",
@@ -248,7 +248,7 @@ export async function main(): Promise<void> {
   if (hasMonorepoStructure()) {
     if (hasTurboInDependencies()) {
       logSection("Monorepo + Turbo")
-      loggers.dev.start("Detected monorepo + turbo → pnpm exec turbo dev")
+      loggers.dev.start("Detected monorepo + turbo ➡️ pnpm exec turbo dev")
       run(["pnpm", "exec", "turbo", "dev"], process.cwd(), {
         TURBO_CACHE_DIR: ".turbo/cache",
         ...portEnv,
@@ -269,7 +269,7 @@ export async function main(): Promise<void> {
           existsSync(join(appPath, "vite.config.mts"))
         ) {
           logSection(`Monorepo App: ${app}`)
-          loggers.dev.start(`Detected monorepo app ${app} with vite → filter ${app} dev`)
+          loggers.dev.start(`Detected monorepo app ${app} with vite ➡️ filter ${app} dev`)
           run(["pnpm", "--filter", app, "dev"], process.cwd(), portEnv)
           return
         }
@@ -284,7 +284,7 @@ export async function main(): Promise<void> {
             logger.info(nextCmd.log)
           }
           logSection(`Monorepo App: ${app}`)
-          loggers.dev.start(`Detected monorepo app ${app} with next → ${nextCmd.cmd.join(" ")}`)
+          loggers.dev.start(`Detected monorepo app ${app} with next ➡️ ${nextCmd.cmd.join(" ")}`)
           run(nextCmd.cmd, process.cwd(), { ...nextCmd.env, ...portEnv })
           return
         }
@@ -292,7 +292,7 @@ export async function main(): Promise<void> {
     }
 
     logSection("Monorepo Dev")
-    loggers.dev.start("Detected monorepo structure → pnpm -r --parallel dev")
+    loggers.dev.start("Detected monorepo structure ➡️ pnpm -r --parallel dev")
     loggers.dev.info("💡 All packages will start in parallel")
     run(["pnpm", "-r", "--parallel", "dev"], process.cwd(), portEnv)
     return
@@ -304,7 +304,7 @@ export async function main(): Promise<void> {
       loggers.termux.warn(viteTermux.reason)
     }
     logSection("Vite Dev")
-    loggers.dev.start("Detected vite.config.* → vite dev")
+    loggers.dev.start("Detected vite.config.* ➡️ vite dev")
     loggers.dev.info(`🌐 Expected: http://localhost:${port || "5173"}`)
     run(["pnpm", "exec", "vite"], process.cwd(), {
       ...viteTermux.env,
@@ -320,11 +320,11 @@ export async function main(): Promise<void> {
 
     /* v8 ignore next 3 */
     if (envInfo.isTermux) {
-      loggers.termux.warn("Next.js dev in Termux → Webpack mode, reduced memory")
+      loggers.termux.warn("Next.js dev in Termux ➡️ Webpack mode, reduced memory")
     }
 
     logSection("Next.js Dev")
-    loggers.dev.start(`Detected next.config.* → ${nextCmd.cmd.join(" ")}`)
+    loggers.dev.start(`Detected next.config.* ➡️ ${nextCmd.cmd.join(" ")}`)
     loggers.dev.info(`🌐 Expected: http://localhost:${port || "3000"}`)
     run(nextCmd.cmd, process.cwd(), {
       ...nextCmd.env,
@@ -336,7 +336,7 @@ export async function main(): Promise<void> {
 
   if (hasAnyFile(["astro.config"])) {
     logSection("Astro Dev")
-    loggers.dev.start("Detected astro.config.* → astro dev")
+    loggers.dev.start("Detected astro.config.* ➡️ astro dev")
     loggers.dev.info(`🌐 Expected: http://localhost:${port || "4321"}`)
     run(["pnpm", "exec", "astro", "dev"], process.cwd(), portEnv)
     return
@@ -344,7 +344,7 @@ export async function main(): Promise<void> {
 
   if (hasAnyFile(["svelte.config"])) {
     logSection("SvelteKit Dev")
-    loggers.dev.start("Detected svelte.config.* → vite dev")
+    loggers.dev.start("Detected svelte.config.* ➡️ vite dev")
     loggers.dev.info(`🌐 Expected: http://localhost:${port || "5173"}`)
     run(["pnpm", "exec", "vite", "dev"], process.cwd(), portEnv)
     return
@@ -352,7 +352,7 @@ export async function main(): Promise<void> {
 
   if (hasAnyFile(["nuxt.config"])) {
     logSection("Nuxt Dev")
-    loggers.dev.start("Detected nuxt.config.* → nuxt dev")
+    loggers.dev.start("Detected nuxt.config.* ➡️ nuxt dev")
     loggers.dev.info(`🌐 Expected: http://localhost:${port || "3000"}`)
     run(["pnpm", "exec", "nuxt", "dev"], process.cwd(), portEnv)
     return
@@ -360,7 +360,7 @@ export async function main(): Promise<void> {
 
   if (hasAnyFile(["remix.config"]) || existsSync("app/root.tsx")) {
     logSection("Remix Dev")
-    loggers.dev.start("Detected remix → remix dev")
+    loggers.dev.start("Detected remix ➡️ remix dev")
     loggers.dev.info(`🌐 Expected: http://localhost:${port || "3000"}`)
     run(["pnpm", "exec", "remix", "dev"], process.cwd(), portEnv)
     return
@@ -368,7 +368,7 @@ export async function main(): Promise<void> {
 
   if (existsSync("wrangler.toml") || existsSync("wrangler.jsonc")) {
     logSection("Hono/Wrangler Dev")
-    loggers.dev.start("Detected Hono/Wrangler → wrangler dev")
+    loggers.dev.start("Detected Hono/Wrangler ➡️ wrangler dev")
     loggers.dev.info(`🌐 Expected: http://localhost:${port || "8787"}`)
     run(["pnpm", "exec", "wrangler", "dev"], process.cwd(), portEnv)
     return
@@ -377,27 +377,27 @@ export async function main(): Promise<void> {
   if (existsSync("src/index.ts") || existsSync("src/index.js")) {
     if (hasTsxInDependencies()) {
       logSection("TSX Watch")
-      loggers.dev.start("Detected src/index.ts + tsx → tsx watch")
+      loggers.dev.start("Detected src/index.ts + tsx ➡️ tsx watch")
       run(["pnpm", "exec", "tsx", "watch", "src/index.ts"], process.cwd(), portEnv)
       return
     }
 
     logSection("Node Watch")
-    loggers.dev.start("Detected src/index.ts → node --watch")
+    loggers.dev.start("Detected src/index.ts ➡️ node --watch")
     run(["node", "--watch", "--experimental-strip-types", "src/index.ts"], process.cwd(), portEnv)
     return
   }
 
   /* v8 ignore start */
-  logger.warn("⚠️ No specific framework detected")
+  logger.warn("⚠️️ No specific framework detected")
   logger.info("📋 Configure your dev command in package.json:")
-  logger.info("  • Vite:      pnpm add -D vite && set 'dev': 'vite'")
-  logger.info("  • Next.js:   pnpm add next react react-dom && set 'dev': 'next dev'")
-  logger.info("  • Astro:     pnpm add astro && set 'dev': 'astro dev'")
-  logger.info("  • SvelteKit: pnpm add @sveltejs/kit && set 'dev': 'vite dev'")
-  logger.info("  • Nuxt:      pnpm add nuxt && set 'dev': 'nuxt dev'")
-  logger.info("  • Hono:      pnpm add hono wrangler && set 'dev': 'wrangler dev'")
-  logger.info("  • Monorepo:  pnpm add -D turbo && create turbo.json")
+  logger.info("  🔹 Vite:      pnpm add -D vite && set 'dev': 'vite'")
+  logger.info("  🔹 Next.js:   pnpm add next react react-dom && set 'dev': 'next dev'")
+  logger.info("  🔹 Astro:     pnpm add astro && set 'dev': 'astro dev'")
+  logger.info("  🔹 SvelteKit: pnpm add @sveltejs/kit && set 'dev': 'vite dev'")
+  logger.info("  🔹 Nuxt:      pnpm add nuxt && set 'dev': 'nuxt dev'")
+  logger.info("  🔹 Hono:      pnpm add hono wrangler && set 'dev': 'wrangler dev'")
+  logger.info("  🔹 Monorepo:  pnpm add -D turbo && create turbo.json")
   logger.info("")
   logger.info("💡 Run pnpm dev --help for more info")
   logger.info(

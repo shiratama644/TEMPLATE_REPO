@@ -84,8 +84,8 @@ export function generateDocs(answers: SetupAnswers, cwd = process.cwd()): string
 \`\`\`
 docs/
 ├── README.md          ← 本ファイル（全ドキュメントの目次）
-├── task-list.md       ★ タスク管理の唯一の正本（進捗・証拠）
-├── arch/              ★ 仕様書（どう作るか）
+├── task-list.md       ⭐ タスク管理の唯一の正本（進捗・証拠）
+├── arch/              ⭐ 仕様書（どう作るか）
 │   ├── README.md
 │   ├── product.md     # プロダクト定義
 │   ├── architecture.md
@@ -235,7 +235,7 @@ docs/
 
 1. 本ファイルに**新規 ID** で行を追加（ID は \`TASK-1\` / \`AUTH-2\` のようにテーマ接頭辞 + 連番）
 2. 計画書を \`docs/planning/{TOPIC}_PLAN.md\` に \`_TEMPLATE.md\` 形式で作成
-3. 実装中は状態を更新（未着手 → 調査中 → 実装中 → ローカル検証済み）
+3. 実装中は状態を更新（未着手 ➡️ 調査中 ➡️ 実装中 ➡️ ローカル検証済み）
 4. 完了時は証拠（コミット SHA / テスト結果）を書く
 `
 
@@ -334,8 +334,8 @@ ${answers.projectName}/
 
 ## 依存規則
 
-- \`src/\` → \`scripts/lib/\` 禁止
-- \`docs/\` → コード 禁止（仕様のみ）
+- \`src/\` ➡️ \`scripts/lib/\` 禁止
+- \`docs/\` ➡️ コード 禁止（仕様のみ）
 
 ## プロジェクトタイプ
 

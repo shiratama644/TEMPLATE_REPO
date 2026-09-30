@@ -291,7 +291,7 @@ describe("cicd.ts", () => {
         },
       ]
       const comment = generateLighthouseComment(results)
-      expect(comment).toContain("⚠️")
+      expect(comment).toContain("⚠️️")
     })
   })
 })

@@ -30,11 +30,11 @@ function test(name: string, fn: () => { passed: boolean; details: string }) {
   try {
     const r = fn()
     results.push({ name, passed: r.passed, details: r.details })
-    console.log(`${r.passed ? `${GREEN}✓` : `${RED}✗`} ${name}${RESET} — ${r.details}`)
+    console.log(`${r.passed ? `${GREEN}✅` : `${RED}❌`} ${name}${RESET} — ${r.details}`)
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     results.push({ name, passed: false, details: `exception: ${msg}` })
-    console.log(`${RED}✗ ${name}${RESET} — exception: ${msg}`)
+    console.log(`${RED}❌ ${name}${RESET} — exception: ${msg}`)
     if (e instanceof Error && e.stack) console.log(e.stack.slice(0, 500))
   }
 }
@@ -43,11 +43,11 @@ async function testAsync(name: string, fn: () => Promise<{ passed: boolean; deta
   try {
     const r = await fn()
     results.push({ name, passed: r.passed, details: r.details })
-    console.log(`${r.passed ? `${GREEN}✓` : `${RED}✗`} ${name}${RESET} — ${r.details}`)
+    console.log(`${r.passed ? `${GREEN}✅` : `${RED}❌`} ${name}${RESET} — ${r.details}`)
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     results.push({ name, passed: false, details: `exception: ${msg}` })
-    console.log(`${RED}✗ ${name}${RESET} — exception: ${msg}`)
+    console.log(`${RED}❌ ${name}${RESET} — exception: ${msg}`)
   }
 }
 

@@ -128,8 +128,8 @@ export function logErrorBox(title: string, errors: string[], hints: string[] = [
   const content = [
     `❌ ${title}`,
     "",
-    ...errors.map((e) => `  • ${e}`),
-    ...(hints.length ? ["", "💡 Hints:", ...hints.map((h) => `  • ${h}`)] : []),
+    ...errors.map((e) => `  🔹 ${e}`),
+    ...(hints.length ? ["", "💡 Hints:", ...hints.map((h) => `  🔹 ${h}`)] : []),
   ].join("\n")
   logger.box(content)
 }
@@ -146,7 +146,7 @@ export function logProgress(current: number, total: number, label?: string): voi
 export function logGroup(title: string, items: string[], icon = "📋"): void {
   logger.info(`${icon} ${title}:`)
   for (const item of items) {
-    logger.log(`  • ${item}`)
+    logger.log(`  🔹 ${item}`)
   }
 }
 

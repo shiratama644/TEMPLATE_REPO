@@ -63,8 +63,8 @@
     "test:e2e:template": "node --experimental-strip-types _tests_/scripts/template-e2e.test.ts",
     "test:e2e:all": "pnpm test:all-robustness && pnpm test:e2e:template && pnpm test:setup && pnpm test:bootstrap:improvements",
     "detect": "node --experimental-strip-types -e \"import { detectAll, logDetectionResult } from './scripts/lib/detector.ts'; logDetectionResult(detectAll())\"",
-    "setup": "node --experimental-strip-types scripts/setup.ts",
-    "test:setup": "node --experimental-strip-types _tests_/scripts/setup.test.ts",
+    "setup": "tsx scripts/setup.ts",
+    "test:setup": "tsx _tests_/scripts/setup.test.ts",
     "test:bootstrap:improvements": "node --experimental-strip-types _tests_/scripts/bootstrap-improvements.test.ts",
     "create": "node bin/create-template.mjs",
     "dx:check": "pnpm typecheck && pnpm lint && pnpm knip && pnpm publint",
@@ -180,7 +180,12 @@
     "fast-check": "^4.3.0",
     "type-coverage": "^2.29.0",
     "dependency-cruiser": "^17.3.0",
-    "jscpd": "^4.0.5"
+    "jscpd": "^4.0.5",
+    "ink": "^5.1.0",
+    "react": "^18.3.1",
+    "@types/react": "^18.3.12",
+    "ink-text-input": "^6.0.0",
+    "ink-select-input": "^6.0.0"
   },
   "overrides": {
     "tmp": "^0.2.4",

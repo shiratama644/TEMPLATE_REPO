@@ -9,8 +9,8 @@
  *
  * 1. pnpm install --frozen-lockfile。失敗したら停止。
  * 2. build: 機能に影響する差分がなければスキップ
- *    - コメントのみ、空白のみ、ドキュメントのみの変更は差分なし扱い → buildスキップ
- *    - 機能に影響する変更あり or 成果物なし → pnpm build
+ *    - コメントのみ、空白のみ、ドキュメントのみの変更は差分なし扱い ➡️ buildスキップ
+ *    - 機能に影響する変更あり or 成果物なし ➡️ pnpm build
  * 3. ビルド成功後、設定されたプロセスを並列起動（例: server + client、色分けログ）。
  *
  * 各プロセスの stdout/stderr はプロセスごとに色分けしてタグ付けして出力。
@@ -371,7 +371,7 @@ export function hasFunctionalDiff(): boolean {
     const diff = getDiffForFile(file)
     /* v8 ignore start */
     if (diff.length === 0) {
-      logLine(colors.build.tag, colors.build.fg, `  ${file}: no diff (empty) → skipping`)
+      logLine(colors.build.tag, colors.build.fg, `  ${file}: no diff (empty) ➡️ skipping`)
       continue
     }
     /* v8 ignore stop */
@@ -381,13 +381,13 @@ export function hasFunctionalDiff(): boolean {
       logLine(
         colors.build.tag,
         colors.build.fg,
-        `  ${file}: comment/whitespace only → non-functional`,
+        `  ${file}: comment/whitespace only ➡️ non-functional`,
       )
     } else {
       logLine(
         colors.build.tag,
         colors.build.fg,
-        `  ${file}: functional change detected → build required`,
+        `  ${file}: functional change detected ➡️ build required`,
       )
       hasFunctional = true
     }
@@ -509,10 +509,10 @@ export async function main(): Promise<number> {
     "--frozen-lockfile",
   ])
   if (installCode !== 0) {
-    logLine(colors.install.tag, colors.install.fg, `✘ Install failed with code ${installCode}`)
+    logLine(colors.install.tag, colors.install.fg, `❌ Install failed with code ${installCode}`)
     return installCode
   }
-  logLine(colors.install.tag, colors.install.fg, "✔ Install succeeded.")
+  logLine(colors.install.tag, colors.install.fg, "✅ Install succeeded.")
 
   const needBuild = hasFunctionalDiff()
 
@@ -521,7 +521,7 @@ export async function main(): Promise<number> {
     logLine(
       colors.build.tag,
       colors.build.fg,
-      `✔ Build cache valid (hash=${sourceHash}), skipping build (キャッシュヒット)`,
+      `✅ Build cache valid (hash=${sourceHash}), skipping build (キャッシュヒット)`,
     )
   }
 
@@ -529,7 +529,7 @@ export async function main(): Promise<number> {
     logLine(
       colors.build.tag,
       colors.build.fg,
-      "✔ No functional diff detected and build output exists. Skipping build (差分なし、buildキャンセルしてstart).",
+      "✅ No functional diff detected and build output exists. Skipping build (差分なし、buildキャンセルしてstart).",
     )
   } else {
     const startMs = Date.now()
@@ -559,12 +559,12 @@ export async function main(): Promise<number> {
       logLine(
         colors.build.tag,
         colors.build.fg,
-        `✘ Build failed with code ${buildCode}. Servers will not be started.`,
+        `❌ Build failed with code ${buildCode}. Servers will not be started.`,
       )
       return buildCode
     }
     saveBuildCache("execute", Date.now() - startMs)
-    logLine(colors.build.tag, colors.build.fg, "✔ Build succeeded.")
+    logLine(colors.build.tag, colors.build.fg, "✅ Build succeeded.")
   }
 
   logLine(
@@ -621,7 +621,7 @@ export async function main(): Promise<number> {
 
   const failed = exits.filter((e) => e.code !== 0 && e.code !== null)
   if (failed.length > 0) {
-    logLine(colors.build.tag, colors.build.fg, `✘ ${failed.length} process(es) failed.`)
+    logLine(colors.build.tag, colors.build.fg, `❌ ${failed.length} process(es) failed.`)
     return 1
   }
 

@@ -71,8 +71,8 @@ export function getNextBuildCommandForTermux(
   }
 
   const log = isDevCommand
-    ? `Next.js dev detected in Termux → forcing Webpack (--webpack) for stability`
-    : `Next.js build detected in Termux → using Webpack env fallback (no --webpack flag for build)`
+    ? `Next.js dev detected in Termux ➡️ forcing Webpack (--webpack) for stability`
+    : `Next.js build detected in Termux ➡️ using Webpack env fallback (no --webpack flag for build)`
 
   return {
     cmd,

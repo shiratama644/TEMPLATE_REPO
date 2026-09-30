@@ -41,7 +41,7 @@ writeFileSync(pkgPath, original, "utf8")
 console.log(`  hash before: ${hash1}`)
 console.log(`  hash after adding newline to package.json: ${hash2}`)
 console.log(
-  `  ${hash1 !== hash2 ? `${GREEN}✓ 変わる (正しい)` : `${RED}✗ 変わらない (バグ)`}${RESET}`,
+  `  ${hash1 !== hash2 ? `${GREEN}✅ 変わる (正しい)` : `${RED}❌ 変わらない (バグ)`}${RESET}`,
 )
 
 // Test 2: srcファイルのmtime変更でハッシュが変わる
@@ -70,7 +70,7 @@ writeFileSync(srcFile, srcOriginalContent, "utf8")
 console.log(`  hash before: ${hashSrc1}`)
 console.log(`  hash after src touch: ${hashSrc2}`)
 console.log(
-  `  ${hashSrc1 !== hashSrc2 ? `${GREEN}✓ 変わる (正しい)` : `${RED}✗ 変わらない (バグ: src変更が検出されない)`}${RESET}`,
+  `  ${hashSrc1 !== hashSrc2 ? `${GREEN}✅ 変わる (正しい)` : `${RED}❌ 変わらない (バグ: src変更が検出されない)`}${RESET}`,
 )
 
 // Test 3: Termuxフラグでハッシュが変わる
@@ -91,7 +91,7 @@ const hashTermux = run(
 console.log(`  normal: ${hashNormal}`)
 console.log(`  termux: ${hashTermux}`)
 console.log(
-  `  ${hashNormal !== hashTermux ? `${GREEN}✓ 変わる (正しい、キャッシュ分離)` : `${RED}✗ 変わらない (バグ: Termuxと通常でキャッシュ衝突)`}${RESET}`,
+  `  ${hashNormal !== hashTermux ? `${GREEN}✅ 変わる (正しい、キャッシュ分離)` : `${RED}❌ 変わらない (バグ: Termuxと通常でキャッシュ衝突)`}${RESET}`,
 )
 
 // Test 4: 無関係なファイル変更ではハッシュが変わらない (docs/*.mdは対象外か?)
@@ -117,7 +117,7 @@ if (existsSync(docsFile)) {
 console.log(`  before: ${hashDocs1}`)
 console.log(`  after docs change: ${hashDocs2}`)
 console.log(
-  `  ${hashDocs1 === hashDocs2 ? `${GREEN}✓ 変わらない (正しい、docsは非機能)` : `${YELLOW}△ 変わる (docs変更でもキャッシュ無効化、過剰だが安全側)`}${RESET}`,
+  `  ${hashDocs1 === hashDocs2 ? `${GREEN}✅ 変わらない (正しい、docsは非機能)` : `${YELLOW}△ 変わる (docs変更でもキャッシュ無効化、過剰だが安全側)`}${RESET}`,
 )
 
 // Test 5: キャッシュの保存と検証
@@ -133,7 +133,7 @@ const valid1 = run(`
   console.log(isBuildCacheValid("test-invalidation"))
 `).trim()
 console.log(`  直後の検証: ${valid1} (期待 true)`)
-console.log(`  ${valid1.includes("true") ? `${GREEN}✓ 有効` : `${RED}✗ 無効 (バグ)`}${RESET}`)
+console.log(`  ${valid1.includes("true") ? `${GREEN}✅ 有効` : `${RED}❌ 無効 (バグ)`}${RESET}`)
 
 // package.json変更後は無効になるはず
 writeFileSync(pkgPath, `${original}\n`, "utf8")
@@ -144,7 +144,7 @@ const valid2 = run(`
 writeFileSync(pkgPath, original, "utf8")
 console.log(`  package.json変更後の検証: ${valid2} (期待 false)`)
 console.log(
-  `  ${valid2.includes("false") ? `${GREEN}✓ 無効化される (正しい)` : `${RED}✗ 有効のまま (バグ)`}${RESET}`,
+  `  ${valid2.includes("false") ? `${GREEN}✅ 無効化される (正しい)` : `${RED}❌ 有効のまま (バグ)`}${RESET}`,
 )
 
 run(`

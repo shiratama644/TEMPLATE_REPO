@@ -19,7 +19,7 @@ export function buildPreviewInfo() {
   const outputExists = existsSync(config.outputDir)
   /* v8 ignore start */
   if (!outputExists) {
-    log(`⚠️ Output dir ${config.outputDir} not found — run ${config.buildCommand} first`)
+    log(`⚠️️ Output dir ${config.outputDir} not found — run ${config.buildCommand} first`)
   } else {
     const stats = statSync(config.outputDir)
     if (stats.isDirectory()) {
@@ -65,7 +65,7 @@ code{background:#f6f8fa;padding:0.2rem 0.4rem;border-radius:3px}
 
 export function copyPreview(outputDir: string, targetDir = "preview") {
   if (!existsSync(outputDir)) {
-    log(`⚠️ Output dir ${outputDir} missing — creating placeholder`)
+    log(`⚠️️ Output dir ${outputDir} missing — creating placeholder`)
     createPreviewPlaceholder(targetDir)
     return false
   }
@@ -76,7 +76,7 @@ export function copyPreview(outputDir: string, targetDir = "preview") {
   /* v8 ignore start */
   try {
     cpSync(outputDir, targetDir, { recursive: true })
-    log(`✅ Copied ${outputDir} → ${targetDir}`)
+    log(`✅ Copied ${outputDir} ➡️ ${targetDir}`)
     return true
   } catch (e) {
     log(`❌ Failed to copy preview: ${e instanceof Error ? e.message : String(e)}`)

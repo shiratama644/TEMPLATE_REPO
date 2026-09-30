@@ -25,15 +25,15 @@ function log(msg: string) {
 }
 
 function ok(msg: string) {
-  console.log(`${GREEN}✔ ${msg}${RESET}`)
+  console.log(`${GREEN}✅ ${msg}${RESET}`)
 }
 
 function warn(msg: string) {
-  console.log(`${YELLOW}⚠ ${msg}${RESET}`)
+  console.log(`${YELLOW}⚠️ ${msg}${RESET}`)
 }
 
 function fail(msg: string) {
-  console.log(`${RED}✘ ${msg}${RESET}`)
+  console.log(`${RED}❌ ${msg}${RESET}`)
 }
 /* v8 ignore stop */
 
@@ -179,7 +179,7 @@ export function runAllChecks(verbose = false) {
   /* v8 ignore next 1 */
   const files = existsSync(process.cwd()) ? readdirSync(process.cwd()) : []
   const preview = detectPreviewConfig(files)
-  ok(`Preview detection: ${preview.framework} → ${preview.outputDir}`)
+  ok(`Preview detection: ${preview.framework} ➡️ ${preview.outputDir}`)
 
   // Bundle size parsing
   const sample = "  template core — 5.2 kB (limit: 10 kB)"

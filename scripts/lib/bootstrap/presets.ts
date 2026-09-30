@@ -133,7 +133,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "next-app",
     name: "Next.js App",
     description: "Next.js SSR/SSG with Docker and E2E",
-    icon: "▲",
+    icon: "🔼",
     projectType: "next",
     features: {
       docker: true,

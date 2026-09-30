@@ -147,7 +147,7 @@ export function runVerifyDocs(): boolean {
     if (docsChanged.length > 0) {
       if (!readmeChanged) {
         console.warn(
-          `⚠️ docs/ に追加/削除がありますが docs/README.md が未更新です:\n${docsChanged.join("\n")}`,
+          `⚠️️ docs/ に追加/削除がありますが docs/README.md が未更新です:\n${docsChanged.join("\n")}`,
         )
       } else {
         console.log("✅ 目次: OK (README更新済み)")
@@ -166,9 +166,9 @@ export function runVerifyDocs(): boolean {
       const pkg = JSON.parse(readFileSync("package.json", "utf-8"))
       const pm = pkg.packageManager as string | undefined
       if (!pm) {
-        console.warn("⚠️ package.json に packageManager フィールドがありません")
+        console.warn("⚠️️ package.json に packageManager フィールドがありません")
       } else if (!pm.startsWith("pnpm@")) {
-        console.warn(`⚠️ packageManager が pnpm ではありません: ${pm}`)
+        console.warn(`⚠️️ packageManager が pnpm ではありません: ${pm}`)
       } else {
         console.log(`✅ packageManager: ${pm}`)
       }

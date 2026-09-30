@@ -64,7 +64,7 @@ export function printBundleAnalysis() {
       }
     }
   } catch {
-    log("⚠️ Could not run pnpm size — run manually for details")
+    log("⚠️️ Could not run pnpm size — run manually for details")
   }
   /* v8 ignore stop */
 }

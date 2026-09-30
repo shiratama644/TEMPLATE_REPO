@@ -264,7 +264,7 @@ export function generateLighthouseComment(results: LighthouseResult[]): string {
 
   for (const r of results) {
     const check = checkLighthouseThresholds(r)
-    const status = check.passed ? "✅" : "⚠️"
+    const status = check.passed ? "✅" : "⚠️️"
     lines.push(
       `| ${r.url} | ${(r.performance * 100).toFixed(0)} | ${(r.accessibility * 100).toFixed(0)} | ${(r.bestPractices * 100).toFixed(0)} | ${(r.seo * 100).toFixed(0)} | ${r.fcp ? `${r.fcp}ms` : "-"} | ${r.lcp ? `${r.lcp}ms` : "-"} | ${r.cls ?? "-"} | ${status} |`,
     )
