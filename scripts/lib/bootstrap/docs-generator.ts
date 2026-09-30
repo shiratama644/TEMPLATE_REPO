@@ -3,7 +3,7 @@
  * Deletes template-repo-specific docs and creates clean template for new project
  */
 
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import type { SetupAnswers } from "./types.ts"
 
@@ -46,6 +46,28 @@ export function generateDocs(answers: SetupAnswers, cwd = process.cwd()): string
         rmSync(full, { force: true, recursive: true })
       } catch {}
     }
+  }
+
+  // Clean .claude/logs/ and .claude/logs/ — ensure empty with .gitkeep for new project
+  for (const logsDir of [".claude/logs", ".claude/logs"]) {
+    const full = join(cwd, logsDir)
+    try {
+      if (existsSync(full)) {
+        const files = readdirSync(full)
+        for (const f of files) {
+          if (f === ".gitkeep") continue
+          try {
+            rmSync(join(full, f), { force: true, recursive: true })
+          } catch {}
+        }
+      }
+      ensureDir(full)
+      const gitkeepPath = join(full, ".gitkeep")
+      if (!existsSync(gitkeepPath)) {
+        writeFileSync(gitkeepPath, "", "utf8")
+      }
+      created.push(`${logsDir}/.gitkeep`)
+    } catch {}
   }
 
   // docs/README.md — for new project
