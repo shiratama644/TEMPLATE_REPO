@@ -181,5 +181,11 @@
     "type-coverage": "^2.29.0",
     "dependency-cruiser": "^17.3.0",
     "jscpd": "^4.0.5"
+  },
+  "overrides": {
+    "tmp": "^0.2.4",
+    "@puppeteer/browsers": "^3.2.2",
+    "qs": "^6.16.0",
+    "uuid": "^11.1.1"
   }
 }

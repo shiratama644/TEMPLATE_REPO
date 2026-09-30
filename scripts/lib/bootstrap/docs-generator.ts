@@ -23,6 +23,7 @@ export function generateDocs(answers: SetupAnswers, cwd = process.cwd()): string
     "docs/complete/migration-v4.md",
     "docs/audit/activity.md",
     "docs/planning/robustness-plan.md",
+    "docs/planning/index.md",
     "docs/arch/product.md",
     "docs/arch/architecture.md",
     "docs/arch/tech-stack.md",
@@ -33,6 +34,9 @@ export function generateDocs(answers: SetupAnswers, cwd = process.cwd()): string
     "docs/arch/adr.md",
     "docs/arch/engineering.md",
     "docs/arch/milestones.md",
+    "docs/arch/cicd.md",
+    "docs/arch/quality.md",
+    "docs/arch/security.md",
   ]
   for (const p of toDelete) {
     const full = join(cwd, p)
