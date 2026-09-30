@@ -66,7 +66,7 @@ export function printA11yReport(result: A11yResult) {
   log(`   Violations: ${result.violations.length}, Score: ${calculateA11yScore(result.violations)}`)
 
   if (result.violations.length === 0) {
-    log("   ✅ No violations found")
+    log("   ✓ No violations found")
     return
   }
 

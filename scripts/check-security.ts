@@ -79,10 +79,10 @@ export function printHelp() {
   --help, -h             Show help
 
 🔍 Checks:
-  🔹 Secret Scanning  — hardcoded tokens, keys, passwords
-  🔹 npm Audit        — known vulnerabilities
-  🔹 License Check    — incompatible licenses
-  🔹 SBOM Generation  — CycloneDX SBOM
+  • Secret Scanning  — hardcoded tokens, keys, passwords
+  • npm Audit        — known vulnerabilities
+  • License Check    — incompatible licenses
+  • SBOM Generation  — CycloneDX SBOM
 
 💡 Examples:
   pnpm security:check                    # all checks (audit + secrets + licenses)
@@ -102,7 +102,7 @@ export function runSecretScan(verbose = false): { findings: SecretFinding[]; ok:
   const findings = scanDirectoryForSecrets(process.cwd())
 
   if (findings.length === 0) {
-    log(`${GREEN}✅ No secrets detected${RESET}`)
+    log(`${GREEN}✓ No secrets detected${RESET}`)
     return { findings, ok: true }
   }
 
@@ -110,7 +110,7 @@ export function runSecretScan(verbose = false): { findings: SecretFinding[]; ok:
   const medium = findings.filter((f) => f.severity === "medium")
   const low = findings.filter((f) => f.severity === "low")
 
-  log(`${RED}❌ Found ${findings.length} potential secrets:${RESET}`)
+  log(`${RED}✗ Found ${findings.length} potential secrets:${RESET}`)
   log(
     `  ${RED}High: ${high.length}${RESET}, ${YELLOW}Medium: ${medium.length}${RESET}, Low: ${low.length}`,
   )
@@ -148,12 +148,12 @@ export function runNpmAudit(
 
   /* v8 ignore start */
   if (fix) {
-    log(`${YELLOW}⚠️ Attempting auto-fix...${RESET}`)
+    log(`${YELLOW}⚠ Attempting auto-fix...${RESET}`)
     try {
       execSync("pnpm audit --fix", { stdio: verbose ? "inherit" : "pipe", cwd: process.cwd() })
-      log(`${GREEN}✅ Auto-fix completed${RESET}`)
+      log(`${GREEN}✓ Auto-fix completed${RESET}`)
     } catch {
-      log(`${YELLOW}⚠️ Auto-fix had issues, continuing with audit${RESET}`)
+      log(`${YELLOW}⚠ Auto-fix had issues, continuing with audit${RESET}`)
     }
   }
   /* v8 ignore stop */
@@ -169,7 +169,7 @@ export function runNpmAudit(
     const filtered = filterBySeverity(findings, auditLevel)
 
     if (filtered.length === 0) {
-      log(`${GREEN}✅ No vulnerabilities found (level: ${auditLevel}+)${RESET}`)
+      log(`${GREEN}✓ No vulnerabilities found (level: ${auditLevel}+)${RESET}`)
       /* v8 ignore next 3 */
       if (findings.length > 0 && verbose) {
         log(`${DIM}Found ${findings.length} low-severity issues below threshold${RESET}`)
@@ -182,7 +182,7 @@ export function runNpmAudit(
     const high = filtered.filter((f) => f.severity === "high")
     const moderate = filtered.filter((f) => f.severity === "moderate")
 
-    log(`${RED}❌ Found ${filtered.length} vulnerabilities (level: ${auditLevel}+):${RESET}`)
+    log(`${RED}✗ Found ${filtered.length} vulnerabilities (level: ${auditLevel}+):${RESET}`)
     log(
       `  ${RED}Critical: ${critical.length}, High: ${high.length}, Moderate: ${moderate.length}${RESET}`,
     )
@@ -218,24 +218,24 @@ export function runNpmAudit(
       msg.includes("no vulnerabilities") ||
       msg.includes("0 vulnerabilities")
     ) {
-      log(`${GREEN}✅ No vulnerabilities found${RESET}`)
+      log(`${GREEN}✓ No vulnerabilities found${RESET}`)
       return { findings: [], ok: true }
     }
 
     // If pnpm audit fails for other reasons, try alternative
-    log(`${YELLOW}⚠️ Audit check had issues, trying alternative...${RESET}`)
+    log(`${YELLOW}⚠ Audit check had issues, trying alternative...${RESET}`)
     try {
       const result = spawnSync("pnpm", ["audit"], { encoding: "utf8", cwd: process.cwd() })
       if (result.status === 0) {
-        log(`${GREEN}✅ No vulnerabilities found (via pnpm audit)${RESET}`)
+        log(`${GREEN}✓ No vulnerabilities found (via pnpm audit)${RESET}`)
         return { findings: [], ok: true }
       }
       // If audit returns non-zero, there are vulnerabilities
-      log(`${YELLOW}⚠️ Vulnerabilities may exist, check pnpm audit output${RESET}`)
+      log(`${YELLOW}⚠ Vulnerabilities may exist, check pnpm audit output${RESET}`)
       if (verbose) console.log(result.stdout || result.stderr)
       return { findings: [], ok: false }
     } catch {
-      log(`${YELLOW}⚠️ Could not run pnpm audit, skipping${RESET}`)
+      log(`${YELLOW}⚠ Could not run pnpm audit, skipping${RESET}`)
       return { findings: [], ok: true }
     }
     /* v8 ignore stop */
@@ -252,7 +252,7 @@ export function runLicenseCheck(verbose = false): {
     const pkgPath = join(process.cwd(), "package.json")
     /* v8 ignore next 3 */
     if (!existsSync(pkgPath)) {
-      log(`${YELLOW}⚠️ No package.json found, skipping license check${RESET}`)
+      log(`${YELLOW}⚠ No package.json found, skipping license check${RESET}`)
       return { incompatible: [], ok: true }
     }
 
@@ -311,19 +311,19 @@ export function runLicenseCheck(verbose = false): {
           reason: check.reason || "Incompatible",
         })
       } else if (check.reason && verbose) {
-        log(`${YELLOW}⚠️ ${lic.name}: ${check.reason}${RESET}`)
+        log(`${YELLOW}⚠ ${lic.name}: ${check.reason}${RESET}`)
       }
     }
 
     if (incompatible.length === 0) {
-      log(`${GREEN}✅ License check passed${RESET}`)
+      log(`${GREEN}✓ License check passed${RESET}`)
       if (verbose && licenses.length > 0) {
         log(`${DIM}Checked ${licenses.length} packages${RESET}`)
       }
       return { incompatible, ok: true }
     }
 
-    log(`${RED}❌ Found ${incompatible.length} incompatible licenses:${RESET}`)
+    log(`${RED}✗ Found ${incompatible.length} incompatible licenses:${RESET}`)
     for (const inc of incompatible) {
       console.log(`  ${RED}[INCOMPATIBLE]${RESET} ${inc.pkg} — ${inc.license}: ${inc.reason}`)
     }
@@ -331,7 +331,7 @@ export function runLicenseCheck(verbose = false): {
     /* v8 ignore stop */
   } catch {
     /* v8 ignore start */
-    log(`${YELLOW}⚠️ License check failed${RESET}`)
+    log(`${YELLOW}⚠ License check failed${RESET}`)
     return { incompatible: [], ok: true }
     /* v8 ignore stop */
   }
@@ -346,7 +346,7 @@ export function generateSbom(verbose = false): { path: string; ok: boolean } {
     const lockPath = join(process.cwd(), "pnpm-lock.yaml")
 
     if (!existsSync(pkgPath)) {
-      log(`${RED}❌ No package.json found${RESET}`)
+      log(`${RED}✗ No package.json found${RESET}`)
       return { path: "", ok: false }
     }
 
@@ -413,7 +413,7 @@ export function generateSbom(verbose = false): { path: string; ok: boolean } {
     writeFileSync(spdxPath, JSON.stringify(spdx, null, 2), "utf8")
 
     /* v8 ignore next 4 */
-    log(`${GREEN}✅ SBOM generated:${RESET}`)
+    log(`${GREEN}✓ SBOM generated:${RESET}`)
     log(`  CycloneDX: ${outputPath}`)
     log(`  SPDX: ${spdxPath}`)
     log(`  Packages: ${packages.length}`)
@@ -421,7 +421,7 @@ export function generateSbom(verbose = false): { path: string; ok: boolean } {
     return { path: outputPath, ok: true }
   } catch {
     /* v8 ignore start */
-    log(`${RED}❌ SBOM generation failed${RESET}`)
+    log(`${RED}✗ SBOM generation failed${RESET}`)
     return { path: "", ok: false }
     /* v8 ignore stop */
   }
@@ -499,9 +499,9 @@ export async function main(): Promise<number> {
   /* v8 ignore start */
   console.log(`${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}`)
   if (allOk) {
-    console.log(`${GREEN}✅ All security checks passed${RESET}`)
+    console.log(`${GREEN}✓ All security checks passed${RESET}`)
   } else {
-    console.log(`${RED}❌ Some security checks failed${RESET}`)
+    console.log(`${RED}✗ Some security checks failed${RESET}`)
     console.log(`${YELLOW}💡 Run with --verbose for details${RESET}`)
     console.log(`${YELLOW}💡 Run pnpm security:check --fix to auto-fix audit issues${RESET}`)
   }

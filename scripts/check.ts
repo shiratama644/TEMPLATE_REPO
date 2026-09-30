@@ -5,7 +5,7 @@
  *   pnpm check  (または `node --experimental-strip-types scripts/check.ts`)
  *
  * 1. install を最初に単独実行（依存解決のため）
- * 2. 残りタスクを並列実行（速い順: lint ➡️ determinism ➡️ cspell ➡️ knip ➡️ typecheck ➡️ test:unit ➡️ coverage ➡️ build ➡️ e2e:list ➡️ security:check, publint/size-limitはnon-blocking）
+ * 2. 残りタスクを並列実行（速い順: lint → determinism → cspell → knip → typecheck → test:unit → coverage → build → e2e:list → security:check, publint/size-limitはnon-blocking）
  *    blocking失敗時のみ残りを abort。typecheck のように子プロセスを持つタスクでもハングしないよう、
  *    - detached プロセスグループ + setsid
  *    - abort 時に kill -TERM/-KILL -pgid でグループ全体を kill
@@ -350,7 +350,7 @@ export function runTaskNode(task: Task, signal: AbortSignal): Promise<Result> {
       const logPath = join(LOG_DIR, task.logFile)
       writeFileSync(logPath, captured, "utf8")
 
-      const icon = ok ? `${GREEN}✅${RESET}` : `${RED}❌${RESET}`
+      const icon = ok ? `${GREEN}✓${RESET}` : `${RED}✗${RESET}`
       const status = aborted
         ? `${RED}${timedOut ? "TIMEOUT" : "ABORTED"}${RESET}`
         : ok
@@ -401,14 +401,14 @@ export async function main() {
   console.log("")
   console.log(`${CYAN}╔════════════════════════════════════════════════════╗${RESET}`)
   console.log(`${CYAN}║  🔍 Quality Gate — pnpm check                     ║${RESET}`)
-  console.log(`${CYAN}║  ${currentTasks.length} tasks, logs ➡️ ${LOG_DIR.padEnd(24)}║${RESET}`)
+  console.log(`${CYAN}║  ${currentTasks.length} tasks, logs → ${LOG_DIR.padEnd(24)}║${RESET}`)
   console.log(`${CYAN}╚════════════════════════════════════════════════════╝${RESET}`)
   console.log("")
   log(`📦 Phase 1: install (sequential, must succeed first)`)
   log(
     `⚡ Phase 2: ${currentTasks.length - 1} tasks in PARALLEL (abort on failure, setsid=${USE_SETSID})`,
   )
-  log(`📋 Order: ${currentTasks.map((t) => t.id).join(" ➡️ ")}`)
+  log(`📋 Order: ${currentTasks.map((t) => t.id).join(" → ")}`)
   console.log("")
 
   const installTask = currentTasks[0]
@@ -423,7 +423,7 @@ export async function main() {
       `mode: install first sequential, then parallel (fast-first)\n` +
       `FAILED at install phase\n` +
       `${"-".repeat(60)}\n` +
-      `${installResult.ok ? "✅" : "❌"} ${installTask.id.padEnd(28)} FAILED exit=${installResult.exit} ${installResult.durationMs}ms -> ${installTask.logFile}\n`
+      `${installResult.ok ? "✓" : "✗"} ${installTask.id.padEnd(28)} FAILED exit=${installResult.exit} ${installResult.durationMs}ms -> ${installTask.logFile}\n`
 
     writeFileSync(join(LOG_DIR, "summary.log"), summaryText, "utf8")
     writeFileSync(
@@ -445,13 +445,13 @@ export async function main() {
     )
     console.log("")
     console.log(summaryText)
-    log(`${RED}❌ install failed, aborting all. See logs/ for details.${RESET}`)
+    log(`${RED}✗ install failed, aborting all. See logs/ for details.${RESET}`)
     process.exit(1)
   }
 
   const remainingTasks = currentTasks.slice(1)
   console.log("")
-  log(`${GREEN}✅ install OK (${installResult.durationMs}ms)${RESET}, starting Phase 2 parallel:`)
+  log(`${GREEN}✓ install OK (${installResult.durationMs}ms)${RESET}, starting Phase 2 parallel:`)
   log(`  ${remainingTasks.map((t) => `${YELLOW}${t.id}${RESET}`).join(", ")}`)
   console.log("")
 
@@ -468,10 +468,10 @@ export async function main() {
     /* v8 ignore next 5 - blocking failure abort path, integration only */
     if (!r.ok && !failed && !isNonBlocking) {
       failed = true
-      log(`${RED}❌ ${r.id} failed -> aborting remaining blocking tasks...${RESET}`)
+      log(`${RED}✗ ${r.id} failed -> aborting remaining blocking tasks...${RESET}`)
       controller.abort()
     } else if (!r.ok && isNonBlocking) {
-      log(`${YELLOW}⚠️ ${r.id} failed but non-blocking (warning only)${RESET}`)
+      log(`${YELLOW}⚠ ${r.id} failed but non-blocking (warning only)${RESET}`)
     }
     return r
   })
@@ -497,7 +497,7 @@ export async function main() {
       : r.ok
         ? "OK"
         : `FAILED exit=${r.exit}${r.nonBlocking ? " (non-blocking)" : ""}`
-    summaryText += `${r.ok ? "✅" : r.nonBlocking ? "⚠️" : "❌"} ${r.id.padEnd(28)} ${st.padEnd(30)} ${r.durationMs}ms -> ${r.logFile}\n`
+    summaryText += `${r.ok ? "✓" : r.nonBlocking ? "⚠" : "✗"} ${r.id.padEnd(28)} ${st.padEnd(30)} ${r.durationMs}ms -> ${r.logFile}\n`
   }
   summaryText += `${"-".repeat(60)}\n`
   if (failedResults.length > 0) {
@@ -541,11 +541,11 @@ export async function main() {
   console.log("")
   console.log(summaryText)
   if (failedResults.length > 0) {
-    log(`${RED}❌ ${failedResults.length} task(s) failed. See logs/ for details.${RESET}`)
+    log(`${RED}✗ ${failedResults.length} task(s) failed. See logs/ for details.${RESET}`)
     /* v8 ignore next 1 */
     setTimeout(() => process.exit(1), 200)
   } else {
-    log(`${GREEN}✅ All ${allResults.length} tasks passed. Logs in ${LOG_DIR}${RESET}`)
+    log(`${GREEN}✓ All ${allResults.length} tasks passed. Logs in ${LOG_DIR}${RESET}`)
     /* v8 ignore next 1 */
     setTimeout(() => process.exit(0), 200)
   }

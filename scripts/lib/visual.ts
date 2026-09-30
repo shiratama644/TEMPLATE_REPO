@@ -60,7 +60,7 @@ export function compareScreenshots(
 }
 
 export function formatVisualDiff(diff: VisualDiff): string {
-  const status = diff.passed ? "✅" : "❌"
+  const status = diff.passed ? "✓" : "✗"
   return `${status} ${diff.name}: ${diff.diffPixels} pixels diff (${(diff.diffRatio * 100).toFixed(2)}%), max ${diff.maxDiff}`
 }
 
@@ -75,9 +75,9 @@ export function printVisualReport(diffs: VisualDiff[]) {
   }
 
   if (passed === total) {
-    log("   ✅ All visual tests passed")
+    log("   ✓ All visual tests passed")
   } else {
-    log(`   ❌ ${total - passed} visual tests failed`)
+    log(`   ✗ ${total - passed} visual tests failed`)
   }
 }
 

@@ -59,12 +59,12 @@ export function printBundleAnalysis() {
       log("Size-limit results:")
       for (const r of results) {
         log(
-          `  ${r.name}: ${formatBytes(r.size)}${r.limit ? ` / ${formatBytes(r.limit)}` : ""} ${r.passed ? "✅" : "❌"}`,
+          `  ${r.name}: ${formatBytes(r.size)}${r.limit ? ` / ${formatBytes(r.limit)}` : ""} ${r.passed ? "✓" : "✗"}`,
         )
       }
     }
   } catch {
-    log("⚠️️ Could not run pnpm size — run manually for details")
+    log("⚠️ Could not run pnpm size — run manually for details")
   }
   /* v8 ignore stop */
 }

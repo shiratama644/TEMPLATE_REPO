@@ -114,10 +114,10 @@ export function runVerifyDocs(): boolean {
   try {
     const secret = checkSecretFiles()
     if (secret.envFiles.length > 0) {
-      console.error(`❌ .envファイルがステージングされています: ${secret.envFiles.join(", ")}`)
+      console.error(`✗ .envファイルがステージングされています: ${secret.envFiles.join(", ")}`)
       fail = true
     } else {
-      console.log("✅ 機密ファイル: OK")
+      console.log("✓ 機密ファイル: OK")
     }
   } catch {
     /* v8 ignore next 1 */
@@ -130,9 +130,9 @@ export function runVerifyDocs(): boolean {
     if (existsSync(docsDir)) {
       const { brokenCount } = checkInternalLinks(docsDir)
       if (brokenCount === 0) {
-        console.log("✅ リンク: OK")
+        console.log("✓ リンク: OK")
       } else {
-        console.error(`❌ 壊れたリンクが ${brokenCount} 件見つかりました`)
+        console.error(`✗ 壊れたリンクが ${brokenCount} 件見つかりました`)
         fail = true
       }
     }
@@ -147,13 +147,13 @@ export function runVerifyDocs(): boolean {
     if (docsChanged.length > 0) {
       if (!readmeChanged) {
         console.warn(
-          `⚠️️ docs/ に追加/削除がありますが docs/README.md が未更新です:\n${docsChanged.join("\n")}`,
+          `⚠️ docs/ に追加/削除がありますが docs/README.md が未更新です:\n${docsChanged.join("\n")}`,
         )
       } else {
-        console.log("✅ 目次: OK (README更新済み)")
+        console.log("✓ 目次: OK (README更新済み)")
       }
     } else {
-      console.log("✅ 目次: 変更なし")
+      console.log("✓ 目次: 変更なし")
     }
   } catch {
     /* v8 ignore next 1 */
@@ -166,11 +166,11 @@ export function runVerifyDocs(): boolean {
       const pkg = JSON.parse(readFileSync("package.json", "utf-8"))
       const pm = pkg.packageManager as string | undefined
       if (!pm) {
-        console.warn("⚠️️ package.json に packageManager フィールドがありません")
+        console.warn("⚠️ package.json に packageManager フィールドがありません")
       } else if (!pm.startsWith("pnpm@")) {
-        console.warn(`⚠️️ packageManager が pnpm ではありません: ${pm}`)
+        console.warn(`⚠️ packageManager が pnpm ではありません: ${pm}`)
       } else {
-        console.log(`✅ packageManager: ${pm}`)
+        console.log(`✓ packageManager: ${pm}`)
       }
     }
   } catch (e) {
@@ -179,10 +179,10 @@ export function runVerifyDocs(): boolean {
 
   console.log("\n=== 検証完了 ===")
   if (fail) {
-    console.error("❌ 検証失敗")
+    console.error("✗ 検証失敗")
     return false
   } else {
-    console.log("✅ 全検証OK")
+    console.log("✓ 全検証OK")
     return true
   }
 }

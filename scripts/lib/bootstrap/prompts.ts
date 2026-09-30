@@ -118,14 +118,14 @@ export async function promptSetup(defaults: boolean, cwd = process.cwd()): Promi
         placeholder: defaultProjectName,
         defaultValue: defaultProjectName,
         validate: (value) => {
-          if (!value) return "❌ Project name is required (e.g. my-awesome-app)"
+          if (!value) return "✗ Project name is required (e.g. my-awesome-app)"
           if (value !== value.toLowerCase())
-            return "❌ Must be lowercase — npm requires lowercase package names"
+            return "✗ Must be lowercase — npm requires lowercase package names"
           if (!/^[a-z0-9-_@/]+$/.test(value))
-            return "❌ Only lowercase letters, numbers, dash, underscore, @, / allowed"
-          if (value.length > 214) return "❌ Name too long — max 214 characters"
+            return "✗ Only lowercase letters, numbers, dash, underscore, @, / allowed"
+          if (value.length > 214) return "✗ Name too long — max 214 characters"
           if (value.startsWith("-") || value.startsWith("_"))
-            return "❌ Cannot start with dash or underscore"
+            return "✗ Cannot start with dash or underscore"
           return undefined
         },
       })) as string
@@ -144,7 +144,7 @@ export async function promptSetup(defaults: boolean, cwd = process.cwd()): Promi
           if (!value) return undefined
           if (value === "your-github-username") return undefined
           if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/.test(value)) {
-            return "❌ Invalid GitHub username — alphanumeric and hyphens only, 1-39 chars"
+            return "✗ Invalid GitHub username — alphanumeric and hyphens only, 1-39 chars"
           }
           return undefined
         },
@@ -162,7 +162,7 @@ export async function promptSetup(defaults: boolean, cwd = process.cwd()): Promi
         defaultValue: inferredDescription,
         validate: (value) => {
           if (value && value.length > 200)
-            return `❌ Too long (${value.length}/200) — keep it concise`
+            return `✗ Too long (${value.length}/200) — keep it concise`
           return undefined
         },
       })) as string
@@ -190,13 +190,13 @@ export async function promptSetup(defaults: boolean, cwd = process.cwd()): Promi
     placeholder: defaultProjectName,
     defaultValue: defaultProjectName,
     validate: (value) => {
-      if (!value) return "❌ Project name is required (e.g. my-awesome-app)"
-      if (value !== value.toLowerCase()) return "❌ Must be lowercase — npm requires it"
+      if (!value) return "✗ Project name is required (e.g. my-awesome-app)"
+      if (value !== value.toLowerCase()) return "✗ Must be lowercase — npm requires it"
       if (!/^[a-z0-9-_@/]+$/.test(value))
-        return "❌ Only lowercase letters, numbers, dash, underscore, @, / allowed"
-      if (value.length > 214) return "❌ Name too long — max 214 characters"
+        return "✗ Only lowercase letters, numbers, dash, underscore, @, / allowed"
+      if (value.length > 214) return "✗ Name too long — max 214 characters"
       if (value.startsWith("-") || value.startsWith("_"))
-        return "❌ Cannot start with dash or underscore"
+        return "✗ Cannot start with dash or underscore"
       return undefined
     },
   })) as string
@@ -212,7 +212,7 @@ export async function promptSetup(defaults: boolean, cwd = process.cwd()): Promi
     placeholder: inferredDescription,
     defaultValue: inferredDescription,
     validate: (value) => {
-      if (value && value.length > 200) return `❌ Too long (${value.length}/200) — keep it concise`
+      if (value && value.length > 200) return `✗ Too long (${value.length}/200) — keep it concise`
       return undefined
     },
   })) as string
@@ -231,7 +231,7 @@ export async function promptSetup(defaults: boolean, cwd = process.cwd()): Promi
       if (!value) return undefined
       if (value === "your-github-username") return undefined
       if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/.test(value)) {
-        return "❌ Invalid GitHub username format"
+        return "✗ Invalid GitHub username format"
       }
       return undefined
     },
@@ -294,8 +294,8 @@ export async function promptSetup(defaults: boolean, cwd = process.cwd()): Promi
       message: "Termux optimization mode?",
       options: [
         { value: "auto", label: "🤖 Auto", hint: "Detect automatically (recommended)" },
-        { value: "yes", label: "✅ Yes", hint: "Always enable Termux optimizations" },
-        { value: "no", label: "❌ No", hint: "Disable, but keep files" },
+        { value: "yes", label: "✓ Yes", hint: "Always enable Termux optimizations" },
+        { value: "no", label: "✗ No", hint: "Disable, but keep files" },
       ],
       initialValue: termuxDetected ? "yes" : "auto",
     })) as "auto" | "yes" | "no"

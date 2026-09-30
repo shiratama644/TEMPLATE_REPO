@@ -145,7 +145,7 @@ export function generateReadme(answers: SetupAnswers): string {
   if (answers.features.determinism) {
     lines.push("| `pnpm check:determinism` | Determinism guard |")
   }
-  lines.push("| `pnpm check` | All quality gates (install ➡️ parallel checks) |")
+  lines.push("| `pnpm check` | All quality gates (install → parallel checks) |")
   lines.push("| `pnpm check:env` | Environment check (Termux detection, cache stats) |")
   if (answers.features.docker) {
     lines.push("| `pnpm docker:build` | Docker build |")
@@ -167,19 +167,19 @@ export function generateReadme(answers: SetupAnswers): string {
     lines.push("### Vite")
     lines.push("")
     lines.push("- Config: `vite.config.ts` (from `docs/examples/vite.config.example.ts`)")
-    lines.push("- Entry: `index.html` ➡️ `src/main.ts` ➡️ `src/index.ts`")
-    lines.push("- Dev: `pnpm dev` ➡️ Vite dev server on http://localhost:5173")
-    lines.push("- Build: `pnpm build` ➡️ `dist/`")
-    lines.push("- Preview: `pnpm preview` ➡️ preview production build")
+    lines.push("- Entry: `index.html` → `src/main.ts` → `src/index.ts`")
+    lines.push("- Dev: `pnpm dev` → Vite dev server on http://localhost:5173")
+    lines.push("- Build: `pnpm build` → `dist/`")
+    lines.push("- Preview: `pnpm preview` → preview production build")
     lines.push("")
   } else if (answers.projectType === "next") {
     lines.push("### Next.js")
     lines.push("")
     lines.push("- Config: `next.config.mjs` (from `docs/examples/next.config.example.mjs`)")
     lines.push("- App Router: `app/page.tsx`, `app/layout.tsx`, `app/globals.css`")
-    lines.push("- Dev: `pnpm dev` ➡️ Next dev server on http://localhost:3000")
-    lines.push("- Build: `pnpm build` ➡️ `.next/`")
-    lines.push("- Start: `pnpm start:next` ➡️ production server")
+    lines.push("- Dev: `pnpm dev` → Next dev server on http://localhost:3000")
+    lines.push("- Build: `pnpm build` → `.next/`")
+    lines.push("- Start: `pnpm start:next` → production server")
     if (answers.features.termux) {
       lines.push(
         `- Termux: ${answers.termuxMode === "auto" ? "Auto-detects Termux and forces Webpack (`--webpack`)" : answers.termuxMode === "yes" ? "Always forces Webpack for Termux stability" : "Disabled"}`,
@@ -191,9 +191,9 @@ export function generateReadme(answers: SetupAnswers): string {
     lines.push("")
     lines.push("- Workspace: `pnpm-workspace.yaml` with `packages/*` and `apps/*`")
     lines.push("- Turbo: `turbo.json` for task orchestration")
-    lines.push("- Dev: `pnpm dev` ➡️ `turbo dev` or `pnpm -r --parallel dev`")
-    lines.push("- Build: `pnpm build` ➡️ `turbo build`")
-    lines.push("- Check: `pnpm check:turbo` ➡️ `turbo run check`")
+    lines.push("- Dev: `pnpm dev` → `turbo dev` or `pnpm -r --parallel dev`")
+    lines.push("- Build: `pnpm build` → `turbo build`")
+    lines.push("- Check: `pnpm check:turbo` → `turbo run check`")
     if (answers.projectType === "next-monorepo") {
       lines.push("- Example apps: `apps/web` (Next.js on 3000), `packages/ui` (shared)")
     } else {
@@ -205,7 +205,7 @@ export function generateReadme(answers: SetupAnswers): string {
     lines.push("")
     lines.push("- Entry: `src/index.ts`")
     lines.push("- Build: `tsc` (no output for template, add your build)")
-    lines.push("- Dev: `pnpm dev:watch` ➡️ watch mode")
+    lines.push("- Dev: `pnpm dev:watch` → watch mode")
     lines.push("")
   }
 

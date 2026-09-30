@@ -254,7 +254,7 @@ export async function check(): Promise<Violation[]> {
 export async function main(): Promise<number> {
   const violations = await check()
   if (violations.length > 0) {
-    console.error("❌ Determinism / architecture violations found:")
+    console.error("✗ Determinism / architecture violations found:")
     for (const v of violations) {
       console.error(`  ${v.file}:${v.line} [${v.pattern}] ${v.snippet}`)
     }
@@ -264,7 +264,7 @@ export async function main(): Promise<number> {
     )
     return 1
   } else {
-    console.log("✅ Determinism check passed (no forbidden patterns in pure layers)")
+    console.log("✓ Determinism check passed (no forbidden patterns in pure layers)")
     return 0
   }
 }

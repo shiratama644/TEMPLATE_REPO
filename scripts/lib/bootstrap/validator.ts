@@ -128,7 +128,7 @@ export function getFeatureImpactSummary(features: Record<FeatureId, boolean>): s
   lines.push(`Enabled ${enabledCount}: ${enabledNames.join(", ")}`)
   lines.push(`Disabled ${disabledCount}: ${disabledNames.join(", ")}`)
   /* v8 ignore next 3 */
-  if (features.playwright) lines.push("⚠️️ Playwright adds ~500MB browsers (pnpm install)")
+  if (features.playwright) lines.push("⚠️ Playwright adds ~500MB browsers (pnpm install)")
   if (features.docker) lines.push("🐳 Docker requires Docker daemon")
   if (features.changesets) lines.push("📦 Changesets adds release workflow")
   return lines

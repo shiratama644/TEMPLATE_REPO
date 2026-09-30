@@ -185,10 +185,10 @@ export function generatePropertyTestSummary(results: PropertyTestResult[]): stri
   for (const r of results) {
     if (!r.passed) {
       lines.push(
-        `  ❌ ${r.property} failed after ${r.failedAfter} runs, counterexample: ${JSON.stringify(r.counterexample)}`,
+        `  ✗ ${r.property} failed after ${r.failedAfter} runs, counterexample: ${JSON.stringify(r.counterexample)}`,
       )
     } else {
-      lines.push(`  ✅ ${r.property} passed (${r.runs} runs)`)
+      lines.push(`  ✓ ${r.property} passed (${r.runs} runs)`)
     }
   }
   return lines.join("\n")

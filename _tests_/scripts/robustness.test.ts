@@ -29,11 +29,11 @@ function test(name: string, fn: () => { passed: boolean; details: string }) {
   try {
     const r = fn()
     results.push({ name, passed: r.passed, details: r.details })
-    console.log(`${r.passed ? `${GREEN}✅` : `${RED}❌`} ${name}${RESET} — ${r.details}`)
+    console.log(`${r.passed ? `${GREEN}✓` : `${RED}✗`} ${name}${RESET} — ${r.details}`)
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     results.push({ name, passed: false, details: `exception: ${msg}` })
-    console.log(`${RED}❌ ${name}${RESET} — exception: ${msg}`)
+    console.log(`${RED}✗ ${name}${RESET} — exception: ${msg}`)
   }
 }
 
@@ -51,7 +51,7 @@ function runNode(
 
 // === 1. 初期導入時に不要な機能が邪魔をしないか ===
 test("1-1: デフォルト状態でビルドがtscにフォールバックする", () => {
-  // 現在のテンプレートはtsconfig.jsonのみ、vite/next/turboなし ➡️ tscになるべき
+  // 現在のテンプレートはtsconfig.jsonのみ、vite/next/turboなし → tscになるべき
   const hasVite = existsSync("vite.config.ts") || existsSync("vite.config.js")
   const hasNext =
     existsSync("next.config.js") || existsSync("next.config.mjs") || existsSync("next.config.ts")
@@ -60,7 +60,7 @@ test("1-1: デフォルト状態でビルドがtscにフォールバックする
   const isPlainTs = existsSync("tsconfig.json") && !hasVite && !hasNext && !hasTurbo
   return {
     passed: isPlainTs,
-    details: `vite=${hasVite}, next=${hasNext}, turbo=${hasTurbo}, monorepo=${hasMonorepo}, plainTs=${isPlainTs} ➡️ デフォルトはtscで正しい`,
+    details: `vite=${hasVite}, next=${hasNext}, turbo=${hasTurbo}, monorepo=${hasMonorepo}, plainTs=${isPlainTs} → デフォルトはtscで正しい`,
   }
 })
 
@@ -87,7 +87,7 @@ test("1-3: package.json scriptsが汎用性を壊していない", () => {
 
 // === 2. 自動判定が誤爆しないか ===
 test("2-1: build.tsのhasFile/hasAnyFileが拡張子を正しく扱う", () => {
-  // build.tsは hasFileで .ts/.js/.mjs/.cjs/.mts をチェックする ➡️ 誤爆しにくい設計
+  // build.tsは hasFileで .ts/.js/.mjs/.cjs/.mts をチェックする → 誤爆しにくい設計
   const content = readFileSync("scripts/build.ts", "utf8")
   const checksExtensions =
     content.includes("pattern") &&
@@ -114,7 +114,7 @@ test("2-2: monorepo判定が空ディレクトリで誤爆しない", () => {
 })
 
 test("2-3: TurboとVite/Nextの優先順位が正しい", () => {
-  // build.tsは turbo.json ➡️ monorepo ➡️ vite ➡️ next ➡️ tsc の順で判定
+  // build.tsは turbo.json → monorepo → vite → next → tsc の順で判定
   const content = readFileSync("scripts/build.ts", "utf8")
   const turboIdx = content.indexOf("turbo.json")
   const viteIdx = content.indexOf("vite.config")
@@ -129,7 +129,7 @@ test("2-3: TurboとVite/Nextの優先順位が正しい", () => {
 })
 
 test("2-4: Vite/Next同時存在時の動作", () => {
-  // 両方ある場合、build.tsはviteを先に検出してvite buildになる ➡️ 意図的か?
+  // 両方ある場合、build.tsはviteを先に検出してvite buildになる → 意図的か?
   // 実際は両方共存は稀だが、ドキュメントで明記すべき
   const content = readFileSync("scripts/build.ts", "utf8")
   const viteBeforeNext = content.indexOf("vite.config") < content.indexOf("next.config")
@@ -198,7 +198,7 @@ test("3-4: 通常環境でNext.jsビルドがWebpack強制されない", () => {
 })
 
 test("3-5: Termux環境でNext.jsビルドがWebpack強制される", () => {
-  // next.config.jsが存在する場合のみWebpack強制される設計 ➡️ テスト用に一時ファイル作成
+  // next.config.jsが存在する場合のみWebpack強制される設計 → テスト用に一時ファイル作成
   const tmpFile = "next.config.js"
   const hadFile = existsSync(tmpFile)
   if (!hadFile) writeFileSync(tmpFile, "module.exports = {}", "utf8")
@@ -237,7 +237,7 @@ test("3-6: 通常環境でViteがTermux最適化されない", () => {
 })
 
 test("3-7: isNextJsProjectがnext.config.jsを検出できる", () => {
-  // 以前バグ: candidatesにnext.config.jsがなかった ➡️ 修正済みか確認
+  // 以前バグ: candidatesにnext.config.jsがなかった → 修正済みか確認
   const content = readFileSync("scripts/lib/next-termux.ts", "utf8")
   const hasJs = content.includes("next.config.js")
   return {
@@ -270,7 +270,7 @@ test("4-2: ハッシュにNodeバージョンとTermuxフラグが含まれる",
   const hasTermux = content.includes("isTermuxEnvironment") && content.includes("termux")
   return {
     passed: hasNode && hasTermux,
-    details: `Node version=${hasNode}, Termux flag=${hasTermux} ➡️ 環境変化でキャッシュ無効化される`,
+    details: `Node version=${hasNode}, Termux flag=${hasTermux} → 環境変化でキャッシュ無効化される`,
   }
 })
 
@@ -285,12 +285,12 @@ test("4-3: キャッシュがTermuxと通常で分離される", () => {
 
 test("4-4: キャッシュ無効化が過剰でないか (src mtimeのみでなくハッシュも)", () => {
   const content = readFileSync("scripts/lib/cache.ts", "utf8")
-  // srcのmtime + sizeでハッシュ ➡️ ファイル内容変更で無効化、ただし最大100ファイルまでで高速化
+  // srcのmtime + sizeでハッシュ → ファイル内容変更で無効化、ただし最大100ファイルまでで高速化
   const hasMtime = content.includes("mtimeMs")
   const hasLimit = content.includes("slice(0, 100)")
   return {
     passed: hasMtime && hasLimit,
-    details: `mtime+sizeで判定=${hasMtime}, 100ファイル制限で高速化=${hasLimit} ➡️ 過剰無効化を防ぎつつ高速`,
+    details: `mtime+sizeで判定=${hasMtime}, 100ファイル制限で高速化=${hasLimit} → 過剰無効化を防ぎつつ高速`,
   }
 })
 
@@ -519,7 +519,7 @@ console.log(
 if (passed !== total) {
   console.log(`\n${YELLOW}失敗したテスト:${RESET}`)
   for (const r of results.filter((r) => !r.passed)) {
-    console.log(`  ${RED}❌ ${r.name}${RESET}: ${r.details}`)
+    console.log(`  ${RED}✗ ${r.name}${RESET}: ${r.details}`)
   }
 }
 console.log("=".repeat(80))

@@ -234,8 +234,8 @@ describe("cicd.ts", () => {
       const comment = generateBundleSizeComment(results)
       expect(comment).toContain("Bundle Size")
       expect(comment).toContain("core")
-      expect(comment).toContain("✅")
-      expect(comment).toContain("❌")
+      expect(comment).toContain("✓")
+      expect(comment).toContain("✗")
     })
     it("with baseline diff", () => {
       const results = [{ name: "core", size: 6000, limit: 10000, passed: true }]
@@ -277,7 +277,7 @@ describe("cicd.ts", () => {
       const comment = generateLighthouseComment(results)
       expect(comment).toContain("Lighthouse")
       expect(comment).toContain("http://localhost:3000")
-      expect(comment).toContain("✅")
+      expect(comment).toContain("✓")
     })
     it("with failure", () => {
       const results = [
@@ -291,7 +291,7 @@ describe("cicd.ts", () => {
         },
       ]
       const comment = generateLighthouseComment(results)
-      expect(comment).toContain("⚠️️")
+      expect(comment).toContain("⚠️")
     })
   })
 })

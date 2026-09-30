@@ -42,10 +42,10 @@ describe("visual.ts", () => {
     const str = formatVisualDiff(diff)
     expect(str).toContain("test")
     expect(str).toContain("10")
-    expect(str).toContain("✅")
+    expect(str).toContain("✓")
 
     const diff2 = { name: "test", diffPixels: 100, diffRatio: 0.1, maxDiff: 100, passed: false }
-    expect(formatVisualDiff(diff2)).toContain("❌")
+    expect(formatVisualDiff(diff2)).toContain("✗")
   })
 
   it("printVisualReport", () => {

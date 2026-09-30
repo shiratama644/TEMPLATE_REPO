@@ -120,16 +120,16 @@ export function logBox(title: string, messages: string[]): void {
 
 // Enhanced box with better formatting
 export function logSuccessBox(title: string, details: string[]): void {
-  const content = [`✅ ${title}`, "", ...details].join("\n")
+  const content = [`✓ ${title}`, "", ...details].join("\n")
   logger.box(content)
 }
 
 export function logErrorBox(title: string, errors: string[], hints: string[] = []): void {
   const content = [
-    `❌ ${title}`,
+    `✗ ${title}`,
     "",
-    ...errors.map((e) => `  🔹 ${e}`),
-    ...(hints.length ? ["", "💡 Hints:", ...hints.map((h) => `  🔹 ${h}`)] : []),
+    ...errors.map((e) => `  • ${e}`),
+    ...(hints.length ? ["", "💡 Hints:", ...hints.map((h) => `  • ${h}`)] : []),
   ].join("\n")
   logger.box(content)
 }
@@ -146,7 +146,7 @@ export function logProgress(current: number, total: number, label?: string): voi
 export function logGroup(title: string, items: string[], icon = "📋"): void {
   logger.info(`${icon} ${title}:`)
   for (const item of items) {
-    logger.log(`  🔹 ${item}`)
+    logger.log(`  • ${item}`)
   }
 }
 

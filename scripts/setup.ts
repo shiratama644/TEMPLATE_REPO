@@ -101,7 +101,7 @@ ${Object.entries(PROJECT_TYPES)
 
 🧩 Features:
 ${Object.entries(FEATURES)
-  .map(([id, def]) => `  ${id.padEnd(20)} ${def.icon || "🔹"} ${def.name} (${def.group})`)
+  .map(([id, def]) => `  ${id.padEnd(20)} ${def.icon || "•"} ${def.name} (${def.group})`)
   .join("\n")}
 
 🔧 For more info: https://github.com/shiratama644/TEMPLATE_REPO
@@ -444,7 +444,7 @@ export async function main() {
       })
       /* v8 ignore next 4 */
       if (p.isCancel(shouldContinue) || !shouldContinue) {
-        p.outro("✅ Already up to date")
+        p.outro("✓ Already up to date")
         process.exit(0)
       }
     } else {
@@ -454,7 +454,7 @@ export async function main() {
         .filter(([id, enabled]) => prev.features[id as keyof typeof prev.features] !== enabled)
         .map(
           ([id, enabled]) =>
-            `${id}: ${prev.features[id as keyof typeof prev.features] ? "ON" : "OFF"} ➡️ ${enabled ? "ON" : "OFF"}`,
+            `${id}: ${prev.features[id as keyof typeof prev.features] ? "ON" : "OFF"} → ${enabled ? "ON" : "OFF"}`,
         )
       /* v8 ignore stop */
 
@@ -464,7 +464,7 @@ export async function main() {
       }
       /* v8 ignore next 3 */
       if (prev.projectType !== answers.projectType) {
-        p.log.info(`Project type: ${prev.projectType} ➡️ ${answers.projectType}`)
+        p.log.info(`Project type: ${prev.projectType} → ${answers.projectType}`)
       }
     }
   }
@@ -621,7 +621,7 @@ export async function main() {
       /* v8 ignore stop */
     }
 
-    p.outro(`✅ Setup complete! Project: ${answers.projectName} (${answers.projectType})`)
+    p.outro(`✓ Setup complete! Project: ${answers.projectName} (${answers.projectType})`)
 
     console.log("\n📋 Summary:")
     console.log(`  Project: ${answers.projectName}`)
@@ -663,7 +663,7 @@ export async function main() {
     console.log("")
 
     if (git.status && !git.clean) {
-      console.log("⚠️️  You had uncommitted changes before setup. Review diff:")
+      console.log("⚠️  You had uncommitted changes before setup. Review diff:")
       console.log("  git status")
       console.log("  git diff")
       if (backupDir) console.log(`  Backup at ${backupDir} can be restored if needed`)

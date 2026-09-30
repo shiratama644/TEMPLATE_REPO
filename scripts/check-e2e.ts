@@ -31,7 +31,7 @@ try {
   const output = (result.stdout || "") + (result.stderr || "")
   if (result.status === 0) {
     console.log(output)
-    console.log(`\n✅ E2E discovery OK via playwright --list`)
+    console.log(`\n✓ E2E discovery OK via playwright --list`)
     process.exit(0)
   }
   // If browser missing, fallback
@@ -40,20 +40,20 @@ try {
     output.includes("browserType.launch") ||
     output.includes("Please run")
   ) {
-    console.log("⚠️ Playwright browsers not installed — falling back to file listing")
+    console.log("⚠ Playwright browsers not installed — falling back to file listing")
     const files = listFiles()
     console.log(`Found ${files.length} e2e files:`)
     for (const f of files) console.log(`  - ${f}`)
-    console.log("\n✅ E2E discovery OK (fallback)")
+    console.log("\n✓ E2E discovery OK (fallback)")
     process.exit(0)
   }
   console.log(output)
   process.exit(result.status ?? 1)
 } catch (err) {
-  console.log(`⚠️ E2E list failed: ${err instanceof Error ? err.message : String(err)} — fallback`)
+  console.log(`⚠ E2E list failed: ${err instanceof Error ? err.message : String(err)} — fallback`)
   const files = listFiles()
   console.log(`Found ${files.length} e2e files:`)
   for (const f of files) console.log(`  - ${f}`)
-  console.log("\n✅ E2E discovery OK (fallback)")
+  console.log("\n✓ E2E discovery OK (fallback)")
   process.exit(0)
 }

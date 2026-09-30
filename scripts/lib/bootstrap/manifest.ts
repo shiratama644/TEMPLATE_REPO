@@ -316,7 +316,7 @@ export const PROJECT_TYPES: Record<string, ProjectTypeDefinition> = {
     id: "next",
     name: "Next.js",
     description: "Next.js SSR/SSG app — React 19, Turbopack, Termux-aware",
-    icon: "🔼",
+    icon: "▲",
     filesToCreate: [
       {
         path: "next.config.mjs",
@@ -426,7 +426,7 @@ export const PROJECT_TYPES: Record<string, ProjectTypeDefinition> = {
     id: "next-monorepo",
     name: "Next.js + Monorepo",
     description: "Next.js app inside Turborepo — apps/web (Next.js) + packages/ui",
-    icon: "🔼🏗️",
+    icon: "▲🏗️",
     filesToCreate: [
       {
         path: "pnpm-workspace.yaml",

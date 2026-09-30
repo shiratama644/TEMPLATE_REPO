@@ -64,7 +64,7 @@ export function runCheckEnv(): {
   )
   console.log("")
 
-  console.log(`${GREEN}✅ Environment check completed${RESET}`)
+  console.log(`${GREEN}✓ Environment check completed${RESET}`)
   if (envInfo.isTermux) {
     console.log(
       `${YELLOW}Termux detected — Next.js builds will use Webpack for stability, caching optimized for low memory${RESET}`,

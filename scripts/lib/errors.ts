@@ -196,7 +196,7 @@ export function reportErrors(
 
   if (isWarning) {
     logger.warn(`${title}:`)
-    for (const err of errors) logger.warn(`  🔹 ${err}`)
+    for (const err of errors) logger.warn(`  • ${err}`)
     for (const hint of hints) logger.info(`💡 ${hint}`)
   } else {
     logErrorBox(title, errors, hints)

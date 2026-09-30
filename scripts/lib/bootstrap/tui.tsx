@@ -1,12 +1,11 @@
 /** @jsxImportSource react */
-
 import { execSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 import { basename } from "node:path"
 import { Box, Text, useApp, useInput } from "ink"
 import SelectInput from "ink-select-input"
 import TextInput from "ink-text-input"
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { FEATURES, PROJECT_TYPES } from "./manifest.ts"
 import { getPreset, getPresetChoices } from "./presets.ts"
 import type { FeatureId, PresetId, ProjectTypeId, SetupAnswers } from "./types.ts"
@@ -58,16 +57,82 @@ type Step =
   | "release"
   | "confirm"
 
+const STEP_ORDER: Step[] = [
+  "preset",
+  "projectName",
+  "githubOwner",
+  "description",
+  "projectType",
+  "devInfra",
+  "termuxMode",
+  "testing",
+  "git",
+  "release",
+  "confirm",
+]
+
+const STEP_LABELS: Record<Step, string> = {
+  preset: "Preset",
+  projectName: "Name",
+  githubOwner: "Owner",
+  description: "Desc",
+  projectType: "Type",
+  devInfra: "Infra",
+  termuxMode: "Termux",
+  testing: "Quality",
+  git: "Git",
+  release: "Release",
+  confirm: "Confirm",
+}
+
 type SelectItem = { label: string; value: string; hint?: string }
 
-function MultiSelect({
+function ProgressBar({ currentStep }: { currentStep: Step }) {
+  const currentIdx = STEP_ORDER.indexOf(currentStep)
+  return (
+    <Box flexDirection="column" marginBottom={1}>
+      <Box flexDirection="row" flexWrap="wrap" gap={1}>
+        {STEP_ORDER.map((s, idx) => {
+          const isActive = s === currentStep
+          const isPast = idx < currentIdx
+          return (
+            <Box key={s} marginRight={1}>
+              <Text
+                color={isActive ? "cyan" : isPast ? "green" : "gray"}
+                bold={isActive}
+                dimColor={idx > currentIdx}
+              >
+                {isPast ? "[x]" : isActive ? "[*]" : "[ ]"} {idx + 1}. {STEP_LABELS[s]}
+              </Text>
+            </Box>
+          )
+        })}
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor>
+          Progress: {currentIdx + 1}/{STEP_ORDER.length} (
+          {Math.round(((currentIdx + 1) / STEP_ORDER.length) * 100)}%)
+        </Text>
+        <Text> </Text>
+        <Text color="cyan">{"=".repeat(currentIdx + 1)}</Text>
+        <Text dimColor>{"-".repeat(STEP_ORDER.length - currentIdx - 1)}</Text>
+      </Box>
+    </Box>
+  )
+}
+
+function ModernMultiSelect({
   items,
   initialSelected,
   onSubmit,
+  title,
+  description,
 }: {
   items: SelectItem[]
   initialSelected: string[]
   onSubmit: (selected: string[]) => void
+  title: string
+  description?: string
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set(initialSelected))
   const [cursor, setCursor] = useState(0)
@@ -92,20 +157,104 @@ function MultiSelect({
 
   return (
     <Box flexDirection="column">
-      <Text>🔧 スペースで切替、Enterで確定、↑↓で移動</Text>
-      {items.map((item, idx) => {
-        const isSelected = selected.has(item.value)
-        const isCursor = idx === cursor
-        return (
-          <Box key={item.value}>
-            <Text color={isCursor ? "cyan" : undefined}>
-              {isCursor ? "➡️ " : "  "}
-              {isSelected ? "✅" : "⬜"} {item.label}
-              {item.hint ? ` - ${item.hint}` : ""}
-            </Text>
-          </Box>
-        )
-      })}
+      <Box
+        borderStyle="round"
+        borderColor="cyan"
+        paddingX={1}
+        paddingY={0}
+        marginBottom={1}
+        flexDirection="column"
+      >
+        <Text bold color="cyan">
+          {title}
+        </Text>
+        {description && <Text dimColor>{description}</Text>}
+      </Box>
+
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor="white"
+        paddingX={1}
+        paddingY={1}
+        marginBottom={1}
+      >
+        {items.map((item, idx) => {
+          const isSelected = selected.has(item.value)
+          const isCursor = idx === cursor
+          return (
+            <Box key={item.value}>
+              <Text
+                backgroundColor={isCursor ? "blue" : undefined}
+                color={isCursor ? "white" : isSelected ? "green" : undefined}
+                bold={isCursor}
+              >
+                {isCursor ? "> " : "  "}
+                {isSelected ? "[x]" : "[ ]"} {item.label}
+              </Text>
+              {item.hint && (
+                <Text dimColor>
+                  {"  "}-- {item.hint}
+                </Text>
+              )}
+            </Box>
+          )
+        })}
+      </Box>
+
+      <Box borderStyle="round" borderColor="gray" paddingX={1} flexDirection="column">
+        <Text bold>Controls:</Text>
+        <Text dimColor> [Up/Down] Navigate | [Space] Toggle | [Enter] Confirm | [ESC] Cancel</Text>
+        <Text>
+          <Text color="green">
+            Selected: {selected.size}/{items.length}
+          </Text>
+          <Text dimColor> | </Text>
+          <Text dimColor>{selected.size > 0 ? Array.from(selected).join(", ") : "none"}</Text>
+        </Text>
+      </Box>
+    </Box>
+  )
+}
+
+function InputField({
+  label,
+  hint,
+  value,
+  onChange,
+  onSubmit,
+  error,
+}: {
+  label: string
+  hint?: string
+  value: string
+  onChange: (v: string) => void
+  onSubmit: (v: string) => void
+  error?: string
+}) {
+  return (
+    <Box flexDirection="column">
+      <Box
+        borderStyle="round"
+        borderColor="cyan"
+        paddingX={1}
+        marginBottom={1}
+        flexDirection="column"
+      >
+        <Text bold>{label}</Text>
+        {hint && <Text dimColor>{hint}</Text>}
+      </Box>
+      {error && (
+        <Box borderStyle="round" borderColor="red" paddingX={1} marginBottom={1}>
+          <Text color="red">! {error}</Text>
+        </Box>
+      )}
+      <Box borderStyle="round" borderColor="white" paddingX={1} paddingY={1}>
+        <Text color="cyan" bold>
+          {">"}{" "}
+        </Text>
+        <TextInput value={value} onChange={onChange} onSubmit={onSubmit} />
+      </Box>
     </Box>
   )
 }
@@ -150,21 +299,21 @@ export function SetupTUI({
 
   const presetChoices: SelectItem[] = [
     ...getPresetChoices().map((p) => ({
-      label: `${p.label} - ${p.hint || ""}`,
+      label: p.label,
       value: p.value,
     })),
-    { label: "🎨 Custom - 手動で選択", value: "custom" },
+    { label: "Custom - Manual selection", value: "custom" },
   ]
 
   const projectTypeItems = Object.entries(PROJECT_TYPES).map(([id, def]) => ({
-    label: `${def.icon || "📦"} ${def.name} - ${def.description}`,
+    label: `${def.name} - ${def.description}`,
     value: id,
   }))
 
   const devInfraItems = Object.entries(FEATURES)
     .filter(([, def]) => def.group === "dev-infra")
     .map(([id, def]) => ({
-      label: `${def.icon || "🔹"} ${def.name}`,
+      label: def.name,
       value: id,
       hint: def.description,
     }))
@@ -172,7 +321,7 @@ export function SetupTUI({
   const testingItems = Object.entries(FEATURES)
     .filter(([, def]) => def.group === "testing-quality")
     .map(([id, def]) => ({
-      label: `${def.icon || "🔹"} ${def.name}`,
+      label: def.name,
       value: id,
       hint: def.description,
     }))
@@ -180,7 +329,7 @@ export function SetupTUI({
   const gitItems = Object.entries(FEATURES)
     .filter(([, def]) => def.group === "git-workflow")
     .map(([id, def]) => ({
-      label: `${def.icon || "🔹"} ${def.name}`,
+      label: def.name,
       value: id,
       hint: def.description,
     }))
@@ -188,19 +337,19 @@ export function SetupTUI({
   const releaseItems = Object.entries(FEATURES)
     .filter(([, def]) => def.group === "release")
     .map(([id, def]) => ({
-      label: `${def.icon || "🔹"} ${def.name}`,
+      label: def.name,
       value: id,
       hint: def.description,
     }))
 
   const validateProjectName = (value: string): string | undefined => {
-    if (!value) return "❌ プロジェクト名は必須です (例: my-awesome-app)"
-    if (value !== value.toLowerCase()) return "❌ 小文字のみ - npmは小文字を要求します"
+    if (!value) return "Project name is required (e.g. my-awesome-app)"
+    if (value !== value.toLowerCase()) return "Must be lowercase - npm requires it"
     if (!/^[a-z0-9-_@/]+$/.test(value))
-      return "❌ 小文字、数字、ダッシュ、アンダースコア、@、/ のみ"
-    if (value.length > 214) return "❌ 名前が長すぎます - 最大214文字"
+      return "Only lowercase, numbers, dash, underscore, @, / allowed"
+    if (value.length > 214) return "Name too long - max 214 chars"
     if (value.startsWith("-") || value.startsWith("_"))
-      return "❌ ダッシュやアンダースコアで開始できません"
+      return "Cannot start with dash or underscore"
     return undefined
   }
 
@@ -237,16 +386,85 @@ export function SetupTUI({
     }
   }
 
+  const Header = () => (
+    <Box
+      borderStyle="double"
+      borderColor="cyan"
+      paddingX={2}
+      paddingY={1}
+      flexDirection="column"
+      marginBottom={1}
+    >
+      <Box>
+        <Text bold color="cyan">
+          TEMPLATE BOOTSTRAP TUI
+        </Text>
+        <Text> </Text>
+        <Text color="white" bold>
+          v2.0.0
+        </Text>
+        <Text dimColor> | Ink + React | Modern</Text>
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor>AI Agent software development template - Interactive setup wizard</Text>
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor>Use keyboard to navigate, ESC to cancel at any time</Text>
+      </Box>
+    </Box>
+  )
+
+  const Footer = () => (
+    <Box borderStyle="round" borderColor="gray" paddingX={1} marginTop={1} flexDirection="column">
+      <Text dimColor>
+        [ESC] Cancel | [Enter] Confirm | [Up/Down] Navigate | [Space] Toggle (multi-select)
+      </Text>
+      <Text dimColor>
+        Current: {STEP_LABELS[step]} ({STEP_ORDER.indexOf(step) + 1}/{STEP_ORDER.length}) | CWD:{" "}
+        {dirName}
+      </Text>
+    </Box>
+  )
+
   const renderStep = () => {
     switch (step) {
       case "preset":
         return (
           <Box flexDirection="column">
-            <Text color="cyan" bold>
-              🚀 Template Bootstrap - プリセットを選択
-            </Text>
-            {termuxDetected && <Text>📱 Termux環境を検出 - 最適化を有効化します</Text>}
-            <Box marginTop={1}>
+            <Box
+              borderStyle="round"
+              borderColor="cyan"
+              paddingX={1}
+              marginBottom={1}
+              flexDirection="column"
+            >
+              <Text bold color="cyan">
+                Step 1/11: Select Preset
+              </Text>
+              <Text dimColor>
+                Choose a preset or customize manually - Presets provide balanced defaults
+              </Text>
+            </Box>
+            {termuxDetected && (
+              <Box
+                marginBottom={1}
+                paddingX={1}
+                borderStyle="round"
+                borderColor="yellow"
+                flexDirection="column"
+              >
+                <Text color="yellow" bold>
+                  ! Termux detected
+                </Text>
+                <Text color="yellow">
+                  Will optimize for Termux environment (memory limits, webpack fallback)
+                </Text>
+              </Box>
+            )}
+            <Box borderStyle="round" borderColor="white" padding={1} flexDirection="column">
+              <Box marginBottom={1}>
+                <Text bold>Available presets:</Text>
+              </Box>
               <SelectInput
                 items={presetChoices}
                 onSelect={(item) => {
@@ -255,221 +473,300 @@ export function SetupTUI({
                 }}
               />
             </Box>
-            <Box marginTop={1}>
-              <Text dimColor>ESCでキャンセル</Text>
-            </Box>
           </Box>
         )
 
       case "projectName":
         return (
-          <Box flexDirection="column">
-            <Text bold>📦 プロジェクト名?</Text>
-            <Text dimColor>デフォルト: {defaultProjectName}</Text>
-            {error && <Text color="red">{error}</Text>}
-            <Box>
-              <Text>➡️ </Text>
-              <TextInput
-                value={projectName}
-                onChange={setProjectName}
-                onSubmit={(value) => {
-                  const err = validateProjectName(value)
-                  if (err) {
-                    setError(err)
-                    return
-                  }
-                  setError("")
-                  setStep("githubOwner")
-                }}
-              />
-            </Box>
-          </Box>
+          <InputField
+            label="Step 2/11: Project Name"
+            hint={`Default: ${defaultProjectName} | Lowercase, dash separated, max 214 chars`}
+            value={projectName}
+            onChange={setProjectName}
+            error={error}
+            onSubmit={(value) => {
+              const err = validateProjectName(value)
+              if (err) {
+                setError(err)
+                return
+              }
+              setError("")
+              setStep("githubOwner")
+            }}
+          />
         )
 
       case "githubOwner":
         return (
-          <Box flexDirection="column">
-            <Text bold>👤 GitHubオーナー名?</Text>
-            <Text dimColor>デフォルト: {inferredOwner}</Text>
-            <Box>
-              <Text>➡️ </Text>
-              <TextInput
-                value={githubOwner}
-                onChange={setGithubOwner}
-                onSubmit={() => setStep("description")}
-              />
-            </Box>
-          </Box>
+          <InputField
+            label="Step 3/11: GitHub Owner"
+            hint={`Default: ${inferredOwner} | Used for CODEOWNERS, funding, security policy`}
+            value={githubOwner}
+            onChange={setGithubOwner}
+            onSubmit={() => setStep("description")}
+          />
         )
 
       case "description":
         return (
-          <Box flexDirection="column">
-            <Text bold>📝 プロジェクト説明?</Text>
-            <Box>
-              <Text>➡️ </Text>
-              <TextInput
-                value={description}
-                onChange={setDescription}
-                onSubmit={() => {
-                  if (presetId !== "custom") {
-                    setStep("confirm")
-                  } else {
-                    setStep("projectType")
-                  }
-                }}
-              />
-            </Box>
-          </Box>
+          <InputField
+            label="Step 4/11: Description"
+            hint="Max 200 chars, concise, describes purpose"
+            value={description}
+            onChange={setDescription}
+            onSubmit={() => {
+              if (presetId !== "custom") {
+                setStep("confirm")
+              } else {
+                setStep("projectType")
+              }
+            }}
+          />
         )
 
       case "projectType":
         return (
           <Box flexDirection="column">
-            <Text bold>🏗️ プロジェクトタイプ?</Text>
-            <SelectInput
-              items={projectTypeItems}
-              onSelect={(item) => {
-                setProjectType(item.value as ProjectTypeId)
-                // Initialize defaults based on type
-                const typeDef = PROJECT_TYPES[item.value as ProjectTypeId]
-                const defaults = Object.entries(FEATURES)
-                  .filter(([, def]) => {
-                    if (typeDef.defaultFeatures && item.value in typeDef.defaultFeatures) {
-                      return (typeDef.defaultFeatures as any)[item.value as FeatureId]
-                    }
-                    return def.defaultEnabled
-                  })
-                  .map(([id]) => id as FeatureId)
-                setDevInfra(defaults.filter((id) => FEATURES[id].group === "dev-infra"))
-                setTesting(defaults.filter((id) => FEATURES[id].group === "testing-quality"))
-                setGitFeatures(defaults.filter((id) => FEATURES[id].group === "git-workflow"))
-                setRelease(defaults.filter((id) => FEATURES[id].group === "release"))
-                setStep("devInfra")
-              }}
-            />
+            <Box
+              borderStyle="round"
+              borderColor="cyan"
+              paddingX={1}
+              marginBottom={1}
+              flexDirection="column"
+            >
+              <Text bold>Step 5/11: Project Type</Text>
+              <Text dimColor>Select the type of project you are creating</Text>
+            </Box>
+            <Box borderStyle="round" borderColor="white" padding={1} flexDirection="column">
+              <Box marginBottom={1}>
+                <Text bold>Types:</Text>
+              </Box>
+              <SelectInput
+                items={projectTypeItems}
+                onSelect={(item) => {
+                  setProjectType(item.value as ProjectTypeId)
+                  const typeDef = PROJECT_TYPES[item.value as ProjectTypeId]
+                  const defaults = Object.entries(FEATURES)
+                    .filter(([, def]) => {
+                      if (typeDef.defaultFeatures && item.value in typeDef.defaultFeatures) {
+                        return (typeDef.defaultFeatures as any)[item.value as FeatureId]
+                      }
+                      return def.defaultEnabled
+                    })
+                    .map(([id]) => id as FeatureId)
+                  setDevInfra(defaults.filter((id) => FEATURES[id].group === "dev-infra"))
+                  setTesting(defaults.filter((id) => FEATURES[id].group === "testing-quality"))
+                  setGitFeatures(defaults.filter((id) => FEATURES[id].group === "git-workflow"))
+                  setRelease(defaults.filter((id) => FEATURES[id].group === "release"))
+                  setStep("devInfra")
+                }}
+              />
+            </Box>
           </Box>
         )
 
       case "devInfra":
         return (
-          <Box flexDirection="column">
-            <Text bold>🔧 Dev & Infra機能を選択</Text>
-            <MultiSelect
-              items={devInfraItems}
-              initialSelected={devInfra}
-              onSubmit={(selected) => {
-                setDevInfra(selected as FeatureId[])
-                if (selected.includes("termux")) {
-                  setStep("termuxMode")
-                } else {
-                  setStep("testing")
-                }
-              }}
-            />
-          </Box>
+          <ModernMultiSelect
+            title="Step 6/11: Dev & Infra"
+            description="Docker, devcontainer, termux, etc."
+            items={devInfraItems}
+            initialSelected={devInfra}
+            onSubmit={(selected) => {
+              setDevInfra(selected as FeatureId[])
+              if (selected.includes("termux")) {
+                setStep("termuxMode")
+              } else {
+                setStep("testing")
+              }
+            }}
+          />
         )
 
       case "termuxMode":
         return (
           <Box flexDirection="column">
-            <Text bold>📱 Termux最適化モード?</Text>
-            <SelectInput
-              items={[
-                { label: "🤖 Auto - 自動検出（推奨）", value: "auto" },
-                { label: "✅ Yes - 常に有効", value: "yes" },
-                { label: "❌ No - 無効", value: "no" },
-              ]}
-              onSelect={(item) => {
-                setTermuxMode(item.value as any)
-                setStep("testing")
-              }}
-            />
+            <Box
+              borderStyle="round"
+              borderColor="cyan"
+              paddingX={1}
+              marginBottom={1}
+              flexDirection="column"
+            >
+              <Text bold>Step 7/11: Termux Mode</Text>
+              <Text dimColor>How to handle Termux environment optimizations</Text>
+            </Box>
+            <Box borderStyle="round" borderColor="white" padding={1} flexDirection="column">
+              <Box marginBottom={1}>
+                <Text bold>Select mode:</Text>
+              </Box>
+              <SelectInput
+                items={[
+                  { label: "Auto - Detect automatically (recommended)", value: "auto" },
+                  { label: "Yes - Always enable optimizations", value: "yes" },
+                  { label: "No - Disable, keep files", value: "no" },
+                ]}
+                onSelect={(item) => {
+                  setTermuxMode(item.value as any)
+                  setStep("testing")
+                }}
+              />
+            </Box>
           </Box>
         )
 
       case "testing":
         return (
-          <Box flexDirection="column">
-            <Text bold>🧪 テスト & 品質機能を選択</Text>
-            <MultiSelect
-              items={testingItems}
-              initialSelected={testing}
-              onSubmit={(s) => {
-                setTesting(s as FeatureId[])
-                setStep("git")
-              }}
-            />
-          </Box>
+          <ModernMultiSelect
+            title="Step 8/11: Testing & Quality"
+            description="Vitest, Playwright, cspell, knip, coverage, determinism"
+            items={testingItems}
+            initialSelected={testing}
+            onSubmit={(s) => {
+              setTesting(s as FeatureId[])
+              setStep("git")
+            }}
+          />
         )
 
       case "git":
         return (
-          <Box flexDirection="column">
-            <Text bold>🌿 Git & Workflow機能を選択</Text>
-            <MultiSelect
-              items={gitItems}
-              initialSelected={gitFeatures}
-              onSubmit={(s) => {
-                setGitFeatures(s as FeatureId[])
-                setStep("release")
-              }}
-            />
-          </Box>
+          <ModernMultiSelect
+            title="Step 9/11: Git & Workflow"
+            description="Husky, commitlint, templates, renovate, stale-bot"
+            items={gitItems}
+            initialSelected={gitFeatures}
+            onSubmit={(s) => {
+              setGitFeatures(s as FeatureId[])
+              setStep("release")
+            }}
+          />
         )
 
       case "release":
         return (
-          <Box flexDirection="column">
-            <Text bold>🚀 リリース機能を選択</Text>
-            <MultiSelect
-              items={releaseItems}
-              initialSelected={release}
-              onSubmit={(s) => {
-                setRelease(s as FeatureId[])
-                setStep("confirm")
-              }}
-            />
-          </Box>
+          <ModernMultiSelect
+            title="Step 10/11: Release"
+            description="Changesets, size-limit, publint"
+            items={releaseItems}
+            initialSelected={release}
+            onSubmit={(s) => {
+              setRelease(s as FeatureId[])
+              setStep("confirm")
+            }}
+          />
         )
 
       case "confirm": {
         const answers = buildAnswers()
+        const enabled = Object.entries(answers.features).filter(([, v]) => v)
+        const disabled = Object.entries(answers.features).filter(([, v]) => !v)
         return (
           <Box flexDirection="column">
-            <Text bold color="green">
-              ✅ 設定確認
-            </Text>
-            <Box flexDirection="column" marginTop={1}>
-              <Text>📦 プロジェクト: {answers.projectName}</Text>
-              <Text>📝 説明: {answers.projectDescription}</Text>
-              <Text>👤 オーナー: {answers.githubOwner}</Text>
-              <Text>🏗️ タイプ: {answers.projectType}</Text>
-              {answers.preset && <Text>🎨 プリセット: {answers.preset}</Text>}
-              <Text>
-                🔧 有効機能:{" "}
-                {Object.entries(answers.features)
-                  .filter(([, v]) => v)
-                  .map(([k]) => k)
-                  .join(", ") || "なし"}
+            <Box
+              borderStyle="double"
+              borderColor="green"
+              paddingX={1}
+              paddingY={1}
+              marginBottom={1}
+              flexDirection="column"
+            >
+              <Text bold color="green">
+                Step 11/11: Confirm & Execute
               </Text>
+              <Text dimColor>Review your configuration before applying</Text>
             </Box>
-            <Box marginTop={1}>
-              <SelectInput
-                items={[
-                  { label: "✅ 実行する", value: "yes" },
-                  { label: "❌ キャンセル", value: "no" },
-                ]}
-                onSelect={(item) => {
-                  if (item.value === "yes") {
-                    onComplete(answers)
-                    exit()
-                  } else {
-                    onCancel()
-                    exit()
-                  }
-                }}
-              />
+
+            <Box
+              borderStyle="round"
+              borderColor="white"
+              paddingX={1}
+              paddingY={1}
+              flexDirection="column"
+              gap={1}
+            >
+              <Box flexDirection="column">
+                <Text bold color="cyan">
+                  -- Project Info --
+                </Text>
+                <Box paddingLeft={2} flexDirection="column">
+                  <Text>
+                    <Text bold>Name:</Text> {answers.projectName}
+                  </Text>
+                  <Text>
+                    <Text bold>Description:</Text> {answers.projectDescription}
+                  </Text>
+                  <Text>
+                    <Text bold>Owner:</Text> {answers.githubOwner}
+                  </Text>
+                  <Text>
+                    <Text bold>Type:</Text> {answers.projectType}
+                  </Text>
+                  {answers.preset && (
+                    <Text>
+                      <Text bold>Preset:</Text> {answers.preset}
+                    </Text>
+                  )}
+                </Box>
+              </Box>
+
+              <Box flexDirection="column">
+                <Text bold color="green">
+                  -- Enabled ({enabled.length}) --
+                </Text>
+                <Box paddingLeft={2}>
+                  <Text color="green">{enabled.map(([k]) => k).join(", ") || "none"}</Text>
+                </Box>
+              </Box>
+
+              <Box flexDirection="column">
+                <Text bold color="gray">
+                  -- Disabled ({disabled.length}) --
+                </Text>
+                <Box paddingLeft={2}>
+                  <Text dimColor>{disabled.map(([k]) => k).join(", ") || "none"}</Text>
+                </Box>
+              </Box>
+
+              <Box
+                borderStyle="round"
+                borderColor="yellow"
+                paddingX={1}
+                marginTop={1}
+                flexDirection="column"
+              >
+                <Text bold color="yellow">
+                  ! This will modify files in: {cwd}
+                </Text>
+                <Text dimColor>Backup will be created automatically, use --no-backup to skip</Text>
+              </Box>
+            </Box>
+
+            <Box
+              marginTop={1}
+              borderStyle="round"
+              borderColor="green"
+              padding={1}
+              flexDirection="column"
+            >
+              <Text bold>Ready to execute?</Text>
+              <Box marginTop={1}>
+                <SelectInput
+                  items={[
+                    { label: "[*] Execute setup", value: "yes" },
+                    { label: "[ ] Cancel", value: "no" },
+                  ]}
+                  onSelect={(item) => {
+                    if (item.value === "yes") {
+                      onComplete(answers)
+                      exit()
+                    } else {
+                      onCancel()
+                      exit()
+                    }
+                  }}
+                />
+              </Box>
             </Box>
           </Box>
         )
@@ -479,14 +776,10 @@ export function SetupTUI({
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Box marginBottom={1}>
-        <Text color="cyan" bold>
-          🚀 Template Bootstrap TUI v2.0.0
-        </Text>
-        <Text> - {step} </Text>
-        <Text dimColor>({Object.keys(FEATURES).length}機能)</Text>
-      </Box>
-      {renderStep()}
+      <Header />
+      <ProgressBar currentStep={step} />
+      <Box marginY={1}>{renderStep()}</Box>
+      <Footer />
     </Box>
   )
 }

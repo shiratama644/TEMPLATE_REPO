@@ -19,7 +19,7 @@ export function checkAutomergeEligibility(
   log(`Labels: ${labels.join(", ")}`)
   log(`Draft: ${isDraft}`)
   log(
-    `Result: ${result.should ? "✅ Should auto-merge" : "❌ Should NOT auto-merge"} — ${result.reason}`,
+    `Result: ${result.should ? "✓ Should auto-merge" : "✗ Should NOT auto-merge"} — ${result.reason}`,
   )
   return result
 }

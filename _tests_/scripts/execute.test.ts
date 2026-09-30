@@ -153,7 +153,7 @@ function testCommentDetection() {
     const isNonFunctional = output === "NON_FUNCTIONAL"
     const passed = isNonFunctional === tc.expectedNonFunctional
     console.log(
-      `${passed ? `${GREEN}✅` : `${RED}❌`} ${tc.name}${RESET} — 判定=${output}, 期待=${tc.expectedNonFunctional ? "NON_FUNCTIONAL" : "FUNCTIONAL"} ${passed ? "" : "(失敗)"}`,
+      `${passed ? `${GREEN}✓` : `${RED}✗`} ${tc.name}${RESET} — 判定=${output}, 期待=${tc.expectedNonFunctional ? "NON_FUNCTIONAL" : "FUNCTIONAL"} ${passed ? "" : "(失敗)"}`,
     )
   }
 }
@@ -217,7 +217,7 @@ function testPathPatterns() {
     const out = JSON.parse((r.stdout || "{}").trim() || "{}")
     const passed = out.isNon === tc.expectedNonFunctional && out.isFunc === tc.expectedFunctional
     console.log(
-      `${passed ? `${GREEN}✅` : `${RED}❌`} ${tc.file}${RESET} — nonFunc=${out.isNon} (期待${tc.expectedNonFunctional}), func=${out.isFunc} (期待${tc.expectedFunctional})`,
+      `${passed ? `${GREEN}✓` : `${RED}✗`} ${tc.file}${RESET} — nonFunc=${out.isNon} (期待${tc.expectedNonFunctional}), func=${out.isFunc} (期待${tc.expectedFunctional})`,
     )
   }
 }

@@ -87,7 +87,7 @@ for (const c of checks) {
   const isExpected = exists === c.shouldBe
   const color = isExpected ? GREEN : YELLOW
   console.log(
-    `${color}${isExpected ? "✅" : "△"} ${c.name}${RESET} — 存在=${exists}, 期待=${c.shouldBe} — ${c.action}`,
+    `${color}${isExpected ? "✓" : "△"} ${c.name}${RESET} — 存在=${exists}, 期待=${c.shouldBe} — ${c.action}`,
   )
 }
 
@@ -111,12 +111,12 @@ const tasks = [
 for (const task of tasks) {
   const exists = checkContent.toLowerCase().includes(task.toLowerCase())
   console.log(
-    `${exists ? `${GREEN}✅` : `${RED}❌`} ${task}${RESET} — ${exists ? "check.tsに含まれる" : "含まれない"}`,
+    `${exists ? `${GREEN}✓` : `${RED}✗`} ${task}${RESET} — ${exists ? "check.tsに含まれる" : "含まれない"}`,
   )
 }
 
 console.log(`\n${YELLOW}保守コスト考察:${RESET}`)
-console.log(`- 12タスクは多いが、並列実行 (install先行➡️11並列) で高速化されている`)
+console.log(`- 12タスクは多いが、並列実行 (install先行→11並列) で高速化されている`)
 console.log(`- publint/size-limitはnon-blocking (continue-on-error) で、失敗してもCIが止まらない`)
 console.log(`- knipはSandbox対策済み (KNIP_DISABLE_RAW_TRANSFER=1)`)
 console.log(`- cspellはignorePathsでnode_modules/.cache/.next/distを除外、誤爆しにくい`)
@@ -137,10 +137,10 @@ const hasRulesRef = agentsMd.includes("rules")
 const hasHooksRef = agentsMd.includes("hooks")
 const hasLogsRef = agentsMd.includes("logs")
 
-console.log(`${hasSkillsRef ? `${GREEN}✅` : `${RED}❌`} AGENTS.mdがskillsを参照${RESET}`)
-console.log(`${hasRulesRef ? `${GREEN}✅` : `${RED}❌`} AGENTS.mdがrulesを参照${RESET}`)
-console.log(`${hasHooksRef ? `${GREEN}✅` : `${RED}❌`} AGENTS.mdがhooksを参照${RESET}`)
-console.log(`${hasLogsRef ? `${GREEN}✅` : `${RED}❌`} AGENTS.mdがlogsを参照${RESET}`)
+console.log(`${hasSkillsRef ? `${GREEN}✓` : `${RED}✗`} AGENTS.mdがskillsを参照${RESET}`)
+console.log(`${hasRulesRef ? `${GREEN}✓` : `${RED}✗`} AGENTS.mdがrulesを参照${RESET}`)
+console.log(`${hasHooksRef ? `${GREEN}✓` : `${RED}✗`} AGENTS.mdがhooksを参照${RESET}`)
+console.log(`${hasLogsRef ? `${GREEN}✓` : `${RED}✗`} AGENTS.mdがlogsを参照${RESET}`)
 
 const skills = [
   "project-overview",
@@ -159,7 +159,7 @@ const skills = [
 for (const skill of skills) {
   const exists = existsSync(`.agent/skills/${skill}/SKILL.md`)
   console.log(
-    `${exists ? `${GREEN}✅` : `${RED}❌`} skill ${skill}${RESET} — ${exists ? "存在" : "不在"}`,
+    `${exists ? `${GREEN}✓` : `${RED}✗`} skill ${skill}${RESET} — ${exists ? "存在" : "不在"}`,
   )
 }
 

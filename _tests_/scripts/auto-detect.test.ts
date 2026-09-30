@@ -47,7 +47,7 @@ console.log(`現在の状態: ${detectProjectType()} (期待 tsc)`)
 console.log(`\n${CYAN}Test 1: Viteプロジェクト${RESET}`)
 writeFileSync("vite.config.ts", "export default {}", "utf8")
 console.log(
-  `  検出: ${detectProjectType()} (期待 vite) — ${detectProjectType() === "vite" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 vite) — ${detectProjectType() === "vite" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
 )
 rmSync("vite.config.ts")
 
@@ -55,7 +55,7 @@ rmSync("vite.config.ts")
 console.log(`\n${CYAN}Test 2: Next.jsプロジェクト${RESET}`)
 writeFileSync("next.config.js", "module.exports = {}", "utf8")
 console.log(
-  `  検出: ${detectProjectType()} (期待 next) — ${detectProjectType() === "next" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 next) — ${detectProjectType() === "next" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
 )
 rmSync("next.config.js")
 
@@ -63,7 +63,7 @@ rmSync("next.config.js")
 console.log(`\n${CYAN}Test 3: Turboプロジェクト${RESET}`)
 writeFileSync("turbo.json", "{}", "utf8")
 console.log(
-  `  検出: ${detectProjectType()} (期待 turbo) — ${detectProjectType() === "turbo" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 turbo) — ${detectProjectType() === "turbo" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
 )
 rmSync("turbo.json")
 
@@ -73,7 +73,7 @@ if (!existsSync("packages")) mkdirSync("packages")
 if (!existsSync("packages/test")) mkdirSync("packages/test")
 writeFileSync("packages/test/package.json", "{}", "utf8")
 console.log(
-  `  検出: ${detectProjectType()} (期待 monorepo) — ${detectProjectType() === "monorepo" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 monorepo) — ${detectProjectType() === "monorepo" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
 )
 rmSync("packages/test/package.json")
 rmSync("packages/test", { recursive: true })
@@ -85,7 +85,7 @@ if (!existsSync("apps")) mkdirSync("apps")
 if (!existsSync("apps/web")) mkdirSync("apps/web", { recursive: true })
 writeFileSync("apps/web/package.json", "{}", "utf8")
 console.log(
-  `  検出: ${detectProjectType()} (期待 monorepo) — ${detectProjectType() === "monorepo" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 monorepo) — ${detectProjectType() === "monorepo" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
 )
 rmSync("apps/web/package.json")
 rmSync("apps/web", { recursive: true })
@@ -95,7 +95,7 @@ if (!existingFiles.hasApps) rmSync("apps", { recursive: true })
 console.log(`\n${CYAN}Test 6: 空のpackagesディレクトリは誤爆しないか${RESET}`)
 if (!existsSync("packages")) mkdirSync("packages")
 console.log(
-  `  検出: ${detectProjectType()} (期待 tsc、空ディレクトリは無視) — ${detectProjectType() === "tsc" ? `${GREEN}✅` : `${RED}❌ 誤爆`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 tsc、空ディレクトリは無視) — ${detectProjectType() === "tsc" ? `${GREEN}✓` : `${RED}✗ 誤爆`}${RESET}`,
 )
 if (!existingFiles.hasPackages) rmSync("packages", { recursive: true })
 
@@ -104,7 +104,7 @@ console.log(`\n${CYAN}Test 7: Turbo + Vite同時存在 (Turbo優先)${RESET}`)
 writeFileSync("turbo.json", "{}", "utf8")
 writeFileSync("vite.config.ts", "export default {}", "utf8")
 console.log(
-  `  検出: ${detectProjectType()} (期待 turbo) — ${detectProjectType() === "turbo" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 turbo) — ${detectProjectType() === "turbo" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
 )
 rmSync("turbo.json")
 rmSync("vite.config.ts")
@@ -114,7 +114,7 @@ console.log(`\n${CYAN}Test 8: Vite + Next同時存在 (Vite優先)${RESET}`)
 writeFileSync("vite.config.ts", "export default {}", "utf8")
 writeFileSync("next.config.js", "module.exports = {}", "utf8")
 console.log(
-  `  検出: ${detectProjectType()} (期待 vite) — ${detectProjectType() === "vite" ? `${GREEN}✅` : `${YELLOW}△ Vite優先 (ドキュメント化必要)`}${RESET}`,
+  `  検出: ${detectProjectType()} (期待 vite) — ${detectProjectType() === "vite" ? `${GREEN}✓` : `${YELLOW}△ Vite優先 (ドキュメント化必要)`}${RESET}`,
 )
 rmSync("vite.config.ts")
 rmSync("next.config.js")
@@ -127,12 +127,12 @@ if (hasTsc) {
   const content = readFileSync("tsconfig.json", "utf8")
   rmSync("tsconfig.json")
   console.log(
-    `  検出: ${detectProjectType()} (期待 none) — ${detectProjectType() === "none" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+    `  検出: ${detectProjectType()} (期待 none) — ${detectProjectType() === "none" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
   )
   writeFileSync("tsconfig.json", content, "utf8")
 } else {
   console.log(
-    `  検出: ${detectProjectType()} (期待 none) — ${detectProjectType() === "none" ? `${GREEN}✅` : `${RED}❌`}${RESET}`,
+    `  検出: ${detectProjectType()} (期待 none) — ${detectProjectType() === "none" ? `${GREEN}✓` : `${RED}✗`}${RESET}`,
   )
 }
 

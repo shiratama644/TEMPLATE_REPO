@@ -77,20 +77,20 @@ export function printBuildHelp() {
   --help, -h             このヘルプを表示
 
 🔍 対応フレームワーク（自動検出）:
-  🔹 Vite         ➡️ vite build
-  🔹 Next.js      ➡️ next build
-  🔹 Astro        ➡️ astro build
-  🔹 SvelteKit    ➡️ vite build
-  🔹 Nuxt         ➡️ nuxt build
-  🔹 Remix        ➡️ remix build
-  🔹 Hono         ➡️ tsc --noEmit
-  🔹 Turbo        ➡️ turbo build
-  🔹 Monorepo     ➡️ pnpm -r build
+  • Vite         → vite build
+  • Next.js      → next build
+  • Astro        → astro build
+  • SvelteKit    → vite build
+  • Nuxt         → nuxt build
+  • Remix        → remix build
+  • Hono         → tsc --noEmit
+  • Turbo        → turbo build
+  • Monorepo     → pnpm -r build
 
 💡 Tips:
-  🔹 キャッシュヒット時はスキップ（--forceで強制実行）
-  🔹 Termux環境では自動最適化
-  🔹 CIでは自動的にverboseモード
+  • キャッシュヒット時はスキップ（--forceで強制実行）
+  • Termux環境では自動最適化
+  • CIでは自動的にverboseモード
 
 📚 Docs: https://github.com/shiratama644/TEMPLATE_REPO#build
 `)
@@ -166,7 +166,7 @@ export async function main(): Promise<number> {
     }
 
     logSection("Turbo Build")
-    loggers.build.start("Detected turbo.json ➡️ pnpm exec turbo build")
+    loggers.build.start("Detected turbo.json → pnpm exec turbo build")
     const code = run(
       ["pnpm", "exec", "turbo", "build", "--cache-dir=.turbo/cache"],
       process.cwd(),
@@ -187,7 +187,7 @@ export async function main(): Promise<number> {
 
   if (hasMonorepoStructure()) {
     logSection("Monorepo Build")
-    loggers.build.start("Detected monorepo ➡️ pnpm -r build")
+    loggers.build.start("Detected monorepo → pnpm -r build")
     const code = run(["pnpm", "-r", "build"])
     if (code === 0) {
       saveBuildCache("monorepo", Date.now() - startMs)
@@ -211,7 +211,7 @@ export async function main(): Promise<number> {
     const cacheValid = isBuildCacheValid("vite")
     if (cacheValid && !envInfo.isTermux) {
       if (!force) {
-        loggers.build.success(`Cache hit (hash=${sourceHash.slice(0, 8)}...) ➡️ skipping`)
+        loggers.build.success(`Cache hit (hash=${sourceHash.slice(0, 8)}...) → skipping`)
         loggers.build.info("💡 Use --force to bypass cache")
         return 0
       }
@@ -219,7 +219,7 @@ export async function main(): Promise<number> {
     }
 
     logSection("Vite Build")
-    loggers.build.start("Detected vite.config.* ➡️ vite build")
+    loggers.build.start("Detected vite.config.* → vite build")
     const code = run(["pnpm", "exec", "vite", "build"], process.cwd(), {
       ...viteTermux.env,
       VITE_CACHE_DIR: "node_modules/.vite",
@@ -250,7 +250,7 @@ export async function main(): Promise<number> {
     }
 
     logSection("Next.js Build")
-    loggers.build.start(`Detected next.config.* ➡️ ${nextTermux.cmd.join(" ")}`)
+    loggers.build.start(`Detected next.config.* → ${nextTermux.cmd.join(" ")}`)
     const code = run(nextTermux.cmd, process.cwd(), {
       ...nextTermux.env,
       NEXT_CACHE_DIR: ".next/cache",
@@ -271,7 +271,7 @@ export async function main(): Promise<number> {
 
   if (hasAnyFile(["astro.config"])) {
     logSection("Astro Build")
-    loggers.build.start("Detected astro.config.* ➡️ astro build")
+    loggers.build.start("Detected astro.config.* → astro build")
     const code = run(["pnpm", "exec", "astro", "build"])
     if (code === 0) {
       saveBuildCache("astro", Date.now() - startMs)
@@ -287,7 +287,7 @@ export async function main(): Promise<number> {
 
   if (hasAnyFile(["svelte.config"])) {
     logSection("SvelteKit Build")
-    loggers.build.start("Detected svelte.config.* ➡️ vite build")
+    loggers.build.start("Detected svelte.config.* → vite build")
     const code = run(["pnpm", "exec", "vite", "build"])
     if (code === 0) {
       saveBuildCache("sveltekit", Date.now() - startMs)
@@ -303,7 +303,7 @@ export async function main(): Promise<number> {
 
   if (hasAnyFile(["nuxt.config"])) {
     logSection("Nuxt Build")
-    loggers.build.start("Detected nuxt.config.* ➡️ nuxt build")
+    loggers.build.start("Detected nuxt.config.* → nuxt build")
     const code = run(["pnpm", "exec", "nuxt", "build"])
     if (code === 0) {
       saveBuildCache("nuxt", Date.now() - startMs)
@@ -319,7 +319,7 @@ export async function main(): Promise<number> {
 
   if (hasAnyFile(["remix.config"]) || existsSync("app/root.tsx")) {
     logSection("Remix Build")
-    loggers.build.start("Detected remix ➡️ remix build")
+    loggers.build.start("Detected remix → remix build")
     const code = run(["pnpm", "exec", "remix", "build"])
     if (code === 0) {
       saveBuildCache("remix", Date.now() - startMs)
@@ -335,7 +335,7 @@ export async function main(): Promise<number> {
 
   if (existsSync("wrangler.toml") || existsSync("wrangler.jsonc")) {
     logSection("Hono/Wrangler Check")
-    loggers.build.start("Detected Hono/Wrangler ➡️ build check")
+    loggers.build.start("Detected Hono/Wrangler → build check")
     const code = run(["pnpm", "exec", "tsc", "--noEmit"])
     /* v8 ignore next 3 */
     if (code === 0) {
@@ -348,7 +348,7 @@ export async function main(): Promise<number> {
   if (existsSync("tsconfig.json")) {
     const cacheValid = isBuildCacheValid("tsc")
     if (cacheValid && !force) {
-      loggers.build.success(`Cache hit (hash=${sourceHash.slice(0, 8)}...) ➡️ skipping tsc`)
+      loggers.build.success(`Cache hit (hash=${sourceHash.slice(0, 8)}...) → skipping tsc`)
       loggers.build.info("💡 Use --force to bypass cache")
       return 0
     }
@@ -358,7 +358,7 @@ export async function main(): Promise<number> {
     }
 
     logSection("TypeScript Check")
-    loggers.build.start("Detected tsconfig.json ➡️ tsc check")
+    loggers.build.start("Detected tsconfig.json → tsc check")
     const check = run(["pnpm", "exec", "tsc", "--noEmit"])
     if (check !== 0) {
       /* v8 ignore start */
@@ -368,7 +368,7 @@ export async function main(): Promise<number> {
       return check
       /* v8 ignore stop */
     }
-    logger.success(`✅ Build check passed in ${formatDuration(Date.now() - startMs)}`)
+    logger.success(`✓ Build check passed in ${formatDuration(Date.now() - startMs)}`)
     saveBuildCache("tsc", Date.now() - startMs)
     return 0
   }

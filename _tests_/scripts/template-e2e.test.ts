@@ -2,13 +2,13 @@
  * Template E2E自己展開テスト — Vite / Next / Monorepoを実際に生成して全フロー検証
  *
  * 目的: テンプレートから新しいアプリを生成した際に、
- * pnpm check ➡️ dev ➡️ build ➡️ test ➡️ commit ➡️ CI ➡️ release までが壊れずに通るか
+ * pnpm check → dev → build → test → commit → CI → release までが壊れずに通るか
  *
  * 検証項目:
  * 1. Plain TS (現状テンプレート) の全フロー
- * 2. Viteアプリ生成 ➡️ 検出 ➡️ build ➡️ test
- * 3. Nextアプリ生成 ➡️ 検出 ➡️ Termux Webpack強制 ➡️ build
- * 4. Monorepo生成 ➡️ workspace検出 ➡️ apps個別検出 ➡️ 空ディレクトリ誤爆なし
+ * 2. Viteアプリ生成 → 検出 → build → test
+ * 3. Nextアプリ生成 → 検出 → Termux Webpack強制 → build
+ * 4. Monorepo生成 → workspace検出 → apps個別検出 → 空ディレクトリ誤爆なし
  * 5. Bootstrap手動手順 (README Step 1-4) が機能するか
  * 6. CIシミュレーション (ci.ymlのstatic-checks + build)
  * 7. Releaseシミュレーション (changeset)
@@ -42,14 +42,14 @@ function test(name: string, fn: () => { passed: boolean; details: string }) {
     const duration = Date.now() - start
     results.push({ name, passed: r.passed, details: r.details, durationMs: duration })
     console.log(
-      `${r.passed ? `${GREEN}✅` : `${RED}❌`} ${name}${RESET} (${duration}ms) — ${r.details}`,
+      `${r.passed ? `${GREEN}✓` : `${RED}✗`} ${name}${RESET} (${duration}ms) — ${r.details}`,
     )
     return r.passed
   } catch (e) {
     const duration = Date.now() - start
     const msg = e instanceof Error ? e.message : String(e)
     results.push({ name, passed: false, details: `exception: ${msg}`, durationMs: duration })
-    console.log(`${RED}❌ ${name}${RESET} (${duration}ms) — exception: ${msg}`)
+    console.log(`${RED}✗ ${name}${RESET} (${duration}ms) — exception: ${msg}`)
     return false
   }
 }
@@ -224,7 +224,7 @@ test("1-5: 現状テンプレートで pnpm test:coverage が85%閾値を満た�
 // ========================================
 // Phase 2: Viteアプリ生成
 // ========================================
-console.log(`\n${CYAN}--- Phase 2: Viteアプリ生成 ➡️ 検出 ➡️ build ---${RESET}`)
+console.log(`\n${CYAN}--- Phase 2: Viteアプリ生成 → 検出 → build ---${RESET}`)
 
 const viteDir = join(tmpRoot, "vite-app")
 mkdirSync(viteDir, { recursive: true })
@@ -297,7 +297,7 @@ test("2-5: Viteアプリ — pnpm-workspace.yamlが汎用性を壊さない", ()
 // ========================================
 // Phase 3: Nextアプリ生成
 // ========================================
-console.log(`\n${CYAN}--- Phase 3: Nextアプリ生成 ➡️ 検出 ➡️ Termux Webpack強制 ---${RESET}`)
+console.log(`\n${CYAN}--- Phase 3: Nextアプリ生成 → 検出 → Termux Webpack強制 ---${RESET}`)
 
 const nextDir = join(tmpRoot, "next-app")
 mkdirSync(nextDir, { recursive: true })
@@ -367,7 +367,7 @@ test("3-5: Nextアプリ — docs/examples/next.config.example.mjsが参考に�
 // ========================================
 // Phase 4: Monorepo生成
 // ========================================
-console.log(`\n${CYAN}--- Phase 4: Monorepo生成 ➡️ workspace検出 ➡️ 混在フレームワーク ---${RESET}`)
+console.log(`\n${CYAN}--- Phase 4: Monorepo生成 → workspace検出 → 混在フレームワーク ---${RESET}`)
 
 const monoDir = join(tmpRoot, "monorepo")
 mkdirSync(monoDir, { recursive: true })
@@ -596,14 +596,14 @@ console.log(
 if (passed !== total) {
   console.log(`\n${YELLOW}失敗したテスト:${RESET}`)
   for (const r of results.filter((r) => !r.passed)) {
-    console.log(`  ${RED}❌ ${r.name}${RESET}: ${r.details}`)
+    console.log(`  ${RED}✗ ${r.name}${RESET}: ${r.details}`)
   }
 } else {
   console.log(
     `\n${GREEN}全テストPASS — テンプレートはVite/Next/Monorepoの3種類で自己展開可能${RESET}`,
   )
   console.log(
-    `${GREEN}初回 pnpm check ➡️ dev ➡️ build ➡️ test ➡️ commit ➡️ CI ➡️ release までのフローが壊れていない${RESET}`,
+    `${GREEN}初回 pnpm check → dev → build → test → commit → CI → release までのフローが壊れていない${RESET}`,
   )
 }
 
