@@ -39,7 +39,7 @@ paths:
 - `diff-{context}.md` — 差分レポート
 - `issues-{context}.md` — バグリスト
 
-### 完了レポート (`docs/complete/` + `docs/planning/complete/`)
+### 完了済み計画 (`docs/planning/complete/`)
 
 - `{TOPIC}_COMPLETE.md` — 完了レポート
 

@@ -199,7 +199,6 @@
     "playwright-report/**",
     "test-results/**",
     ".agent/logs/**",
-    "docs/complete/**",
     "docs/audit/**",
     ".husky/_/**",
     "coverage/**",

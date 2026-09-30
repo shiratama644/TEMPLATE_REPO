@@ -17,6 +17,7 @@ export function generateDocs(answers: SetupAnswers, cwd = process.cwd()): string
 
   // Clean old template-repo-specific files
   const toDelete = [
+    "docs/complete",
     "docs/complete/migration.md",
     "docs/complete/migration-v2.md",
     "docs/complete/migration-v3.md",
@@ -42,7 +43,7 @@ export function generateDocs(answers: SetupAnswers, cwd = process.cwd()): string
     const full = join(cwd, p)
     if (existsSync(full)) {
       try {
-        rmSync(full, { force: true })
+        rmSync(full, { force: true, recursive: true })
       } catch {}
     }
   }
@@ -76,8 +77,6 @@ docs/
 ├── research/          # 調査結果
 │   └── README.md
 ├── audit/             # 差分・バグ監査
-│   └── index.md
-├── complete/          # 完了レポート
 │   └── index.md
 ├── ops/               # 運用ドキュメント
 │   └── index.md
@@ -129,10 +128,6 @@ docs/
 
 - 計画書 vs 実装の差分、バグリスト
 - 時点記録のため書き換えない
-
-### \`complete/\` — 完了レポート
-
-- タスク完了時の事後報告書
 
 ### \`ops/\` — 運用ドキュメント
 
@@ -559,16 +554,6 @@ ${answers.projectName}/
     "utf8",
   )
   created.push("docs/ops/index.md")
-
-  // docs/complete/ — ensure index exists, but migration.md already deleted
-  const completeDir = join(docsDir, "complete")
-  ensureDir(completeDir)
-  writeFileSync(
-    join(completeDir, "index.md"),
-    `# complete/ — 完了レポート（${answers.projectName}）\n\nタスク完了時の事後報告書。\n`,
-    "utf8",
-  )
-  created.push("docs/complete/index.md")
 
   return created
 }

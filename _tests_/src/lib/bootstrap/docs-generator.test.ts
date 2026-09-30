@@ -62,6 +62,8 @@ describe("docs-generator", () => {
 
     // Old TEMPLATE_REPO-specific files that are NOT recreated should be deleted
     expect(existsSync(join(testDir, "docs/complete/migration.md"))).toBe(false)
+    // docs/complete folder itself should be deleted (deprecated)
+    expect(existsSync(join(testDir, "docs/complete"))).toBe(false)
     expect(existsSync(join(testDir, "docs/audit/activity.md"))).toBe(false)
     expect(existsSync(join(testDir, "docs/planning/robustness-plan.md"))).toBe(false)
     expect(existsSync(join(testDir, "docs/arch/tech-stack.md"))).toBe(false)

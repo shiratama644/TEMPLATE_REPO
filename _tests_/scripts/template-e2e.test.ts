@@ -485,7 +485,7 @@ test("5-4: 初期クリーンアップ対象が明確", () => {
   // READMEに記載されているクリーンアップ対象
   const readme = existsSync("README.md") ? readFileSync("README.md", "utf8") : ""
   const hasCleanup =
-    readme.includes("docs/complete") && readme.includes("_tests_") && readme.includes("logs/")
+    /* docs/complete removed */ readme.includes("_tests_") && readme.includes("logs/")
   return {
     passed: hasCleanup,
     details: hasCleanup ? "READMEにクリーンアップ手順あり" : "READMEに手順なし",

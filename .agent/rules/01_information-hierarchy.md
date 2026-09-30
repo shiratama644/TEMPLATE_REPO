@@ -19,7 +19,7 @@ paths:
 | 個別タスクの詳細計画 | `docs/planning/*_PLAN.md` | ✅ 編集可（計画時） | `_TEMPLATE.md` 準拠 |
 | 調査結果 | `docs/research/*` | ✅ 編集可 | 競合・技術調査 — cod-web arena準拠で復旧 |
 | 監査・差分・バグ | `docs/audit/*` | ✅ 必要時に作成 | 時点記録、書き換え禁止 — DropMod準拠で復旧 |
-| 完了レポート | `docs/complete/*` + `docs/planning/complete/*` | ✅ 完了時に作成 | メトリクス・証拠を記録 |
+| 完了レポート | `docs/planning/complete/*` | ✅ 完了時に作成 | メトリクス・証拠を記録 |
 | 運用手順 | `docs/ops/*` | ✅ 運用時に更新 | デプロイ・CI手順 |
 | 設定例 | `docs/examples/*` | ✅ 参考として保持 | Vite/Next.js設定例 — 現在の機能 |
 | ドキュメント目次 | `docs/README.md` | ✅ 追加・削除時に必須更新 | 全ドキュメントの入口（arch/ + planning/ + research/ + audit/ + ops/ + examples/ + task-list.md） |

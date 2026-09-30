@@ -434,19 +434,12 @@ test("7-1: .agent/logsがgitignoreされている", () => {
   }
 })
 
-test("7-2: docs/completeがテンプレートとして適切か", () => {
-  // docs/completeは過去の完了レポート置き場、新規リポジトリでは不要だが、テンプレートとしては参考になる
+test("7-2: docs/completeが削除済みか", () => {
+  // docs/completeは旧形式、planning/complete/が正本のため削除済み
   const hasComplete = existsSync("docs/complete")
-  let fileCount = 0
-  try {
-    if (hasComplete) {
-      const { readdirSync } = require("node:fs") as typeof import("node:fs")
-      fileCount = readdirSync("docs/complete").length
-    }
-  } catch {}
   return {
-    passed: true,
-    details: `docs/complete存在=${hasComplete}, ファイル数=${fileCount} — テンプレートとしては参考資料として残すのは妥当、新規リポジトリでは削除推奨をREADMEに明記すべき`,
+    passed: !hasComplete,
+    details: `docs/complete存在=${hasComplete} — 旧形式のため削除済み、planning/complete/を使用`,
   }
 })
 

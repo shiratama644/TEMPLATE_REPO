@@ -60,7 +60,7 @@ paths:
 - 計画書: `docs/planning/`（_TEMPLATE.md形式）— 完了済みは complete/
 - 調査: `docs/research/`（競合・技術調査）— cod-web arena準拠で復旧
 - 監査: `docs/audit/`（差分・バグ）— DropMod準拠で復旧
-- 完了レポート: `docs/complete/` + `docs/planning/complete/`
+- 完了レポート: `docs/planning/complete/`
 - 運用: `docs/ops/`、設定例: `docs/examples/`（現在の機能）
 - 以前「記録は削除」としたが、ユーザー指摘（arch/audit/planning/researchは必要）により復旧（2026-09-27調査）
 

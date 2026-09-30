@@ -31,11 +31,11 @@ const checks = [
     action: "gitignore済みなのでコピーされても実害なし、ただし初期は空が望ましい",
   },
   {
-    name: "docs/completeが存在 (過去レポート)",
+    name: "docs/completeが存在しない (旧形式、planning/complete/が正本)",
     file: "docs/complete",
     check: () => existsSync("docs/complete"),
-    shouldBe: true,
-    action: "テンプレートとしては参考資料として残すのは妥当、新規では削除推奨",
+    shouldBe: false,
+    action: "旧形式のため削除済み、planning/complete/を使用",
   },
   {
     name: ".cacheが存在 (ビルドキャッシュ)",

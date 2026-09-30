@@ -220,7 +220,7 @@ pnpm install --frozen-lockfile
   - 計画書: `docs/planning/`（_TEMPLATE.md形式）— 計画書索引は README.md、完了済みは complete/
   - 調査: `docs/research/`（競合・技術調査）— cod-web arena準拠で復旧
   - 監査: `docs/audit/`（差分・バグ）— DropMod準拠で復旧
-  - 完了レポート: `docs/complete/`（旧形式）+ `docs/planning/complete/`（新形式、cod-web準拠）
+  - 完了済み計画: `docs/planning/complete/`（cod-web準拠）
   - 運用: `docs/ops/`（デプロイ・CI）
   - 設定例: `docs/examples/`（Vite/Next）— 現在の機能
 - ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する

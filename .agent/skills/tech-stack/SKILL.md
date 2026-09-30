@@ -112,7 +112,7 @@ description: テンプレートの技術スタック（Node.js, pnpm, TypeScript
 - **cspell**: `10.3.4`（最新）、スペルチェック
   - `cspell.json` で辞書と無視パスを設定
   - `words` にプロジェクト固有の単語（biome, pnpm, vitest, cod-web, arena等）を追加
-  - `ignorePaths` に `node_modules`, `dist`, `logs`, `.agent/logs`, `docs/complete`, `docs/audit` 等を設定
+  - `ignorePaths` に `node_modules`, `dist`, `logs`, `.agent/logs`, `docs/audit` 等を設定
   - スクリプト: `pnpm cspell`、CIでも実行
   - pre-commitでも `*.md` に対して実行（lint-staged経由）
 
@@ -201,7 +201,7 @@ description: テンプレートの技術スタック（Node.js, pnpm, TypeScript
 - **upload-artifact v4**: 隠しディレクトリ（`.next/`）は `excludeHiddenFiles` により0件マッチ。tar化して単一ファイルとしてアップロードする。
 - **ESMのvite.config.ts**: `__dirname` が使えない。`import.meta.dirname` を使うか、`path.resolve` で代替。
 - **knip + oxc-parser 0.150.0**: 2GiBのArrayBuffer確保でSandbox等で失敗。`KNIP_DISABLE_RAW_TRANSFER=1` 環境変数でraw transfer無効化（package.jsonのknipスクリプトで設定済み）
-- **cspell**: プロジェクト固有単語は `cspell.json` の `words` に追加、無視パスは `ignorePaths` に追加。`docs/audit` や `docs/complete` は無視推奨
+- **cspell**: プロジェクト固有単語は `cspell.json` の `words` に追加、無視パスは `ignorePaths` に追加。`docs/audit` は無視推奨
 - **husky v9**: `prepare` スクリプトに `husky` を設定、`pnpm install` で自動インストール。hooksは `.husky/` に置き、`chmod +x` 必須。v9では `_/husky.sh` をsourceしないシンプルな形式
 - **commitlint**: 日本語subjectを許可するため `subject-case: [0, 'never']` で無効化。`commit-msg` hookで検証
 - **lint-staged**: `package.json` の `lint-staged` フィールドで設定、stagedファイルのみ対象で高速

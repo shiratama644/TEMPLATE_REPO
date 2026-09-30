@@ -35,9 +35,6 @@ docs/
 ├── audit/                             # 差分・バグ監査 — DropMod準拠で復旧
 │   ├── index.md                       # 本フォルダの説明
 │   └── activity.md                    # 活動ログ
-├── complete/                          # 完了レポート（旧形式、planning/complete/が正本）
-│   ├── index.md
-│   └── migration.md                   # マイグレーション記録
 ├── ops/                               # 運用ドキュメント（デプロイ・CI実務）
 │   └── index.md
 └── examples/                          # 設定例（Vite/Next）— 現在の機能
@@ -121,14 +118,6 @@ docs/
 - 発見したバグ・潜在的不具合（`issues-*.md`）
 - 時点記録のため書き換えない
 
-### `complete/` — 完了レポート
-
-詳細は [`complete/index.md`](complete/index.md)。
-
-- タスク・マイルストーン完了時の事後報告書
-- メトリクス、サブタスク、DoD達成状況を記録
-- 新形式では `planning/complete/` が正本、旧形式は本フォルダ
-
 ### `ops/` — 運用ドキュメント
 
 詳細は [`ops/index.md`](ops/index.md)。
@@ -153,7 +142,6 @@ docs/
 | 調査 | `{TOPIC}_RESEARCH.md` | `TERMUX_RESEARCH.md` |
 | 監査（差分） | `diff-{context}.md` | `diff-migration.md` |
 | 監査（バグ） | `issues-{context}.md` | `issues-auth.md` |
-| 完了レポート | `{TOPIC}_COMPLETE.md` | `AUTH_COMPLETE.md` |
 | 運用 | 大文字スネークケース | `DEPLOY.md` |
 | 設定例 | `kebab-case.example.*` | `vite.config.example.ts` |
 | スキル | `kebab-case/SKILL.md` | `project-overview/SKILL.md` |
