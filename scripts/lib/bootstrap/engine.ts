@@ -300,6 +300,11 @@ export function calculatePlan(answers: SetupAnswers, cwd = process.cwd()): Setup
           ([otherId, otherEnabled]) => {
             if (!otherEnabled) return false
             if (otherId === featureId) return false
+            // Allow determinism test files to be deleted even if vitest is enabled
+            if (featureId === "determinism" && otherId === "vitest") {
+              const isDeterminismFile = feature.files.includes(file)
+              if (isDeterminismFile) return false
+            }
             const otherFeature = FEATURES[otherId as FeatureId]
             if (!otherFeature) return false
             return otherFeature.files.some((fp) => {

@@ -73,17 +73,34 @@ describe("calculatePlan", () => {
   })
 
   it("minimal removes docker", () => {
-    const answers = getMinimalAnswers(process.cwd())
-    const plan = calculatePlan(answers, process.cwd())
-    const hasDockerDelete = plan.files.some((f) => f.path === "Dockerfile" && f.type === "delete")
-    expect(hasDockerDelete).toBe(true)
+    const tempRoot = join(tmpdir(), `engine-docker-${Date.now()}-${Math.random()}`)
+    mkdirSync(tempRoot, { recursive: true })
+    try {
+      writeFileSync(join(tempRoot, "Dockerfile"), "FROM node", "utf8")
+      writeFileSync(join(tempRoot, "package.json"), "{}", "utf8")
+      const answers = getMinimalAnswers(tempRoot)
+      const plan = calculatePlan(answers, tempRoot)
+      const hasDockerDelete = plan.files.some((f) => f.path === "Dockerfile" && f.type === "delete")
+      expect(hasDockerDelete).toBe(true)
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true })
+    }
   })
 
   it("protects src/", () => {
-    const answers = getMinimalAnswers(process.cwd())
-    const plan = calculatePlan(answers, process.cwd())
-    const hasSrcDelete = plan.files.some((f) => f.path.startsWith("src/") && f.type === "delete")
-    expect(hasSrcDelete).toBe(false)
+    const tempRoot = join(tmpdir(), `engine-src-${Date.now()}-${Math.random()}`)
+    mkdirSync(tempRoot, { recursive: true })
+    try {
+      mkdirSync(join(tempRoot, "src"), { recursive: true })
+      writeFileSync(join(tempRoot, "src", "index.ts"), "", "utf8")
+      writeFileSync(join(tempRoot, "package.json"), "{}", "utf8")
+      const answers = getMinimalAnswers(tempRoot)
+      const plan = calculatePlan(answers, tempRoot)
+      const hasSrcDelete = plan.files.some((f) => f.path.startsWith("src/") && f.type === "delete")
+      expect(hasSrcDelete).toBe(false)
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true })
+    }
   })
 
   it("handles unknown project type", () => {

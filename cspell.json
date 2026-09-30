@@ -202,7 +202,8 @@
     "docs/complete/**",
     "docs/audit/**",
     ".husky/_/**",
-    "coverage/**"
+    "coverage/**",
+    ".git/**"
   ],
   "dictionaries": [],
   "dictionaryDefinitions": [],
