@@ -185,7 +185,8 @@
     "youtubei",
     "ytdl",
     "yxxx",
-    "zustand"
+    "zustand",
+    "opentui"
   ],
   "ignorePaths": [
     "node_modules/**",

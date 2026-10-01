@@ -1,10 +1,8 @@
-/** @jsxImportSource react */
+/** @jsxImportSource @opentui/react */
 import { execSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 import { basename } from "node:path"
-import { Box, Text, useApp, useInput } from "ink"
-import SelectInput from "ink-select-input"
-import TextInput from "ink-text-input"
+import { useKeyboard, useRenderer } from "@opentui/react"
 import React, { useMemo, useState } from "react"
 import { FEATURES, PROJECT_TYPES } from "./manifest.ts"
 import { getPreset, getPresetChoices } from "./presets.ts"
@@ -59,22 +57,19 @@ type Step =
   | "release"
   | "confirm"
 
-type SelectItem = { label: string; value: string }
+type SelectItem = { label: string; value: string; description?: string }
 
 function PromptLine({ question, hint }: { question: string; hint?: string }) {
   return (
-    <Box>
-      <Text color="cyan" bold>
-        ?{" "}
-      </Text>
-      <Text bold>{question}</Text>
-      {hint ? (
-        <>
-          <Text> </Text>
-          <Text dimColor>{hint}</Text>
-        </>
-      ) : null}
-    </Box>
+    <box flexDirection="row">
+      <text>
+        <span fg="#00FFFF">
+          <b>? </b>
+        </span>
+        <b>{question}</b>
+        {hint ? <span fg="#888888"> {hint}</span> : null}
+      </text>
+    </box>
   )
 }
 
@@ -96,23 +91,25 @@ function QuestionInput({
   error?: string
 }) {
   return (
-    <Box flexDirection="column">
+    <box flexDirection="column" gap={1}>
       <PromptLine question={question} hint={hint} />
       {error ? (
-        <Box marginLeft={2}>
-          <Text color="red"> {error}</Text>
-        </Box>
+        <box marginLeft={2}>
+          <text fg="#FF0000"> {error}</text>
+        </box>
       ) : null}
-      <Box marginLeft={2}>
-        <Text dimColor>{">"} </Text>
-        <TextInput
+      <box marginLeft={2} flexDirection="row" gap={1}>
+        <text fg="#888888">{">"} </text>
+        <input
+          placeholder={placeholder || value}
           value={value}
-          onChange={onChange}
-          onSubmit={onSubmit}
-          placeholder={placeholder}
+          focused
+          width={40}
+          onInput={onChange}
+          onSubmit={() => onSubmit(value)}
         />
-      </Box>
-    </Box>
+      </box>
+    </box>
   )
 }
 
@@ -127,24 +124,40 @@ function QuestionSelect({
   items: SelectItem[]
   onSelect: (item: SelectItem) => void
 }) {
+  const options = useMemo(
+    () =>
+      items.map((it) => ({
+        name: it.label,
+        description: it.description || "",
+        value: it.value,
+      })),
+    [items],
+  )
+
   return (
-    <Box flexDirection="column">
+    <box flexDirection="column" gap={1}>
       <PromptLine question={question} hint={hint} />
-      <Box marginLeft={2} flexDirection="column" marginTop={1}>
-        <SelectInput
-          items={items}
-          onSelect={onSelect as any}
-          indicatorComponent={({ isSelected }) => (
-            <Text color={isSelected ? "cyan" : undefined}>{isSelected ? ">" : " "} </Text>
-          )}
-          itemComponent={({ isSelected, label }) => (
-            <Text color={isSelected ? "cyan" : undefined} bold={isSelected}>
-              {label}
-            </Text>
-          )}
+      <box
+        marginLeft={2}
+        marginTop={1}
+        height={Math.min(options.length + 2, 12)}
+        width={80}
+        border
+        borderStyle="rounded"
+      >
+        <select
+          focused
+          options={options}
+          width={78}
+          height={Math.min(options.length, 10)}
+          onChange={(_idx: number, option: any) => {
+            if (option) {
+              onSelect({ label: option.name, value: option.value, description: option.description })
+            }
+          }}
         />
-      </Box>
-    </Box>
+      </box>
+    </box>
   )
 }
 
@@ -164,12 +177,12 @@ function MultiSelect({
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initialSelected))
   const [cursor, setCursor] = useState(0)
 
-  useInput((input, key) => {
-    if (key.upArrow) {
+  useKeyboard((key) => {
+    if (key.name === "up" || key.name === "k") {
       setCursor((c) => (c > 0 ? c - 1 : items.length - 1))
-    } else if (key.downArrow) {
+    } else if (key.name === "down" || key.name === "j") {
       setCursor((c) => (c < items.length - 1 ? c + 1 : 0))
-    } else if (input === " ") {
+    } else if (key.name === "space") {
       const it = items[cursor]
       setSelected((prev) => {
         const next = new Set(prev)
@@ -177,37 +190,48 @@ function MultiSelect({
         else next.add(it.value)
         return next
       })
-    } else if (key.return) {
+    } else if (key.name === "return" || key.name === "enter") {
       onSubmit(Array.from(selected))
     }
   })
 
   return (
-    <Box flexDirection="column">
+    <box flexDirection="column" gap={1}>
       <PromptLine question={question} hint={hint} />
-      <Box marginLeft={2} flexDirection="column" marginTop={1}>
+      <box
+        marginLeft={2}
+        flexDirection="column"
+        marginTop={1}
+        border
+        borderStyle="rounded"
+        padding={1}
+        width={80}
+      >
         {items.map((it, idx) => {
           const isSel = selected.has(it.value)
           const isCur = idx === cursor
           return (
-            <Box key={it.value}>
-              <Text color={isCur ? "cyan" : undefined} bold={isCur}>
-                {isCur ? ">" : " "} {isSel ? "[x]" : "[ ]"} {it.label}
-              </Text>
-              {it.description ? <Text dimColor> - {it.description}</Text> : null}
-            </Box>
+            <box key={it.value} flexDirection="row">
+              <text>
+                <span fg={isCur ? "#00FFFF" : undefined}>
+                  <b>{isCur ? ">" : " "} </b>
+                </span>
+                <span fg={isSel ? "#00FF00" : "#FFFFFF"}>
+                  {isSel ? "[x]" : "[ ]"} {it.label}
+                </span>
+                {it.description ? <span fg="#888888"> - {it.description}</span> : null}
+              </text>
+            </box>
           )
         })}
-      </Box>
-      <Box marginLeft={2} marginTop={1}>
-        <Text dimColor>Space to toggle, Enter to confirm, Up/Down to navigate</Text>
-      </Box>
-      <Box marginLeft={2}>
-        <Text dimColor>
+      </box>
+      <box marginLeft={2} flexDirection="column">
+        <text fg="#888888">Space to toggle, Enter to confirm, Up/Down or j/k to navigate</text>
+        <text fg="#888888">
           Selected {selected.size}/{items.length}: {Array.from(selected).join(", ") || "none"}
-        </Text>
-      </Box>
-    </Box>
+        </text>
+      </box>
+    </box>
   )
 }
 
@@ -220,7 +244,7 @@ export function SetupTUI({
   onComplete: (answers: SetupAnswers) => void
   onCancel: () => void
 }) {
-  const { exit } = useApp()
+  const renderer = useRenderer()
 
   const [dirName] = useState(() => basename(cwd))
   const [defaultProjectName] = useState(
@@ -249,10 +273,10 @@ export function SetupTUI({
     if (termuxDetected) setTermuxMode("yes")
   }, [termuxDetected])
 
-  useInput((_, key) => {
-    if (key.escape) {
+  useKeyboard((key) => {
+    if (key.name === "escape") {
       onCancel()
-      exit()
+      renderer.destroy()
     }
   })
 
@@ -280,6 +304,7 @@ export function SetupTUI({
       Object.entries(PROJECT_TYPES).map(([id, def]) => ({
         label: `${def.icon} ${def.name} - ${def.description}`,
         value: id,
+        description: def.description,
       })),
     [],
   )
@@ -544,83 +569,79 @@ export function SetupTUI({
           .map(([k]) => k)
 
         return (
-          <Box flexDirection="column">
-            <Box>
-              <Text bold>Review your configuration:</Text>
-            </Box>
-            <Box marginTop={1} flexDirection="column">
-              <Text>
-                <Text dimColor>Name:</Text> {answers.projectName}
-              </Text>
-              <Text>
-                <Text dimColor>Description:</Text> {answers.projectDescription}
-              </Text>
-              <Text>
-                <Text dimColor>Owner:</Text> {answers.githubOwner}
-              </Text>
-              <Text>
-                <Text dimColor>Type:</Text> {answers.projectType}
-              </Text>
+          <box flexDirection="column" gap={1}>
+            <box>
+              <text>
+                <b>Review your configuration:</b>
+              </text>
+            </box>
+            <box flexDirection="column" border borderStyle="rounded" padding={1} width={80}>
+              <text>
+                <span fg="#888888">Name:</span> {answers.projectName}
+              </text>
+              <text>
+                <span fg="#888888">Description:</span> {answers.projectDescription}
+              </text>
+              <text>
+                <span fg="#888888">Owner:</span> {answers.githubOwner}
+              </text>
+              <text>
+                <span fg="#888888">Type:</span> {answers.projectType}
+              </text>
               {answers.preset ? (
-                <Text>
-                  <Text dimColor>Preset:</Text> {answers.preset}
-                </Text>
+                <text>
+                  <span fg="#888888">Preset:</span> {answers.preset}
+                </text>
               ) : null}
-              <Text>
-                <Text dimColor>Enabled ({enabled.length}):</Text> {enabled.join(", ") || "none"}
-              </Text>
-              <Text>
-                <Text dimColor>Disabled ({disabled.length}):</Text> {disabled.join(", ") || "none"}
-              </Text>
-              <Text dimColor>Will modify files in: {cwd} (backup auto-created)</Text>
-            </Box>
-            <Box marginTop={1} flexDirection="column">
+              <text>
+                <span fg="#888888">Enabled ({enabled.length}):</span> {enabled.join(", ") || "none"}
+              </text>
+              <text>
+                <span fg="#888888">Disabled ({disabled.length}):</span>{" "}
+                {disabled.join(", ") || "none"}
+              </text>
+              <text fg="#888888">Will modify files in: {cwd} (backup auto-created)</text>
+            </box>
+            <box flexDirection="column" gap={1}>
               <PromptLine question="Ready to execute?" />
-              <Box marginLeft={2} marginTop={1}>
-                <SelectInput
-                  items={[
-                    { label: "Yes, execute setup", value: "yes" },
-                    { label: "No, cancel", value: "no" },
+              <box marginLeft={2} width={40} border borderStyle="rounded">
+                <select
+                  focused
+                  options={[
+                    { name: "Yes, execute setup", description: "Execute", value: "yes" },
+                    { name: "No, cancel", description: "Cancel", value: "no" },
                   ]}
-                  onSelect={(item) => {
-                    if (item.value === "yes") {
+                  onChange={(_idx: number, option: any) => {
+                    if (option?.value === "yes") {
                       onComplete(answers)
-                      exit()
+                      renderer.destroy()
                     } else {
                       onCancel()
-                      exit()
+                      renderer.destroy()
                     }
                   }}
-                  indicatorComponent={({ isSelected }) => (
-                    <Text color={isSelected ? "cyan" : undefined}>{isSelected ? ">" : " "} </Text>
-                  )}
-                  itemComponent={({ isSelected, label }) => (
-                    <Text color={isSelected ? "cyan" : undefined} bold={isSelected}>
-                      {label}
-                    </Text>
-                  )}
                 />
-              </Box>
-            </Box>
-          </Box>
+              </box>
+            </box>
+          </box>
         )
       }
     }
   }
 
   return (
-    <Box flexDirection="column" padding={1}>
-      <Box>
-        <Text bold>create-template-app</Text>
-        <Text dimColor> v2.0.0 - Template Bootstrap</Text>
-      </Box>
-      <Box marginTop={1} flexDirection="column">
-        <Text dimColor>AI Agent software development template</Text>
-        <Text dimColor>
+    <box flexDirection="column" padding={1} gap={1}>
+      <box flexDirection="column">
+        <text>
+          <b>create-template-app</b>
+          <span fg="#888888"> v2.0.0 - Template Bootstrap (OpenTUI)</span>
+        </text>
+        <text fg="#888888">AI Agent software development template</text>
+        <text fg="#888888">
           Press ESC to cancel | {dirName} | {step}
-        </Text>
-      </Box>
-      <Box marginTop={1}>{renderStep()}</Box>
-    </Box>
+        </text>
+      </box>
+      <box>{renderStep()}</box>
+    </box>
   )
 }

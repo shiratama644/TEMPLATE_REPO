@@ -266,7 +266,7 @@ export const PROJECT_TYPES: Record<string, ProjectTypeDefinition> = {
     id: "vite",
     name: "Vite",
     description: "Vite SPA (React, Vue, etc) — fast HMR, optimized build",
-    icon: "⚡︎",
+    icon: "◆",
     filesToCreate: [
       {
         path: "vite.config.ts",

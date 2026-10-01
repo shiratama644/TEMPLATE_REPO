@@ -106,7 +106,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "vite-app",
     name: "Vite App",
     description: "Vite SPA with testing and quality tools",
-    icon: "⚡︎",
+    icon: "◆",
     projectType: "vite",
     features: {
       docker: true,
