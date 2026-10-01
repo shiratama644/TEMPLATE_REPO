@@ -1,9 +1,14 @@
 import { render } from "ink"
 import React from "react"
-import { SetupTUI } from "./tui.tsx"
 import type { SetupAnswers } from "./types.ts"
 
-export function runTUI(cwd = process.cwd()): Promise<SetupAnswers | null> {
+export async function runTUI(cwd = process.cwd()): Promise<SetupAnswers | null> {
+  // Immediate feedback for fast perceived opening
+  // eslint-disable-next-line no-console
+  console.log("  Loading setup wizard...")
+
+  const { SetupTUI } = await import("./tui.tsx")
+
   return new Promise((resolve) => {
     let result: SetupAnswers | null = null
 

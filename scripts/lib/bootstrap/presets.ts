@@ -16,7 +16,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "minimal",
     name: "Minimal",
     description: "Plain TS + Vitest only — smallest possible",
-    icon: "🪶",
+    icon: "[M]",
     projectType: "plain",
     features: {
       docker: false,
@@ -43,7 +43,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "recommended",
     name: "Recommended",
     description: "Plain TS + testing + quality + git workflow — balanced",
-    icon: "⭐",
+    icon: "[R]",
     projectType: "plain",
     features: {
       docker: false,
@@ -70,7 +70,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "full",
     name: "Full",
     description: "All features enabled — maximum DX",
-    icon: "🚀",
+    icon: "[F]",
     projectType: "plain",
     features: allEnabled(),
     termuxMode: "auto",
@@ -79,7 +79,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "library",
     name: "Library",
     description: "Publishable library — publint, size-limit, changesets",
-    icon: "📦",
+    icon: "[P]",
     projectType: "plain",
     features: {
       docker: false,
@@ -106,7 +106,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "vite-app",
     name: "Vite App",
     description: "Vite SPA with testing and quality tools",
-    icon: "⚡",
+    icon: "[V]",
     projectType: "vite",
     features: {
       docker: true,
@@ -133,7 +133,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "next-app",
     name: "Next.js App",
     description: "Next.js SSR/SSG with Docker and E2E",
-    icon: "▲",
+    icon: "[N]",
     projectType: "next",
     features: {
       docker: true,
@@ -160,7 +160,7 @@ export const PRESETS: Record<string, PresetDefinition> = {
     id: "monorepo",
     name: "Monorepo",
     description: "Turborepo monorepo with apps/* and packages/*",
-    icon: "🏗️",
+    icon: "[M]",
     projectType: "next-monorepo",
     features: {
       docker: true,

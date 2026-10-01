@@ -5,7 +5,7 @@ import { basename } from "node:path"
 import { Box, Text, useApp, useInput } from "ink"
 import SelectInput from "ink-select-input"
 import TextInput from "ink-text-input"
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 import { FEATURES, PROJECT_TYPES } from "./manifest.ts"
 import { getPreset, getPresetChoices } from "./presets.ts"
 import type { FeatureId, PresetId, ProjectTypeId, SetupAnswers } from "./types.ts"
@@ -17,9 +17,11 @@ function inferGithubOwner(cwd: string): string {
       cwd,
       encoding: "utf8",
       stdio: "pipe",
-    }).trim()
-    const match = remote.match(/github\.com[:/]([^/]+)\/([^/.]+)(?:\.git)?/)
-    if (match) return match[1]
+    })
+      .toString()
+      .trim()
+    const m = remote.match(/github\.com[:/]([^/]+)\/([^/.]+)(?:\.git)?/)
+    if (m) return m[1]
   } catch {}
   try {
     const pkgPath = `${cwd}/package.json`
@@ -27,8 +29,8 @@ function inferGithubOwner(cwd: string): string {
       const pkg = JSON.parse(readFileSync(pkgPath, "utf8"))
       const repo = pkg.repository
       const url = typeof repo === "string" ? repo : repo?.url || ""
-      const match = url.match(/github\.com[:/]([^/]+)\/([^/.]+)/)
-      if (match) return match[1]
+      const mm = url.match(/github\.com[:/]([^/]+)\/([^/.]+)/)
+      if (mm) return mm[1]
     }
   } catch {}
   return "your-github-username"
@@ -45,8 +47,8 @@ function isTermuxEnvironment(): boolean {
 }
 
 type Step =
-  | "preset"
   | "projectName"
+  | "recommended"
   | "githubOwner"
   | "description"
   | "projectType"
@@ -57,84 +59,109 @@ type Step =
   | "release"
   | "confirm"
 
-const STEP_ORDER: Step[] = [
-  "preset",
-  "projectName",
-  "githubOwner",
-  "description",
-  "projectType",
-  "devInfra",
-  "termuxMode",
-  "testing",
-  "git",
-  "release",
-  "confirm",
-]
+type SelectItem = { label: string; value: string }
 
-const STEP_LABELS: Record<Step, string> = {
-  preset: "Preset",
-  projectName: "Name",
-  githubOwner: "Owner",
-  description: "Desc",
-  projectType: "Type",
-  devInfra: "Infra",
-  termuxMode: "Termux",
-  testing: "Quality",
-  git: "Git",
-  release: "Release",
-  confirm: "Confirm",
+function PromptLine({ question, hint }: { question: string; hint?: string }) {
+  return (
+    <Box>
+      <Text color="cyan" bold>
+        ?{" "}
+      </Text>
+      <Text bold>{question}</Text>
+      {hint ? (
+        <>
+          <Text> </Text>
+          <Text dimColor>{hint}</Text>
+        </>
+      ) : null}
+    </Box>
+  )
 }
 
-type SelectItem = { label: string; value: string; hint?: string }
-
-function ProgressBar({ currentStep }: { currentStep: Step }) {
-  const currentIdx = STEP_ORDER.indexOf(currentStep)
+function QuestionInput({
+  question,
+  hint,
+  value,
+  onChange,
+  onSubmit,
+  placeholder,
+  error,
+}: {
+  question: string
+  hint?: string
+  value: string
+  onChange: (v: string) => void
+  onSubmit: (v: string) => void
+  placeholder?: string
+  error?: string
+}) {
   return (
-    <Box flexDirection="column" marginBottom={1}>
-      <Box flexDirection="row" flexWrap="wrap" gap={1}>
-        {STEP_ORDER.map((s, idx) => {
-          const isActive = s === currentStep
-          const isPast = idx < currentIdx
-          return (
-            <Box key={s} marginRight={1}>
-              <Text
-                color={isActive ? "cyan" : isPast ? "green" : "gray"}
-                bold={isActive}
-                dimColor={idx > currentIdx}
-              >
-                {isPast ? "[x]" : isActive ? "[*]" : "[ ]"} {idx + 1}. {STEP_LABELS[s]}
-              </Text>
-            </Box>
-          )
-        })}
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>
-          Progress: {currentIdx + 1}/{STEP_ORDER.length} (
-          {Math.round(((currentIdx + 1) / STEP_ORDER.length) * 100)}%)
-        </Text>
-        <Text> </Text>
-        <Text color="cyan">{"=".repeat(currentIdx + 1)}</Text>
-        <Text dimColor>{"-".repeat(STEP_ORDER.length - currentIdx - 1)}</Text>
+    <Box flexDirection="column">
+      <PromptLine question={question} hint={hint} />
+      {error ? (
+        <Box marginLeft={2}>
+          <Text color="red"> {error}</Text>
+        </Box>
+      ) : null}
+      <Box marginLeft={2}>
+        <Text dimColor>{">"} </Text>
+        <TextInput
+          value={value}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          placeholder={placeholder}
+        />
       </Box>
     </Box>
   )
 }
 
-function ModernMultiSelect({
+function QuestionSelect({
+  question,
+  hint,
+  items,
+  onSelect,
+}: {
+  question: string
+  hint?: string
+  items: SelectItem[]
+  onSelect: (item: SelectItem) => void
+}) {
+  return (
+    <Box flexDirection="column">
+      <PromptLine question={question} hint={hint} />
+      <Box marginLeft={2} flexDirection="column" marginTop={1}>
+        <SelectInput
+          items={items}
+          onSelect={onSelect as any}
+          indicatorComponent={({ isSelected }) => (
+            <Text color={isSelected ? "cyan" : undefined}>{isSelected ? ">" : " "} </Text>
+          )}
+          itemComponent={({ isSelected, label }) => (
+            <Text color={isSelected ? "cyan" : undefined} bold={isSelected}>
+              {label}
+            </Text>
+          )}
+        />
+      </Box>
+    </Box>
+  )
+}
+
+function MultiSelect({
+  question,
+  hint,
   items,
   initialSelected,
   onSubmit,
-  title,
-  description,
 }: {
-  items: SelectItem[]
+  question: string
+  hint?: string
+  items: { label: string; value: string; description?: string }[]
   initialSelected: string[]
   onSubmit: (selected: string[]) => void
-  title: string
-  description?: string
 }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(initialSelected))
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(initialSelected))
   const [cursor, setCursor] = useState(0)
 
   useInput((input, key) => {
@@ -143,11 +170,11 @@ function ModernMultiSelect({
     } else if (key.downArrow) {
       setCursor((c) => (c < items.length - 1 ? c + 1 : 0))
     } else if (input === " ") {
-      const item = items[cursor]
+      const it = items[cursor]
       setSelected((prev) => {
         const next = new Set(prev)
-        if (next.has(item.value)) next.delete(item.value)
-        else next.add(item.value)
+        if (next.has(it.value)) next.delete(it.value)
+        else next.add(it.value)
         return next
       })
     } else if (key.return) {
@@ -157,103 +184,28 @@ function ModernMultiSelect({
 
   return (
     <Box flexDirection="column">
-      <Box
-        borderStyle="round"
-        borderColor="cyan"
-        paddingX={1}
-        paddingY={0}
-        marginBottom={1}
-        flexDirection="column"
-      >
-        <Text bold color="cyan">
-          {title}
-        </Text>
-        {description && <Text dimColor>{description}</Text>}
-      </Box>
-
-      <Box
-        flexDirection="column"
-        borderStyle="round"
-        borderColor="white"
-        paddingX={1}
-        paddingY={1}
-        marginBottom={1}
-      >
-        {items.map((item, idx) => {
-          const isSelected = selected.has(item.value)
-          const isCursor = idx === cursor
+      <PromptLine question={question} hint={hint} />
+      <Box marginLeft={2} flexDirection="column" marginTop={1}>
+        {items.map((it, idx) => {
+          const isSel = selected.has(it.value)
+          const isCur = idx === cursor
           return (
-            <Box key={item.value}>
-              <Text
-                backgroundColor={isCursor ? "blue" : undefined}
-                color={isCursor ? "white" : isSelected ? "green" : undefined}
-                bold={isCursor}
-              >
-                {isCursor ? "> " : "  "}
-                {isSelected ? "[x]" : "[ ]"} {item.label}
+            <Box key={it.value}>
+              <Text color={isCur ? "cyan" : undefined} bold={isCur}>
+                {isCur ? ">" : " "} {isSel ? "[x]" : "[ ]"} {it.label}
               </Text>
-              {item.hint && (
-                <Text dimColor>
-                  {"  "}-- {item.hint}
-                </Text>
-              )}
+              {it.description ? <Text dimColor> - {it.description}</Text> : null}
             </Box>
           )
         })}
       </Box>
-
-      <Box borderStyle="round" borderColor="gray" paddingX={1} flexDirection="column">
-        <Text bold>Controls:</Text>
-        <Text dimColor> [Up/Down] Navigate | [Space] Toggle | [Enter] Confirm | [ESC] Cancel</Text>
-        <Text>
-          <Text color="green">
-            Selected: {selected.size}/{items.length}
-          </Text>
-          <Text dimColor> | </Text>
-          <Text dimColor>{selected.size > 0 ? Array.from(selected).join(", ") : "none"}</Text>
-        </Text>
+      <Box marginLeft={2} marginTop={1}>
+        <Text dimColor>Space to toggle, Enter to confirm, Up/Down to navigate</Text>
       </Box>
-    </Box>
-  )
-}
-
-function InputField({
-  label,
-  hint,
-  value,
-  onChange,
-  onSubmit,
-  error,
-}: {
-  label: string
-  hint?: string
-  value: string
-  onChange: (v: string) => void
-  onSubmit: (v: string) => void
-  error?: string
-}) {
-  return (
-    <Box flexDirection="column">
-      <Box
-        borderStyle="round"
-        borderColor="cyan"
-        paddingX={1}
-        marginBottom={1}
-        flexDirection="column"
-      >
-        <Text bold>{label}</Text>
-        {hint && <Text dimColor>{hint}</Text>}
-      </Box>
-      {error && (
-        <Box borderStyle="round" borderColor="red" paddingX={1} marginBottom={1}>
-          <Text color="red">! {error}</Text>
-        </Box>
-      )}
-      <Box borderStyle="round" borderColor="white" paddingX={1} paddingY={1}>
-        <Text color="cyan" bold>
-          {">"}{" "}
+      <Box marginLeft={2}>
+        <Text dimColor>
+          Selected {selected.size}/{items.length}: {Array.from(selected).join(", ") || "none"}
         </Text>
-        <TextInput value={value} onChange={onChange} onSubmit={onSubmit} />
       </Box>
     </Box>
   )
@@ -268,12 +220,19 @@ export function SetupTUI({
   onComplete: (answers: SetupAnswers) => void
   onCancel: () => void
 }) {
-  const dirName = basename(cwd)
-  const defaultProjectName = dirName.replace(/[^a-z0-9-]/gi, "-").toLowerCase() || "my-app"
-  const inferredOwner = inferGithubOwner(cwd)
-  const termuxDetected = isTermuxEnvironment()
+  const { exit } = useApp()
 
-  const [step, setStep] = useState<Step>("preset")
+  const [dirName] = useState(() => basename(cwd))
+  const [defaultProjectName] = useState(
+    () =>
+      basename(cwd)
+        .replace(/[^a-z0-9-]/gi, "-")
+        .toLowerCase() || "my-app",
+  )
+  const [inferredOwner] = useState(() => inferGithubOwner(cwd))
+  const [termuxDetected] = useState(() => isTermuxEnvironment())
+
+  const [step, setStep] = useState<Step>("projectName")
   const [presetId, setPresetId] = useState<PresetId | "custom">("recommended")
   const [projectName, setProjectName] = useState(defaultProjectName)
   const [githubOwner, setGithubOwner] = useState(inferredOwner)
@@ -283,73 +242,102 @@ export function SetupTUI({
   const [testing, setTesting] = useState<FeatureId[]>([])
   const [gitFeatures, setGitFeatures] = useState<FeatureId[]>([])
   const [release, setRelease] = useState<FeatureId[]>([])
-  const [termuxMode, setTermuxMode] = useState<"auto" | "yes" | "no">(
-    termuxDetected ? "yes" : "auto",
-  )
-  const [error, setError] = useState<string>("")
+  const [termuxMode, setTermuxMode] = useState<"auto" | "yes" | "no">("auto")
+  const [error, setError] = useState("")
 
-  const { exit } = useApp()
+  React.useEffect(() => {
+    if (termuxDetected) setTermuxMode("yes")
+  }, [termuxDetected])
 
-  useInput((input, key) => {
+  useInput((_, key) => {
     if (key.escape) {
       onCancel()
       exit()
     }
   })
 
-  const presetChoices: SelectItem[] = [
-    ...getPresetChoices().map((p) => ({
-      label: p.label,
-      value: p.value,
-    })),
-    { label: "Custom - Manual selection", value: "custom" },
-  ]
+  const presetChoices = useMemo<SelectItem[]>(
+    () => [
+      {
+        label: "Yes, use recommended defaults - TypeScript, ESLint, Vitest, Husky, Changesets",
+        value: "recommended",
+      },
+      {
+        label: "No, use minimal defaults - bare minimum",
+        value: "minimal",
+      },
+      ...getPresetChoices().map((p) => ({
+        label: `${p.label} - ${p.value}`,
+        value: p.value,
+      })),
+      { label: "No, customize settings - Choose your own preferences", value: "custom" },
+    ],
+    [],
+  )
 
-  const projectTypeItems = Object.entries(PROJECT_TYPES).map(([id, def]) => ({
-    label: `${def.name} - ${def.description}`,
-    value: id,
-  }))
+  const projectTypeItems = useMemo<SelectItem[]>(
+    () =>
+      Object.entries(PROJECT_TYPES).map(([id, def]) => ({
+        label: `${def.icon} ${def.name} - ${def.description}`,
+        value: id,
+      })),
+    [],
+  )
 
-  const devInfraItems = Object.entries(FEATURES)
-    .filter(([, def]) => def.group === "dev-infra")
-    .map(([id, def]) => ({
-      label: def.name,
-      value: id,
-      hint: def.description,
-    }))
+  const devInfraItems = useMemo(
+    () =>
+      Object.entries(FEATURES)
+        .filter(([, def]) => def.group === "dev-infra")
+        .map(([id, def]) => ({
+          label: def.name,
+          value: id,
+          description: def.description,
+        })),
+    [],
+  )
 
-  const testingItems = Object.entries(FEATURES)
-    .filter(([, def]) => def.group === "testing-quality")
-    .map(([id, def]) => ({
-      label: def.name,
-      value: id,
-      hint: def.description,
-    }))
+  const testingItems = useMemo(
+    () =>
+      Object.entries(FEATURES)
+        .filter(([, def]) => def.group === "testing-quality")
+        .map(([id, def]) => ({
+          label: def.name,
+          value: id,
+          description: def.description,
+        })),
+    [],
+  )
 
-  const gitItems = Object.entries(FEATURES)
-    .filter(([, def]) => def.group === "git-workflow")
-    .map(([id, def]) => ({
-      label: def.name,
-      value: id,
-      hint: def.description,
-    }))
+  const gitItems = useMemo(
+    () =>
+      Object.entries(FEATURES)
+        .filter(([, def]) => def.group === "git-workflow")
+        .map(([id, def]) => ({
+          label: def.name,
+          value: id,
+          description: def.description,
+        })),
+    [],
+  )
 
-  const releaseItems = Object.entries(FEATURES)
-    .filter(([, def]) => def.group === "release")
-    .map(([id, def]) => ({
-      label: def.name,
-      value: id,
-      hint: def.description,
-    }))
+  const releaseItems = useMemo(
+    () =>
+      Object.entries(FEATURES)
+        .filter(([, def]) => def.group === "release")
+        .map(([id, def]) => ({
+          label: def.name,
+          value: id,
+          description: def.description,
+        })),
+    [],
+  )
 
   const validateProjectName = (value: string): string | undefined => {
-    if (!value) return "Project name is required (e.g. my-awesome-app)"
-    if (value !== value.toLowerCase()) return "Must be lowercase - npm requires it"
-    if (!/^[a-z0-9-_@/]+$/.test(value))
-      return "Only lowercase, numbers, dash, underscore, @, / allowed"
-    if (value.length > 214) return "Name too long - max 214 chars"
-    if (value.startsWith("-") || value.startsWith("_"))
-      return "Cannot start with dash or underscore"
+    if (!value) return "Project name is required"
+    if (value !== value.toLowerCase()) return "Must be lowercase"
+    if (!/^[a-z0-9-_@/]+$/.test(value)) return "Only lowercase, numbers, dash, underscore, @, /"
+    if (value.length > 214) return "Max 214 chars"
+    if (value.startsWith("-") || value.startsWith("_")) return "Cannot start with - or _"
     return undefined
   }
 
@@ -386,111 +374,37 @@ export function SetupTUI({
     }
   }
 
-  const Header = () => (
-    <Box
-      borderStyle="double"
-      borderColor="cyan"
-      paddingX={2}
-      paddingY={1}
-      flexDirection="column"
-      marginBottom={1}
-    >
-      <Box>
-        <Text bold color="cyan">
-          TEMPLATE BOOTSTRAP TUI
-        </Text>
-        <Text> </Text>
-        <Text color="white" bold>
-          v2.0.0
-        </Text>
-        <Text dimColor> | Ink + React | Modern</Text>
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>AI Agent software development template - Interactive setup wizard</Text>
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>Use keyboard to navigate, ESC to cancel at any time</Text>
-      </Box>
-    </Box>
-  )
-
-  const Footer = () => (
-    <Box borderStyle="round" borderColor="gray" paddingX={1} marginTop={1} flexDirection="column">
-      <Text dimColor>
-        [ESC] Cancel | [Enter] Confirm | [Up/Down] Navigate | [Space] Toggle (multi-select)
-      </Text>
-      <Text dimColor>
-        Current: {STEP_LABELS[step]} ({STEP_ORDER.indexOf(step) + 1}/{STEP_ORDER.length}) | CWD:{" "}
-        {dirName}
-      </Text>
-    </Box>
-  )
-
   const renderStep = () => {
     switch (step) {
-      case "preset":
-        return (
-          <Box flexDirection="column">
-            <Box
-              borderStyle="round"
-              borderColor="cyan"
-              paddingX={1}
-              marginBottom={1}
-              flexDirection="column"
-            >
-              <Text bold color="cyan">
-                Step 1/11: Select Preset
-              </Text>
-              <Text dimColor>
-                Choose a preset or customize manually - Presets provide balanced defaults
-              </Text>
-            </Box>
-            {termuxDetected && (
-              <Box
-                marginBottom={1}
-                paddingX={1}
-                borderStyle="round"
-                borderColor="yellow"
-                flexDirection="column"
-              >
-                <Text color="yellow" bold>
-                  ! Termux detected
-                </Text>
-                <Text color="yellow">
-                  Will optimize for Termux environment (memory limits, webpack fallback)
-                </Text>
-              </Box>
-            )}
-            <Box borderStyle="round" borderColor="white" padding={1} flexDirection="column">
-              <Box marginBottom={1}>
-                <Text bold>Available presets:</Text>
-              </Box>
-              <SelectInput
-                items={presetChoices}
-                onSelect={(item) => {
-                  setPresetId(item.value as PresetId | "custom")
-                  setStep("projectName")
-                }}
-              />
-            </Box>
-          </Box>
-        )
-
       case "projectName":
         return (
-          <InputField
-            label="Step 2/11: Project Name"
-            hint={`Default: ${defaultProjectName} | Lowercase, dash separated, max 214 chars`}
+          <QuestionInput
+            question="What is your project named?"
+            hint={`(${defaultProjectName})`}
             value={projectName}
             onChange={setProjectName}
             error={error}
-            onSubmit={(value) => {
-              const err = validateProjectName(value)
+            onSubmit={(v) => {
+              const err = validateProjectName(v)
               if (err) {
                 setError(err)
                 return
               }
               setError("")
+              setStep("recommended")
+            }}
+          />
+        )
+
+      case "recommended":
+        return (
+          <QuestionSelect
+            question="Would you like to use the recommended defaults?"
+            hint={termuxDetected ? "(Termux detected)" : undefined}
+            items={presetChoices}
+            onSelect={(item) => {
+              const val = item.value as PresetId | "custom"
+              setPresetId(val)
               setStep("githubOwner")
             }}
           />
@@ -498,9 +412,9 @@ export function SetupTUI({
 
       case "githubOwner":
         return (
-          <InputField
-            label="Step 3/11: GitHub Owner"
-            hint={`Default: ${inferredOwner} | Used for CODEOWNERS, funding, security policy`}
+          <QuestionInput
+            question="What is your GitHub owner?"
+            hint={`(${inferredOwner}) Used for CODEOWNERS, funding`}
             value={githubOwner}
             onChange={setGithubOwner}
             onSubmit={() => setStep("description")}
@@ -509,117 +423,80 @@ export function SetupTUI({
 
       case "description":
         return (
-          <InputField
-            label="Step 4/11: Description"
-            hint="Max 200 chars, concise, describes purpose"
+          <QuestionInput
+            question="What is your project description?"
+            hint="(max 200 chars)"
             value={description}
             onChange={setDescription}
             onSubmit={() => {
-              if (presetId !== "custom") {
-                setStep("confirm")
-              } else {
-                setStep("projectType")
-              }
+              if (presetId !== "custom") setStep("confirm")
+              else setStep("projectType")
             }}
           />
         )
 
       case "projectType":
         return (
-          <Box flexDirection="column">
-            <Box
-              borderStyle="round"
-              borderColor="cyan"
-              paddingX={1}
-              marginBottom={1}
-              flexDirection="column"
-            >
-              <Text bold>Step 5/11: Project Type</Text>
-              <Text dimColor>Select the type of project you are creating</Text>
-            </Box>
-            <Box borderStyle="round" borderColor="white" padding={1} flexDirection="column">
-              <Box marginBottom={1}>
-                <Text bold>Types:</Text>
-              </Box>
-              <SelectInput
-                items={projectTypeItems}
-                onSelect={(item) => {
-                  setProjectType(item.value as ProjectTypeId)
-                  const typeDef = PROJECT_TYPES[item.value as ProjectTypeId]
-                  const defaults = Object.entries(FEATURES)
-                    .filter(([, def]) => {
-                      if (typeDef.defaultFeatures && item.value in typeDef.defaultFeatures) {
-                        return (typeDef.defaultFeatures as any)[item.value as FeatureId]
-                      }
-                      return def.defaultEnabled
-                    })
-                    .map(([id]) => id as FeatureId)
-                  setDevInfra(defaults.filter((id) => FEATURES[id].group === "dev-infra"))
-                  setTesting(defaults.filter((id) => FEATURES[id].group === "testing-quality"))
-                  setGitFeatures(defaults.filter((id) => FEATURES[id].group === "git-workflow"))
-                  setRelease(defaults.filter((id) => FEATURES[id].group === "release"))
-                  setStep("devInfra")
-                }}
-              />
-            </Box>
-          </Box>
+          <QuestionSelect
+            question="What is your project type?"
+            items={projectTypeItems}
+            onSelect={(item) => {
+              const id = item.value as ProjectTypeId
+              setProjectType(id)
+              const typeDef = PROJECT_TYPES[id]
+              const defaults = Object.entries(FEATURES)
+                .filter(([, def]) => {
+                  if (typeDef.defaultFeatures && id in typeDef.defaultFeatures) {
+                    return (typeDef.defaultFeatures as any)[id as FeatureId]
+                  }
+                  return def.defaultEnabled
+                })
+                .map(([fid]) => fid as FeatureId)
+              setDevInfra(defaults.filter((fid) => FEATURES[fid].group === "dev-infra"))
+              setTesting(defaults.filter((fid) => FEATURES[fid].group === "testing-quality"))
+              setGitFeatures(defaults.filter((fid) => FEATURES[fid].group === "git-workflow"))
+              setRelease(defaults.filter((fid) => FEATURES[fid].group === "release"))
+              setStep("devInfra")
+            }}
+          />
         )
 
       case "devInfra":
         return (
-          <ModernMultiSelect
-            title="Step 6/11: Dev & Infra"
-            description="Docker, devcontainer, termux, etc."
+          <MultiSelect
+            question="Would you like to use dev & infra features?"
+            hint="Docker, devcontainer, termux etc."
             items={devInfraItems}
             initialSelected={devInfra}
-            onSubmit={(selected) => {
-              setDevInfra(selected as FeatureId[])
-              if (selected.includes("termux")) {
-                setStep("termuxMode")
-              } else {
-                setStep("testing")
-              }
+            onSubmit={(sel) => {
+              setDevInfra(sel as FeatureId[])
+              if (sel.includes("termux")) setStep("termuxMode")
+              else setStep("testing")
             }}
           />
         )
 
       case "termuxMode":
         return (
-          <Box flexDirection="column">
-            <Box
-              borderStyle="round"
-              borderColor="cyan"
-              paddingX={1}
-              marginBottom={1}
-              flexDirection="column"
-            >
-              <Text bold>Step 7/11: Termux Mode</Text>
-              <Text dimColor>How to handle Termux environment optimizations</Text>
-            </Box>
-            <Box borderStyle="round" borderColor="white" padding={1} flexDirection="column">
-              <Box marginBottom={1}>
-                <Text bold>Select mode:</Text>
-              </Box>
-              <SelectInput
-                items={[
-                  { label: "Auto - Detect automatically (recommended)", value: "auto" },
-                  { label: "Yes - Always enable optimizations", value: "yes" },
-                  { label: "No - Disable, keep files", value: "no" },
-                ]}
-                onSelect={(item) => {
-                  setTermuxMode(item.value as any)
-                  setStep("testing")
-                }}
-              />
-            </Box>
-          </Box>
+          <QuestionSelect
+            question="How to handle Termux environment?"
+            items={[
+              { label: "Auto - Detect automatically (recommended)", value: "auto" },
+              { label: "Yes - Always enable optimizations", value: "yes" },
+              { label: "No - Disable, keep files", value: "no" },
+            ]}
+            onSelect={(item) => {
+              setTermuxMode(item.value as any)
+              setStep("testing")
+            }}
+          />
         )
 
       case "testing":
         return (
-          <ModernMultiSelect
-            title="Step 8/11: Testing & Quality"
-            description="Vitest, Playwright, cspell, knip, coverage, determinism"
+          <MultiSelect
+            question="Would you like to use testing & quality features?"
+            hint="Vitest, Playwright, cspell, knip, coverage"
             items={testingItems}
             initialSelected={testing}
             onSubmit={(s) => {
@@ -631,9 +508,9 @@ export function SetupTUI({
 
       case "git":
         return (
-          <ModernMultiSelect
-            title="Step 9/11: Git & Workflow"
-            description="Husky, commitlint, templates, renovate, stale-bot"
+          <MultiSelect
+            question="Would you like to use git & workflow features?"
+            hint="Husky, commitlint, templates, renovate"
             items={gitItems}
             initialSelected={gitFeatures}
             onSubmit={(s) => {
@@ -645,9 +522,9 @@ export function SetupTUI({
 
       case "release":
         return (
-          <ModernMultiSelect
-            title="Step 10/11: Release"
-            description="Changesets, size-limit, publint"
+          <MultiSelect
+            question="Would you like to use release features?"
+            hint="Changesets, size-limit, publint"
             items={releaseItems}
             initialSelected={release}
             onSubmit={(s) => {
@@ -659,102 +536,51 @@ export function SetupTUI({
 
       case "confirm": {
         const answers = buildAnswers()
-        const enabled = Object.entries(answers.features).filter(([, v]) => v)
-        const disabled = Object.entries(answers.features).filter(([, v]) => !v)
+        const enabled = Object.entries(answers.features)
+          .filter(([, v]) => v)
+          .map(([k]) => k)
+        const disabled = Object.entries(answers.features)
+          .filter(([, v]) => !v)
+          .map(([k]) => k)
+
         return (
           <Box flexDirection="column">
-            <Box
-              borderStyle="double"
-              borderColor="green"
-              paddingX={1}
-              paddingY={1}
-              marginBottom={1}
-              flexDirection="column"
-            >
-              <Text bold color="green">
-                Step 11/11: Confirm & Execute
+            <Box>
+              <Text bold>Review your configuration:</Text>
+            </Box>
+            <Box marginTop={1} flexDirection="column">
+              <Text>
+                <Text dimColor>Name:</Text> {answers.projectName}
               </Text>
-              <Text dimColor>Review your configuration before applying</Text>
+              <Text>
+                <Text dimColor>Description:</Text> {answers.projectDescription}
+              </Text>
+              <Text>
+                <Text dimColor>Owner:</Text> {answers.githubOwner}
+              </Text>
+              <Text>
+                <Text dimColor>Type:</Text> {answers.projectType}
+              </Text>
+              {answers.preset ? (
+                <Text>
+                  <Text dimColor>Preset:</Text> {answers.preset}
+                </Text>
+              ) : null}
+              <Text>
+                <Text dimColor>Enabled ({enabled.length}):</Text> {enabled.join(", ") || "none"}
+              </Text>
+              <Text>
+                <Text dimColor>Disabled ({disabled.length}):</Text> {disabled.join(", ") || "none"}
+              </Text>
+              <Text dimColor>Will modify files in: {cwd} (backup auto-created)</Text>
             </Box>
-
-            <Box
-              borderStyle="round"
-              borderColor="white"
-              paddingX={1}
-              paddingY={1}
-              flexDirection="column"
-              gap={1}
-            >
-              <Box flexDirection="column">
-                <Text bold color="cyan">
-                  -- Project Info --
-                </Text>
-                <Box paddingLeft={2} flexDirection="column">
-                  <Text>
-                    <Text bold>Name:</Text> {answers.projectName}
-                  </Text>
-                  <Text>
-                    <Text bold>Description:</Text> {answers.projectDescription}
-                  </Text>
-                  <Text>
-                    <Text bold>Owner:</Text> {answers.githubOwner}
-                  </Text>
-                  <Text>
-                    <Text bold>Type:</Text> {answers.projectType}
-                  </Text>
-                  {answers.preset && (
-                    <Text>
-                      <Text bold>Preset:</Text> {answers.preset}
-                    </Text>
-                  )}
-                </Box>
-              </Box>
-
-              <Box flexDirection="column">
-                <Text bold color="green">
-                  -- Enabled ({enabled.length}) --
-                </Text>
-                <Box paddingLeft={2}>
-                  <Text color="green">{enabled.map(([k]) => k).join(", ") || "none"}</Text>
-                </Box>
-              </Box>
-
-              <Box flexDirection="column">
-                <Text bold color="gray">
-                  -- Disabled ({disabled.length}) --
-                </Text>
-                <Box paddingLeft={2}>
-                  <Text dimColor>{disabled.map(([k]) => k).join(", ") || "none"}</Text>
-                </Box>
-              </Box>
-
-              <Box
-                borderStyle="round"
-                borderColor="yellow"
-                paddingX={1}
-                marginTop={1}
-                flexDirection="column"
-              >
-                <Text bold color="yellow">
-                  ! This will modify files in: {cwd}
-                </Text>
-                <Text dimColor>Backup will be created automatically, use --no-backup to skip</Text>
-              </Box>
-            </Box>
-
-            <Box
-              marginTop={1}
-              borderStyle="round"
-              borderColor="green"
-              padding={1}
-              flexDirection="column"
-            >
-              <Text bold>Ready to execute?</Text>
-              <Box marginTop={1}>
+            <Box marginTop={1} flexDirection="column">
+              <PromptLine question="Ready to execute?" />
+              <Box marginLeft={2} marginTop={1}>
                 <SelectInput
                   items={[
-                    { label: "[*] Execute setup", value: "yes" },
-                    { label: "[ ] Cancel", value: "no" },
+                    { label: "Yes, execute setup", value: "yes" },
+                    { label: "No, cancel", value: "no" },
                   ]}
                   onSelect={(item) => {
                     if (item.value === "yes") {
@@ -765,6 +591,14 @@ export function SetupTUI({
                       exit()
                     }
                   }}
+                  indicatorComponent={({ isSelected }) => (
+                    <Text color={isSelected ? "cyan" : undefined}>{isSelected ? ">" : " "} </Text>
+                  )}
+                  itemComponent={({ isSelected, label }) => (
+                    <Text color={isSelected ? "cyan" : undefined} bold={isSelected}>
+                      {label}
+                    </Text>
+                  )}
                 />
               </Box>
             </Box>
@@ -776,10 +610,17 @@ export function SetupTUI({
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Header />
-      <ProgressBar currentStep={step} />
-      <Box marginY={1}>{renderStep()}</Box>
-      <Footer />
+      <Box>
+        <Text bold>create-template-app</Text>
+        <Text dimColor> v2.0.0 - Template Bootstrap</Text>
+      </Box>
+      <Box marginTop={1} flexDirection="column">
+        <Text dimColor>AI Agent software development template</Text>
+        <Text dimColor>
+          Press ESC to cancel | {dirName} | {step}
+        </Text>
+      </Box>
+      <Box marginTop={1}>{renderStep()}</Box>
     </Box>
   )
 }
