@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "3000:3000" # Next.js / generic
+      - "5173:5173" # Vite
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+      - /app/dist
+      - /app/build
+      - pnpm-store:/pnpm/store
+    environment:
+      - NODE_ENV=development
+    command: pnpm dev
+    stdin_open: true
+    tty: true
+
+  # Example: Vite standalone
+  # vite:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   ports:
+  #     - "5173:5173"
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #   command: pnpm dev:vite
+
+  # Example: Monorepo with multiple apps
+  # web:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #     - /app/apps/web/.next
+  #   command: pnpm --filter web dev
+
+volumes:
+  pnpm-store:

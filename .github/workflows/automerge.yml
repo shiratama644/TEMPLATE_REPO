@@ -1,0 +1,201 @@
+name: Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+  workflow_run:
+    workflows: ["CI", "Security", "Bundle Size", "Lighthouse CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number to auto-merge'
+        required: false
+        type: number
+
+concurrency:
+  group: automerge-${{ github.event.pull_request.number || github.event.workflow_run.id || inputs.pr || github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  actions: read
+
+jobs:
+  # ==========================================================================
+  # Enable auto-merge for Renovate / Dependabot / minor patches
+  # ==========================================================================
+  enable-automerge:
+    name: Enable auto-merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: |
+      (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') &&
+      (
+        github.actor == 'renovate[bot]' ||
+        github.actor == 'dependabot[bot]' ||
+        contains(github.event.pull_request.labels.*.name, 'dependencies') ||
+        startsWith(github.event.pull_request.title, 'chore:') ||
+        startsWith(github.event.pull_request.title, 'chore(deps)') ||
+        startsWith(github.event.pull_request.title, 'fix(deps)') ||
+        contains(github.event.pull_request.title, 'deps:')
+      )
+    steps:
+      - name: Check PR conditions
+        id: check
+        run: |
+          echo "Actor: ${{ github.actor }}"
+          echo "Title: ${{ github.event.pull_request.title }}"
+          echo "Labels: ${{ join(github.event.pull_request.labels.*.name, ', ') }}"
+          echo "Draft: ${{ github.event.pull_request.draft }}"
+
+          # Skip drafts
+          if [[ "${{ github.event.pull_request.draft }}" == "true" ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Draft PR - skipping auto-merge"
+            exit 0
+          fi
+
+          # Only auto-merge minor/patch for safety, unless label says automerge
+          TITLE="${{ github.event.pull_request.title }}"
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ', ') }}"
+
+          # If explicitly labeled automerge, allow
+          if echo "$LABELS" | grep -qi "automerge"; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Labeled automerge - allowing"
+            exit 0
+          fi
+
+          # For renovate/dependabot, check if it's patch/minor (not major)
+          # Renovate groups major separately, so non-major should be safe
+          if echo "$TITLE" | grep -qE "major|BREAKING"; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Major/BREAKING change - skipping auto-merge"
+            exit 0
+          fi
+
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+      - name: Enable auto-merge (squash)
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          echo "Enabling auto-merge for PR #${{ github.event.pull_request.number }}"
+          gh pr merge ${{ github.event.pull_request.number }} --auto --squash --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment auto-merge enabled
+        if: steps.check.outputs.skip == 'false'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr,
+              body: `🤖 Auto-merge enabled (squash) — will merge when CI passes.\n\n- Actor: \`${{ github.actor }}\`\n- Title: \`${{ github.event.pull_request.title }}\`\n- Labels: \`${{ join(github.event.pull_request.labels.*.name, ', ') }}\`\n\n> To disable, remove \`automerge\` label or convert to draft.`
+            });
+
+  # ==========================================================================
+  # Auto-merge on CI success (workflow_run)
+  # ==========================================================================
+  automerge-on-success:
+    name: Auto-merge on CI success
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: |
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    steps:
+      - name: Get PR from workflow_run
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            console.log(`Workflow ${run.name} succeeded for ${run.head_branch}`);
+
+            // Find PR associated with this run
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${run.head_branch}`
+            });
+
+            if (prs.data.length === 0) {
+              console.log('No open PR found for branch', run.head_branch);
+              return;
+            }
+
+            const pr = prs.data[0];
+            console.log(`Found PR #${pr.number}: ${pr.title} by ${pr.user.login}`);
+
+            // Only for renovate/dependabot or dependencies label
+            const isBot = pr.user.login === 'renovate[bot]' || pr.user.login === 'dependabot[bot]';
+            const hasDepLabel = pr.labels.some(l => l.name === 'dependencies' || l.name === 'automerge');
+            const isChore = pr.title.startsWith('chore:') || pr.title.includes('deps:');
+
+            if (!isBot && !hasDepLabel && !isChore) {
+              console.log('Not a bot/dependencies PR - skipping');
+              return;
+            }
+
+            // Check if PR is draft
+            if (pr.draft) {
+              console.log('Draft PR - skipping');
+              return;
+            }
+
+            // Check if auto-merge already enabled
+            if (pr.auto_merge) {
+              console.log('Auto-merge already enabled');
+              return;
+            }
+
+            // Check other required workflows
+            const checks = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha
+            });
+
+            const failed = checks.data.check_runs.filter(c => c.conclusion === 'failure' || c.conclusion === 'cancelled');
+            if (failed.length > 0) {
+              console.log('Some checks failed, skipping:', failed.map(c => c.name));
+              return;
+            }
+
+            core.setOutput('pr_number', pr.number);
+            core.setOutput('should_merge', 'true');
+
+      - name: Enable auto-merge after CI success
+        if: steps.pr.outputs.should_merge == 'true'
+        run: |
+          echo "Enabling auto-merge for PR #${{ steps.pr.outputs.pr_number }} after CI success"
+          gh pr merge ${{ steps.pr.outputs.pr_number }} --auto --squash --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================================================
+  # Manual auto-merge dispatch
+  # ==========================================================================
+  manual-automerge:
+    name: Manual auto-merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'workflow_dispatch' && inputs.pr != 0
+    steps:
+      - name: Enable auto-merge manually
+        run: |
+          echo "Manually enabling auto-merge for PR #${{ inputs.pr }}"
+          gh pr merge ${{ inputs.pr }} --auto --squash --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

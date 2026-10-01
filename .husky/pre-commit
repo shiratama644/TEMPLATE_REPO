@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+# pre-commit: lint-staged + typecheck (blocking) + determinism warning
+# husky v9 style (no need for _/husky.sh)
+# Decisions: cspell all files (not md-only), typecheck enabled (blocking)
+
+echo "🔍 Running pre-commit checks (lint-staged + typecheck)..."
+
+# lint-staged: biome check + cspell (all files) per package.json lint-staged config
+pnpm exec lint-staged
+LINT_STAGED_EXIT=$?
+
+if [ $LINT_STAGED_EXIT -ne 0 ]; then
+  echo "❌ lint-staged failed"
+  exit $LINT_STAGED_EXIT
+fi
+
+# typecheck: blocking (per user decision precommit-scope=custom)
+echo "🔍 Running typecheck..."
+pnpm typecheck
+TYPECHECK_EXIT=$?
+
+if [ $TYPECHECK_EXIT -ne 0 ]; then
+  echo "❌ typecheck failed — fix types before commit"
+  exit $TYPECHECK_EXIT
+fi
+
+# determinism check: non-blocking warning (optional)
+# pnpm check:determinism || echo "⚠ determinism check warning (non-blocking)"
+
+echo "✅ pre-commit checks passed"

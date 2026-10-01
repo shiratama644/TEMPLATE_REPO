@@ -1,0 +1,153 @@
+name: Mutation Testing
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  workflow_dispatch:
+  schedule:
+    # Weekly on Tuesday 3AM JST (Monday 18:00 UTC)
+    - cron: '0 18 * * 1'
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  mutation:
+    name: Stryker Mutation Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Stryker mutation testing
+        run: |
+          echo "🧬 Running mutation testing..."
+          pnpm test:mutation:ci 2>&1 | tee mutation.log || {
+            echo "::warning::Mutation testing failed or timed out"
+            cat mutation.log | tail -100
+            # Don't fail PR, just warn - mutation testing is expensive
+            exit 0
+          }
+
+      - name: Parse mutation score
+        if: always()
+        run: |
+          echo "📊 Parsing mutation report..."
+          if [ -f "reports/mutation/mutation.json" ]; then
+            SCORE=$(cat reports/mutation/mutation.json | python3 -c "import json,sys; data=json.load(sys.stdin); print(data.get('mutationScore', data.get('score', 0)))" 2>/dev/null || echo "0")
+            echo "Mutation score: $SCORE"
+            echo "score=$SCORE" >> $GITHUB_OUTPUT
+          else
+            echo "No mutation report found"
+            echo "score=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report-${{ github.sha }}
+          path: |
+            reports/mutation/
+            mutation.log
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Comment PR with mutation results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            let report = null;
+            try {
+              if (fs.existsSync('reports/mutation/mutation.json')) {
+                report = JSON.parse(fs.readFileSync('reports/mutation/mutation.json', 'utf8'));
+              }
+            } catch {}
+
+            let body = `### 🧬 Mutation Testing Report
+
+            | Metric | Value |
+            |--------|-------|
+            | **Score** | ${report ? (report.mutationScore || report.score || 'N/A') : 'N/A'}% |
+            | **Total mutants** | ${report ? (report.totalMutants || 'N/A') : 'N/A'} |
+            | **Killed** | ${report ? (report.killed || 'N/A') : 'N/A'} |
+            | **Survived** | ${report ? (report.survived || 'N/A') : 'N/A'} |
+            | **Timeout** | ${report ? (report.timedOut || 'N/A') : 'N/A'} |
+
+            #### What is mutation testing?
+            Mutation testing introduces small changes (mutants) to your code and checks if tests catch them.
+            - **Killed**: Test failed when mutant introduced (good)
+            - **Survived**: Test passed despite mutant (bad - missing test)
+            - **High score** = strong tests
+
+            #### 📦 Artifacts
+            - Full HTML report: Download from [Actions artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (name: \`mutation-report-${{ github.sha }}\`)
+            - Retention: 14 days
+
+            #### 💡 Local run
+            \`\`\`bash
+            pnpm test:mutation
+            # or
+            pnpm test:mutation:ci
+            \`\`\`
+
+            > Edit \`stryker.config.json\` to customize.
+
+            ---
+            *Checked at ${new Date().toISOString()}*
+            `;
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+
+            const existing = comments.data.find(c => c.body.includes('### 🧬 Mutation Testing Report'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: body
+              });
+            }

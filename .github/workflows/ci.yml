@@ -1,0 +1,228 @@
+name: CI
+
+on:
+  # mainへのpushはCI実行、arena/**へのpushはPR経由のpull_requestが担う
+  # ドキュメント系のみの変更ではCIをスキップ（README.md / AGENTS.md / .agent/** / docs/**）
+  push:
+    branches: [main, 'arena/**']
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Run specific job (all/quality/e2e)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - quality
+          - e2e
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ==========================================================================
+  # 型・lint・決定論・ユニットテスト・カバレッジ・E2E discovery（最速でfailを検出）
+  # cod-web arena/01a0b161-cod-web の quality-gates.yml を pnpm用に汎用化
+  # ==========================================================================
+  static-checks:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.job == 'all' || inputs.job == 'quality' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        # versionはpackage.jsonのpackageManager (pnpm@12.6.0) から解決。
+        # versionを明示すると重複指定エラー (Multiple versions of pnpm specified) で失敗するため書かない。
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript type check
+        run: pnpm typecheck
+
+      - name: Biome lint
+        run: pnpm lint
+
+      - name: Security check (secrets + audit + licenses)
+        run: pnpm security:check --audit-level=high || echo "::warning::Security checks found issues (non-blocking for template)"
+
+      - name: Determinism guard (forbidden API detection)
+        run: pnpm check:determinism
+
+      - name: CSpell (spell check)
+        run: pnpm cspell
+
+      - name: Knip (unused code detection)
+        run: pnpm knip
+
+      - name: Publint (package quality)
+        run: pnpm publint || echo "publint warnings (non-blocking for template)"
+
+      - name: Size Limit (bundle size)
+        run: pnpm size || echo "size-limit check (non-blocking for template)"
+
+      - name: Unit tests + Coverage (threshold 100%)
+        run: pnpm test:coverage
+
+      - name: E2E spec discovery (--list, no browser)
+        run: pnpm test:e2e -- --list
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # ==========================================================================
+  # ビルド（production buildが通ることを保証）
+  # ==========================================================================
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: static-checks
+    if: ${{ always() && (github.event_name != 'workflow_dispatch' || inputs.job == 'all' || inputs.job == 'quality') && (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped') }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore build cache (Next.js, Vite, Turbo, generic)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+            .cache/
+            node_modules/.vite
+            .vite
+            .turbo
+            .turbo/cache
+            node_modules/.cache
+            packages/*/node_modules/.vite
+            apps/*/.next/cache
+            apps/*/node_modules/.vite
+          key: build-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'tsconfig.json', 'vite.config.*', 'next.config.*', 'turbo.json') }}
+          restore-keys: |
+            build-${{ runner.os }}-
+            build-
+
+      - name: Log environment info (Termux detection)
+        run: node --experimental-strip-types scripts/lib/termux.ts 2>&1 || node --experimental-strip-types -e "import('./scripts/lib/termux.ts').then(m=>m.logEnvironmentInfo())" 2>&1 || echo "Termux check skipped"
+
+      - name: Build
+        run: pnpm build
+
+      - name: Archive build output (if exists)
+        if: success()
+        run: |
+          if [ -d dist ]; then tar -czf build-output.tgz dist; fi
+          if [ -d .next ]; then tar --exclude='.next/cache' -czf next-build.tgz .next; fi
+          ls -lh *.tgz 2>/dev/null || echo "No build artifacts to archive"
+
+      - name: Upload build output
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            build-output.tgz
+            next-build.tgz
+          retention-days: 1
+          if-no-files-found: ignore
+
+  # ==========================================================================
+  # E2E (Playwright): push (mainマージ) と手動実行時のみ
+  # PRプレビューでは静的チェック優先
+  # cod-web最新arenaのe2e jobをpnpm用に汎用化
+  # ==========================================================================
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [static-checks, build]
+    if: ${{ always() && (github.event_name == 'push' || inputs.job == 'all' || inputs.job == 'e2e' || (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'e2e'))) && (needs.static-checks.result == 'success' || needs.static-checks.result == 'skipped') }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+        continue-on-error: true
+
+      - name: Extract build output
+        run: |
+          if [ -f build-output.tgz ]; then tar -xzf build-output.tgz; fi
+          if [ -f next-build.tgz ]; then tar -xzf next-build.tgz; fi
+          ls -lh dist .next 2>/dev/null || echo "No build artifacts restored"
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          CI: 'true'
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

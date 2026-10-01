@@ -1,0 +1,24 @@
+{
+  "threshold": 5,
+  "reporters": ["console"],
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "node_modules/**",
+    "dist/**",
+    ".next/**",
+    "coverage/**",
+    "reports/**",
+    "pnpm-lock.yaml"
+  ],
+  "absolute": true,
+  "gitignore": true,
+  "format": ["typescript", "javascript"],
+  "minLines": 10,
+  "minTokens": 50,
+  "maxLines": 500,
+  "maxSize": "100kb",
+  "skipLocal": false,
+  "exitCode": 0
+}

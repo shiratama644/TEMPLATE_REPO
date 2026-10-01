@@ -1,0 +1,28 @@
+name: "CodeQL Config"
+
+# Disable default queries, use security-extended
+# See https://codeql.github.com/docs/codeql-cli/using-the-advanced-functionality-of-the-codeql-cli/specifying-command-line-options/
+
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+
+# Paths to ignore (in addition to defaults)
+paths-ignore:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/.next/**"
+  - "**/coverage/**"
+  - "**/.turbo/**"
+  - "**/playwright-report/**"
+  - "**/test-results/**"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - "**/__tests__/**"
+  - "**/_tests_/**"
+  - "**/sbom/**"
+
+# Paths to include (optional, if you want to limit)
+# paths:
+#   - src
+#   - scripts

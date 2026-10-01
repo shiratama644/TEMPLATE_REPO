@@ -1,0 +1,95 @@
+name: CodeQL Security Analysis
+
+on:
+  push:
+    branches: [main, 'arena/**']
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  schedule:
+    # Weekly on Monday at 3 AM JST (Sunday 18:00 UTC)
+    - cron: '0 18 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript-typescript']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          # Use security-extended for more checks, or security-and-quality for all
+          queries: security-extended
+          # Config file if exists
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+          upload: true
+
+  # Optional: Check for CodeQL config
+  check-config:
+    name: Check CodeQL Config
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify CodeQL will run
+        run: |
+          echo "✅ CodeQL analysis will run on this PR"
+          echo "Languages: javascript-typescript"
+          echo "Queries: security-extended"
+          if [ -f .github/codeql/codeql-config.yml ]; then
+            echo "✅ Custom config found"
+            cat .github/codeql/codeql-config.yml
+          else
+            echo "ℹ️ Using default config (security-extended)"
+          fi

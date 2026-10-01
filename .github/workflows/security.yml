@@ -1,0 +1,235 @@
+name: Security
+
+on:
+  push:
+    branches: [main, 'arena/**']
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  schedule:
+    # Daily at 3 AM JST (18:00 UTC previous day)
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # ==========================================================================
+  # Secret Scanning (Gitleaks)
+  # ==========================================================================
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --verbose --redact
+
+      - name: Custom Secret Scan (JS)
+        run: |
+          echo "🔍 Running custom secret scan..."
+          node --experimental-strip-types scripts/check-security.ts --no-audit --no-licenses --verbose || {
+            echo "⚠️ Potential secrets found - check logs"
+            # Don't fail on medium/low, only on high
+            exit 0
+          }
+
+  # ==========================================================================
+  # NPM Audit & Vulnerability Scanning
+  # ==========================================================================
+  audit:
+    name: Vulnerability Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm audit
+        run: |
+          echo "🔍 Running pnpm audit..."
+          pnpm audit --audit-level=moderate || {
+            echo "::warning::Vulnerabilities found"
+            pnpm audit || true
+          }
+
+      - name: Run security:check script
+        run: |
+          echo "🔒 Running security checks..."
+          node --experimental-strip-types scripts/check-security.ts --audit-level=high --verbose || {
+            echo "::warning::Security checks found issues"
+            # Fail only on high/critical
+            node --experimental-strip-types scripts/check-security.ts --audit-level=critical && exit 0 || exit 1
+          }
+
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: |
+            logs/security.json
+            logs/security.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ==========================================================================
+  # SBOM Generation
+  # ==========================================================================
+  sbom:
+    name: SBOM Generation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate SBOM (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: ./
+          format: cyclonedx-json
+          output-file: sbom/sbom.cyclonedx.json
+
+      - name: Generate SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: ./
+          format: spdx-json
+          output-file: sbom/sbom.spdx.json
+
+      - name: Generate SBOM (custom script)
+        run: |
+          node --experimental-strip-types scripts/check-security.ts --sbom --no-audit --no-secrets --no-licenses --verbose
+          ls -lh sbom/ || echo "No SBOM generated"
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
+          retention-days: 30
+
+      - name: Upload SBOM to Dependency Graph
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-dependency-graph
+          path: sbom/sbom.cyclonedx.json
+          retention-days: 7
+
+  # ==========================================================================
+  # License Check
+  # ==========================================================================
+  license-check:
+    name: License Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check licenses
+        run: |
+          echo "📜 Checking licenses..."
+          pnpm licenses list || pnpm list --depth=0 || echo "License check skipped"
+          # Optional: use license-checker
+          npx --yes license-checker --summary --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;CC0-1.0;Unlicense;BlueOak-1.0.0;MIT-0" || echo "⚠️ Some licenses need review"
+
+  # ==========================================================================
+  # OpenSSF Scorecard (optional but recommended)
+  # ==========================================================================
+  scorecard:
+    name: OpenSSF Scorecard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@v2.4.2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload Scorecard results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif

@@ -56,20 +56,40 @@
 
 ### 3.1 検証コマンドの実行
 - `package.json` に定義されたスクリプトのみを使用する（存在しないコマンドを捏造・実行しない）。
-- 原則として commit 前に、プロジェクトで定義された検証をすべて pass させる。典型的には以下の 4 種:
+- 原則として commit 前に、プロジェクトで定義された検証をすべて pass させる。本テンプレートでは以下の 8 必須 + 2 任意(non-blocking) + infra 3種 + pre-commit:
   ```bash
-  pnpm typecheck   # 型チェック
-  pnpm lint        # Lint / Format
-  pnpm test:unit   # 単体テスト
-  pnpm build       # 本番ビルド
+  # 必須 8 gates（blocking, CIでも必須）
+  pnpm typecheck          # 型チェック (tsc --noEmit, TypeScript 6.0.3)
+  pnpm lint               # Lint / Format (Biome 2.5.14, zero-alloc/memory-leak lint含む)
+  pnpm check:determinism  # 決定論・禁止API検出 (Math.random/Date.now等が純粋層に混入していないか)
+  pnpm cspell             # スペルチェック (cspell 10.3.4)
+  pnpm knip               # 未使用コード検出 (knip 6.38.0, KNIP_DISABLE_RAW_TRANSFER=1)
+  pnpm test:unit          # 単体テスト (Vitest 5.0.2)
+  pnpm test:coverage      # カバレッジ (threshold 100%)
+  pnpm build              # 本番ビルド
+
+  # 任意 2 gates（non-blocking, warningのみ, CIでもnon-blocking）
+  pnpm publint            # パッケージ公開検証
+  pnpm size-limit         # バンドルサイズ (10kB)
+
+  # infra 3 tasks（check.ts内でのみ実行, 必須ではないが常にpass期待）
+  pnpm install            # 依存インストール（check.ts先頭で先行実行）
+  pnpm e2e:list           # E2E discovery (browser未インストール時はfallback)
+  pnpm security:check     # セキュリティ統合チェック（secret/dependency check）
+
+  # pre-commit (husky + lint-staged): commit時にstagedファイルのみ自動で lint + cspell(all) + typecheck
   ```
   ※ 実際のスクリプト名はプロジェクトの `package.json` を確認すること
   （`pnpm lint` が linter 直接呼び出しの別名だったり、`pnpm test` が watch モードだったりする）。
+  ※ 一括実行は `pnpm check`（install先行→残り並列、publint/size-limitはnon-blocking, logs/に保存、cod-web最新arena由来）
 - テストの watch モードは commit 前検証に使わない。必ず run 相当のスクリプトを使う。
 - E2E テストは実行環境によってはローカルで実行できないことがある（§6 の制約を確認）。
   実行できない場合は CI 上のみ実行し、ローカルで無理に実行しようとしない。
 - ビルドログに環境起因の既知エラー（外部 API への接続失敗等）が出ても、exit code が
   0 であれば成功扱いで問題ない（既知事象は §6 に追記して引き継ぐ）。
+- **テストファイル命名規則（公式ルール）**: テストファイルは `_tests_/` ディレクトリに同じディレクトリ構造で配置し、命名は `<name>.test.ts` 形式に統一する（例: `src/index.ts` → `_tests_/src/index.test.ts`, `scripts/lib/cache.ts` → `_tests_/scripts/cache.test.ts`）。`test-*.ts` 等の旧形式は禁止。詳細は `.agent/rules/04_verification.md` §5 を参照
+- **pre-commit**: husky 9.1.7 + lint-staged 17.6.0 により、commit時にstagedファイルのみ `biome check --write` + `biome lint` + `cspell` が自動実行される。`--no-verify` でスキップ可能だが、原則使わない
+- **commit-msg**: husky + commitlint 21.2.3 により、Conventional Commits形式（feat, fix, docs等）が強制される。不正なメッセージはcommit失敗。`pnpm commit` (commitizen) で対話的に作成可能
 
 ### 3.2 エラー対応と品質維持
 - エラー発生時はエラーメッセージやスタックトレースから根本原因を特定し、最小限の範囲で修正する。
@@ -112,7 +132,7 @@ git fetch origin <現在のブランチ>
 # 2. FETCH_HEAD にワークツリーごとリセット（この場合の --hard は例外的に必要）
 git reset --hard FETCH_HEAD
 
-# 3. 依存を再構築（復旧スクリプトがある場合はそれを使う。例: .agent/hooks/restore-sandbox-env.sh）
+# 3. 依存を再構築（復旧スクリプトがある場合はそれを使う。例: .agent/hooks/restore-env.sh）
 corepack enable pnpm >/dev/null 2>&1
 pnpm install --frozen-lockfile
 ```
@@ -191,15 +211,23 @@ pnpm install --frozen-lockfile
 ### 6.6 UI 実装ルール
 - （例）ブレークポイント分離・z-index 序列・アニメーション方針など
 
-### 6.7 ドキュメント運用
+### 6.7 ドキュメント運用（活発リポジトリ準拠 — cod-web arena/01a0b161-cod-web復旧）
+
 - テンプレート同梱のドキュメント規約を既定とする:
   - 構成・命名規則・運用ルール: `docs/README.md`
-  - タスク進捗管理: `docs/task-list.md`（**唯一の正本**。状態定義・証拠記録のルールは同ファイル冒頭）
-  - 計画書テンプレート: `docs/planning/_TEMPLATE.md`（新規計画書は必ず本形式。形式の出典: Qiita「Claude Code／Codex に中〜大規模開発を任せるためのタスク管理」）
-- ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する。
-- プロジェクトに不要なディレクトリ（`audit/` 等）は削除してよい。プロジェクト固有の
-  ドキュメント運用ルールがあればここに追記する。
-- （例）計画書・完了レポート・監査の置き場所と命名規則の変更など
+  - タスク進捗管理: `docs/task-list.md`（**唯一の正本**。状態定義・証拠記録のルールは同ファイル冒頭）— cod-web arena準拠
+  - 仕様書: `docs/arch/`（どう作るか）— product, architecture, tech-stack, bootstrap, detector, cache, termux, adr
+  - 計画書: `docs/planning/`（_TEMPLATE.md形式）— 計画書索引は README.md、完了済みは complete/
+  - 調査: `docs/research/`（競合・技術調査）— cod-web arena準拠で復旧
+  - 監査: `docs/audit/`（差分・バグ）— DropMod準拠で復旧
+  - 完了済み計画: `docs/planning/complete/`（cod-web準拠）
+  - 運用: `docs/ops/`（デプロイ・CI）
+  - 設定例: `docs/examples/`（Vite/Next）— 現在の機能
+- ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する
+- ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK、`yaml-utils-top-level.test.ts` NG）— 長過ぎると意味がない
+- 重要なのは現在の機能（Node 24 LTS + pnpm 12.6.0 + TS 6, Vite/Next/Monorepo/Turbo自動検出, Termux 9判定, キャッシュhash-skip, 12品質ゲート, coverage 100%, Bootstrap CLI 7プリセット, GitHub templates full, DX tools all）+ 活発リポジトリの構成（arch, audit, planning, research）
+- 参考: cod-web arena/01a0b161-cod-web（2026-09-26活発）— docs/: README, task-list.md, arch/ (15 files), planning/ (with complete/), ops/, research/ (DR-1..5)
+- プロジェクトに不要なディレクトリ（`audit/` 等）は削除してよいが、本テンプレートでは活発リポジトリ準拠で全て保持
 
 ---
 
@@ -319,40 +347,127 @@ pnpm install --frozen-lockfile
 
 本プロジェクトでは、Agent 自身の**コードベース知識・定型ワークフロー・タスク実行ログ**を `.agent/` 配下に構造化して永続化する。セッションをまたいで記憶を継承し、無駄な再調査を省くための仕組み。
 
-### 8.1 ディレクトリ構成
+> **構成はClaude Code公式の `.claude/` ディレクトリ構成に準拠**。ディレクトリ名は `.agent/` のまま維持する。
+> 公式仕様: https://code.claude.com/docs/en/claude-directory.md
+> 調査時点の最新仕様（2026-09-26確認）を正とする。
 
-| ディレクトリ | 役割 | 命名規則 |
-| :--- | :--- | :--- |
-| `.agent/skills/` | コードベースの**事実/仕様/暗黙了解**をサブシステム別に格納 | `kebab-case.md` |
-| `.agent/hooks/` | トリガー別の**定型手順/スクリプト**（pre-task, verify, log, recovery） | `kebab-case.md` / `.sh` / `.py` |
-| `.agent/logs/` | タスク完了毎の**実行記録** | `YYYY-MM-DD_kebab-case-summary.md` |
+### 8.1 ディレクトリ構成（公式準拠 + テンプレート拡張）
 
-各ディレクトリ直下に **`index.md`** を置き、一覧・参照条件を管理する（`logs/` は日付名でソートされるため不要）。
+```
+.agent/
+├── settings.json              # チーム共有設定（permissions, hooks, env, model）— コミット対象
+├── settings.local.json        # 個人オーバーライド（gitignore）— 個人のみ
+├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）— 公式準拠
+│   ├── 01_information-hierarchy.md
+│   ├── 02_git-workflow.md
+│   ├── 03_doc-style.md
+│   ├── 04_verification.md
+│   └── project-template.md
+├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 公式準拠
+│   ├── project-overview/      # 製品概要・構成把握
+│   ├── tech-stack/            # 技術スタック・ハマりどころ
+│   ├── sandbox-constraints/   # Sandbox制約・迂回策
+│   ├── verify-doc-integrity/  # ドキュメント整合性検証
+│   ├── diff-review-report/    # 差分レビューレポート
+│   ├── docs-maintenance/      # ドキュメント整理・URL検証（cod-web最新arena由来）
+│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理（cod-web最新arena由来）
+│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略（cod-web最新arena由来）
+│   ├── import-boundaries/     # レイヤー境界・import制限（cod-web最新arena由来）
+│   ├── determinism/           # 決定論・禁止API検出（cod-web deterministic-sim由来）
+│   ├── e2e/                   # Playwright E2E・webServer配列（cod-web最新arena由来）
+│   ├── memory-leak/           # メモリリーク防止・leave時clear（cod-web最新arena由来）
+│   └── zero-alloc/            # ゼロアロケーション・GC削減（cod-web最新arena由来）
+├── agents/                    # サブエージェント定義（name, description, tools, model等）— 公式準拠
+│   ├── explore.md
+│   ├── plan.md
+│   ├── doc-editor.md
+│   ├── code-reviewer.md
+│   └── test-writer.md
+├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh) — テンプレート拡張 + 公式hooks登録
+│   ├── index.md
+│   ├── pre-task.md
+│   ├── verify-commit.md
+│   ├── log-task.md
+│   ├── sandbox-recovery.md
+│   ├── restore-env.sh
+│   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック（PalmIDE由来）
+│   └── post_edit_verify.sh    # PostToolUse: 事後検証（PalmIDE由来）
+├── commands/                  # 旧commands互換（新しくはskills/を使う）— 公式互換
+│   ├── commit.md
+│   ├── review.md
+│   └── test.md
+├── output-styles/             # 出力スタイル（concise, detailed等）— 公式準拠
+├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）— 公式準拠
+│   └── implement-task.js
+├── agent-memory/              # サブエージェント永続メモリ（自動生成）— 公式準拠
+└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）— テンプレート独自（PalmIDE由来）
+    └── YYYY-MM-DD_<summary>.md
+```
 
-### 8.2 `index.md` 起点のピンポイント読込（核心ワークフロー）
-- **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。
+| ディレクトリ | 役割 | 命名規則 | 公式/独自 |
+| :--- | :--- | :--- | :--- |
+| `settings.json` | チーム共有設定（permissions, hooks, env） | 固定 | 公式準拠 |
+| `settings.local.json` | 個人オーバーライド（gitignore） | 固定 | 公式準拠 |
+| `rules/` | トピック別ルール（pathsで発火条件） | `NN_kebab-case.md` | 公式準拠 |
+| `skills/<name>/` | コードベースの**事実/仕様/暗黙了解**をサブシステム別に格納 | `<kebab-case>/SKILL.md` | 公式準拠 |
+| `agents/` | サブエージェント定義（name, description, tools等） | `kebab-case.md` | 公式準拠 |
+| `hooks/` | トリガー別の**定型手順/スクリプト** + 実行スクリプト | `kebab-case.md` / `.sh` | 公式hooks登録 + テンプレート拡張 |
+| `commands/` | 単一ファイルプロンプト（旧形式、互換性のため） | `kebab-case.md` | 公式互換 |
+| `output-styles/` | 出力スタイルのカスタマイズ | `kebab-case.md` | 公式準拠 |
+| `workflows/` | 動的ワークフロー（JS） | `kebab-case.js` | 公式準拠 |
+| `agent-memory/` | サブエージェント永続メモリ | `<name>/MEMORY.md` | 公式準拠 |
+| `logs/` | タスク完了毎の**実行記録** | `YYYY-MM-DD_kebab-case-summary.md` | テンプレート独自 |
+
+各ディレクトリ直下に **`index.md`** を置き、一覧・参照条件を管理する（`logs/` は日付名でソートされるため不要、`rules/` `skills/` `hooks/` は必須）。
+
+### 8.2 公式構成との対応
+
+| 公式 `.claude/` | 本テンプレート `.agent/` | 備考 |
+|---|---|---|
+| `CLAUDE.md` | `AGENTS.md`（本ファイル） | Claude CodeはAGENTS.mdも読める。CLAUDE.mdがあれば併用も可 |
+| `settings.json` | `settings.json` | 同型。permissions, hooks, env, model等 |
+| `settings.local.json` | `settings.local.json` | 同型。gitignore対象 |
+| `rules/*.md` | `rules/*.md` | 同型。pathsフロントマターで発火条件 |
+| `skills/<name>/SKILL.md` | `skills/<name>/SKILL.md` | 同型。name, description必須 |
+| `commands/*.md` | `commands/*.md` | 同型。旧形式だが互換性のため残す |
+| `agents/*.md` | `agents/*.md` | 同型。name, description, tools, model等 |
+| `output-styles/*.md` | `output-styles/*.md` | 同型 |
+| `workflows/*.js` | `workflows/*.js` | 同型。agent(), parallel(), phase()プリミティブ |
+| `agent-memory/` | `agent-memory/` | 同型。サブエージェント永続メモリ |
+| — | `hooks/` | テンプレート拡張。手順md + 実行sh + settings.jsonで登録 |
+| — | `logs/` | テンプレート拡張。PalmIDE由来の4セクションログ |
+
+### 8.3 `index.md` 起点のピンポイント読込（核心ワークフロー）
+- **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。`settings.json` の `UserPromptSubmit` フックでも自動実行。
+- **編集前**: `settings.json` の `PreToolUse` フックで [`pre_edit_guard.sh`](.agent/hooks/pre_edit_guard.sh) が編集禁止領域をブロック（PalmIDE由来）。
+- **編集後**: `settings.json` の `PostToolUse` フックで [`post_edit_verify.sh`](.agent/hooks/post_edit_verify.sh) が事後検証（PalmIDE由来）。
 - **トリガー発生時**: [`.agent/hooks/index.md`](.agent/hooks/index.md) の「対応表」で該当フックを特定し実行。
-- 初回/全体把握が必要な時だけ、その目的のスキル（例: `project-overview.md` → `architecture-and-data-flow.md`）を順に読む。未作成なら作成を検討する。
+- 初回/全体把握が必要な時だけ、`project-overview/SKILL.md` を読む。未作成なら作成を検討する。
 
-### 8.3 記憶の同期（書き込みワークフロー）
+### 8.4 記憶の同期（書き込みワークフロー）
 - **タスク完了時**（[`.agent/hooks/log-task.md`](.agent/hooks/log-task.md)）: 必ず `.agent/logs/YYYY-MM-DD_<summary>.md` を 4 セクション（指示内容/実行内容/気づき/次アクション）で作成。
-- **知見のスキル化**: ログの「気づき」が再利用性の高いコードベース知識なら該当 `skills/*.md` に反映し、`skills/index.md` の「最終更新」を更新する。新スキルは `skills/index.md` の「読み方ガイド」「一覧」両方に追記。
-- ログ・スキル・index の変更も commit/push 対象（セッションブランチへ）。
+- **知見のスキル化**: ログの「気づき」が再利用性の高いコードベース知識なら該当 `skills/<name>/SKILL.md` に反映し、`skills/index.md` の「最終更新」を更新する。新スキルは `skills/index.md` の「読み方ガイド」「一覧」両方に追記。frontmatterの `description` も更新。
+- **ルールの更新**: 汎用的な作業規約が見つかったら `rules/` に追加。`paths` で発火条件を絞る。
+- ログ・スキル・rules・index の変更も commit/push 対象（セッションブランチへ）。
 
-### 8.4 AGENTS.md と skills の役割分担
-- **AGENTS.md（本ファイル）** = 「どう作業するか」の**規約**（コミット手順・Lint・Git 運用・コミュニケーション等）。常に正。
-- **skills/** = 「このコードベースが**どう出来ているか**」の**事実/仕様**。深掘り用。
-- 両者が重複する場合、作業手順は AGENTS.md、ドメイン知識は skills を参照。
+### 8.5 AGENTS.md と skills/rules の役割分担
+- **AGENTS.md（本ファイル）** = 「どう作業するか」の**規約**（コミット手順・Lint・Git運用・コミュニケーション等）。常に正。
+- **rules/** = 「いつ・どのファイルで何を守るか」の**トピック別ルール**。`paths` で発火条件を絞る。AGENTS.mdの詳細版。
+- **skills/** = 「このコードベースが**どう出来ているか**」の**事実/仕様**。深掘り用。自動発火も可能。
+- 3者が重複する場合、作業手順は AGENTS.md、詳細ルールは rules/、ドメイン知識は skills/ を参照。
 
-### 8.5 運用ルール
-- `.agent/` 配下は Git 追跡対象（永続化）。`.gitignore` で除外しない。
-- スキル/フックを更新したら対応 `index.md` も必ず更新する（腐らせない）。
+### 8.6 運用ルール
+- `.agent/` 配下は Git 追跡対象（永続化）。ただし `settings.local.json` と `agent-memory/` は `.gitignore` で除外（個人情報・自動生成のため）。
+- スキル/ルール/フック/エージェントを更新したら対応 `index.md` / `README.md` も必ず更新する（腐らせない）。
 - ログは**追加のみ**（過去ログを書き換えない）。
   - ⚠️ **一括置換・リネーム系の指示が来ても、`.agent/logs/` の過去ログを置換対象に含めない。**
     過去ログは「その時点で何が起きたか」の事実記録であり、旧ブランチ名・旧数値・旧パスが
     書かれているのは**正しい状態**。書き換えると記録が偽になる。
-  - 一括置換の射程は**現用ドキュメント**（`AGENTS.md` / `.agent/skills/` / `.agent/hooks/` /
-    現用の `docs/`）に限定する。`.agent/logs/` 等の時点記録に触れる必要がある場合は、
-    **必ず事前にユーザーへ確認**する。
-  - 当時の事実（旧ブランチ名など）を残す必要がある場合は、過去ログを書き換えるのではなく
-    **当日の新規ログに記録**する。
+  - 一括置換の射程は**現用ドキュメント**（`AGENTS.md` / `.agent/skills/` / `.agent/hooks/` / `.agent/rules/` / `.agent/agents/` / 現用の `docs/`）に限定する。`.agent/logs/` 等の時点記録に触れる必要がある場合は、**必ず事前にユーザーへ確認**する。
+  - 当時の事実（旧ブランチ名など）を残す必要がある場合は、過去ログを書き換えるのではなく**当日の新規ログに記録**する。
+- **他リポジトリからの良い部分の採用**:
+  - **PalmIDE**: rules/のトピック分割、agents/の定義、skills/のモジュール化、hooks/のPOSIX sh + exit code規約、settings.example.jsonの配線例、verify-doc-integrity / diff-review-reportスキル
+  - **cod-web (main)**: hooks/settings.jsonのイベント登録パターン、skills/<name>/SKILL.mdのfrontmatter形式、scripts/execute.tsの汎用ランナー
+  - **cod-web (arena/01a0b161-cod-web 最新arena)**: 18スキルへの拡張（docs-maintenance, ci-quality-gates, testing, import-boundaries, determinism, e2e, memory-leak, zero-alloc等）、check-all.tsの並列品質ゲート（install先行+abort+hang修正+setsid+summary保存、check.tsに改名）、check-determinism.tsの禁止API検出、quality-gates.ymlの構成（checkout@v6, inputs.job, quality+e2e分離、coverage閾値100%、E2E discovery --list）
+  - **DropMod**: GitHub ActionsのCI構成（static-checks + build + e2e、pnpm/action-setup@v4のバージョン非明示、cache、artifact共有、paths-ignore）、packageManagerのengines整備
+  - **ytdl**: 検証キットのUXルール（?probe=1 / 1 fetch / 外部リトライ / raw URL + 自己チェック）、sandbox-constraintsの詳細化

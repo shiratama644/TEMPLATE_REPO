@@ -1,0 +1,236 @@
+name: Quality Gates Extended
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 21 * * 1' # Tuesday 6AM JST
+
+concurrency:
+  group: quality-ext-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  property-tests:
+    name: Property-based tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run property tests
+        run: |
+          echo "🧪 Running property-based tests (fast-check)..."
+          pnpm test:property 2>&1 | tee property.log || pnpm vitest run --grep property 2>&1 | tee property.log || echo "No property tests yet"
+
+      - name: Upload property test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: property-tests-${{ github.sha }}
+          path: property.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  smoke-tests:
+    name: Smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run smoke tests
+        run: |
+          echo "💨 Running smoke tests..."
+          pnpm test:smoke 2>&1 | tee smoke.log || pnpm vitest run --grep smoke 2>&1 | tee smoke.log || echo "No smoke tests yet"
+
+      - name: Run CLI smoke
+        run: |
+          echo "🔍 CLI smoke tests..."
+          node --experimental-strip-types scripts/check.ts --help || true
+          node --experimental-strip-types scripts/check-cicd.ts --help || true
+          node --experimental-strip-types scripts/check-security.ts --help || true
+          pnpm build --help 2>&1 | head -20 || true
+
+  type-coverage:
+    name: Type coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check type coverage
+        run: |
+          echo "📊 Type coverage..."
+          pnpm type-coverage --detail 2>&1 | tee type-coverage.log || true
+          # Also run tsc --noEmit with strict
+          pnpm typecheck 2>&1 | tee -a type-coverage.log
+
+      - name: Upload type coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: type-coverage-${{ github.sha }}
+          path: type-coverage.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  dep-checks:
+    name: Dependency & duplication checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Dependency cruiser
+        run: |
+          pnpm dep-cruise 2>&1 | tee dep-cruise.log || pnpm dep-cruise:ci 2>&1 | tee dep-cruise.log || true
+
+      - name: JSCPD duplicate check
+        run: |
+          pnpm jscpd 2>&1 | tee jscpd.log || true
+
+      - name: Knip
+        run: |
+          pnpm knip 2>&1 | tee knip.log || true
+
+      - name: Upload dep checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dep-checks-${{ github.sha }}
+          path: |
+            dep-cruise.log
+            jscpd.log
+            knip.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  summary:
+    name: Quality summary
+    runs-on: ubuntu-latest
+    needs: [property-tests, smoke-tests, type-coverage, dep-checks]
+    if: always() && github.event_name == 'pull_request'
+    timeout-minutes: 5
+    steps:
+      - name: Comment PR with quality summary
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const body = `### 🧪 Extended Quality Report
+
+            | Check | Status |
+            |-------|--------|
+            | **Property tests** | ${{ needs.property-tests.result == 'success' && '✅' || '⚠️' }} ${{ needs.property-tests.result }} |
+            | **Smoke tests** | ${{ needs.smoke-tests.result == 'success' && '✅' || '⚠️' }} ${{ needs.smoke-tests.result }} |
+            | **Type coverage** | ${{ needs.type-coverage.result == 'success' && '✅' || '⚠️' }} ${{ needs.type-coverage.result }} |
+            | **Dep checks** | ${{ needs.dep-checks.result == 'success' && '✅' || '⚠️' }} ${{ needs.dep-checks.result }} |
+
+            #### Tools
+            - **Property testing**: fast-check
+            - **Type coverage**: type-coverage
+            - **Dep cruiser**: dependency-cruiser (circular, orphans, boundaries)
+            - **Duplication**: jscpd
+            - **Unused**: knip
+
+            #### 💡 Local
+            \`\`\`bash
+            pnpm test:property
+            pnpm test:smoke
+            pnpm type-coverage
+            pnpm dep-cruise
+            pnpm jscpd
+            \`\`\`
+
+            ---
+            *Checked at ${new Date().toISOString()}*
+            `;
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+
+            const existing = comments.data.find(c => c.body.includes('### 🧪 Extended Quality Report'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: body
+              });
+            }

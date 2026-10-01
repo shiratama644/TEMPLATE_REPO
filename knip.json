@@ -1,0 +1,32 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "scripts/**/*.{ts,js}",
+    "src/**/*.{ts,js}",
+    "bin/**/*.{mjs,js}",
+    "bench/**/*.{ts,js}",
+    "e2e/**/*.{ts,js}"
+  ],
+  "project": [
+    "scripts/**/*.{ts,js}",
+    "src/**/*.{ts,js}",
+    "bin/**/*.{mjs,js}",
+    "bench/**/*.{ts,js}",
+    "e2e/**/*.{ts,js}",
+    "_tests_/**/*.{ts,js}"
+  ],
+  "ignoreBinaries": ["pkill", "vite", "next", "turbo", "where"],
+  "ignoreDependencies": ["tsx", "tinyglobby", "lighthouse", "serve", "axe-core"],
+  "rules": {
+    "files": "warn",
+    "dependencies": "warn",
+    "devDependencies": "warn",
+    "unlisted": "warn",
+    "binaries": "warn",
+    "unresolved": "error",
+    "exports": "warn",
+    "types": "warn",
+    "enumMembers": "warn",
+    "duplicates": "warn"
+  }
+}

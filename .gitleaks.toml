@@ -1,0 +1,46 @@
+# Gitleaks configuration for template repo
+# https://github.com/gitleaks/gitleaks#configuration
+
+title = "Template Repo Gitleaks Config"
+
+[extend]
+# Use default config
+useDefault = true
+
+[allowlist]
+  description = "Allowlisted patterns for template repo"
+  paths = [
+    '''pnpm-lock.yaml''',
+    '''package-lock.json''',
+    '''yarn.lock''',
+    '''\.md$''',
+    '''\.test\.ts$''',
+    '''\.spec\.ts$''',
+    '''__tests__/''',
+    '''_tests_/''',
+    '''\.example$''',
+    '''\.template$''',
+    '''docs/''',
+    '''\.gitleaks\.toml''',
+  ]
+  regexes = [
+    '''your-github-username''',
+    '''your[_-]?api[_-]?key''',
+    '''example\.com''',
+    '''test[_-]?token''',
+    '''fake[_-]?secret''',
+    '''placeholder''',
+    '''sk_test_''',
+    '''pk_test_''',
+    '''ghp_example''',
+    '''AKIA.*EXAMPLE''',
+  ]
+  # Allowlisted commits (if needed)
+  # commits = []
+
+[[rules]]
+  id = "custom-api-key"
+  description = "Custom API Key detection"
+  regex = '''(?i)(?:api[_-]?key|apikey)\s*[:=]\s*['"]?[A-Za-z0-9_\-]{20,}['"]?'''
+  tags = ["key", "API"]
+  # Only report if not in allowlist

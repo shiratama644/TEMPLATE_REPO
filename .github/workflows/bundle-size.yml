@@ -1,0 +1,211 @@
+name: Bundle Size
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: bundle-size-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ==========================================================================
+  # Size Limit check + PR comment bot
+  # ==========================================================================
+  size-limit:
+    name: Size Limit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (if needed for size-limit)
+        run: |
+          # size-limit needs built files? For small-lib preset it checks src directly
+          # But try to build anyway for app presets
+          pnpm build 2>/dev/null || echo "No build script or build failed - continuing with src size check"
+
+      - name: Run size-limit
+        id: size
+        run: |
+          echo "📦 Running size-limit..."
+          pnpm size 2>&1 | tee size-report.txt || echo "size-limit failed but continuing"
+
+          # Capture output for comment
+          if [ -f size-report.txt ]; then
+            echo "report<<EOF" >> $GITHUB_OUTPUT
+            cat size-report.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+          # Also run with --why for detailed breakdown (non-blocking)
+          pnpm size:why 2>&1 | head -100 || true
+
+      - name: Size Limit Action (bot)
+        if: github.event_name == 'pull_request'
+        uses: andresz1/size-limit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          build_script: build
+          skip_step: install
+          clean: false
+        continue-on-error: true
+
+      - name: Custom size comment (fallback)
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            let report = 'Size report not available';
+            try {
+              report = fs.readFileSync('size-report.txt', 'utf8');
+            } catch {}
+
+            const body = `### 📦 Bundle Size Report
+
+            \`\`\`
+            ${report.substring(0, 3000)}
+            \`\`\`
+
+            #### Size Limit Config
+            \`\`\`json
+            ${JSON.stringify(require('./package.json')['size-limit'], null, 2)}
+            \`\`\`
+
+            > 💡 To update limits: edit \`size-limit\` in package.json
+            > Run \`pnpm size\` locally to check
+
+            ---
+            *Checked at ${new Date().toISOString()}*
+            `;
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+
+            const existing = comments.data.find(c => c.body.includes('### 📦 Bundle Size Report'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: body
+              });
+            }
+
+      - name: Upload size report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-report-${{ github.event.pull_request.number || github.sha }}
+          path: |
+            size-report.txt
+            .size-limit.json
+            dist/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Check size limits (fail if exceeds)
+        run: |
+          echo "Checking if size exceeds limits..."
+          pnpm size || {
+            echo "::warning::Bundle size exceeds limits"
+            # Don't fail PR, just warn - template allows growth
+            # To enforce, uncomment: exit 1
+            exit 0
+          }
+
+  # ==========================================================================
+  # Bundle analysis (detailed)
+  # ==========================================================================
+  bundle-analysis:
+    name: Bundle Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Analyze bundle
+        run: |
+          echo "🔍 Analyzing bundle composition..."
+
+          # Check src size
+          echo "### Source files size" > bundle-analysis.txt
+          du -sh src/* 2>/dev/null | sort -hr >> bundle-analysis.txt || true
+          echo "" >> bundle-analysis.txt
+
+          echo "### Package size breakdown" >> bundle-analysis.txt
+          # List largest dependencies
+          if [ -f "pnpm-lock.yaml" ]; then
+            echo "Top 20 largest node_modules (approx):" >> bundle-analysis.txt
+            du -sh node_modules/* 2>/dev/null | sort -hr | head -20 >> bundle-analysis.txt || true
+          fi
+
+          echo "" >> bundle-analysis.txt
+          echo "### Size-limit details" >> bundle-analysis.txt
+          pnpm size --why 2>&1 | head -200 >> bundle-analysis.txt || true
+
+          cat bundle-analysis.txt
+
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis-pr-${{ github.event.pull_request.number || 'main' }}
+          path: bundle-analysis.txt
+          retention-days: 7

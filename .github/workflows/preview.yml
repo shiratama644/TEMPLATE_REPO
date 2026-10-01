@@ -1,0 +1,325 @@
+name: Preview Deploy
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.agent/**'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number to deploy preview for'
+        required: false
+        type: number
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number || inputs.pr || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  pages: write
+  id-token: write
+
+jobs:
+  # ==========================================================================
+  # Build preview
+  # ==========================================================================
+  build-preview:
+    name: Build preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event.pull_request.draft == false
+    outputs:
+      has-dist: ${{ steps.detect.outputs.has-dist }}
+      has-next: ${{ steps.detect.outputs.has-next }}
+      has-vite: ${{ steps.detect.outputs.has-vite }}
+      preview-path: ${{ steps.detect.outputs.preview-path }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Detect framework
+        id: detect
+        run: |
+          echo "Detecting framework..."
+          HAS_DIST="false"
+          HAS_NEXT="false"
+          HAS_VITE="false"
+          PREVIEW_PATH="dist"
+
+          if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ]; then
+            HAS_NEXT="true"
+            PREVIEW_PATH=".next"
+            echo "Detected Next.js"
+          elif [ -f "vite.config.ts" ] || [ -f "vite.config.js" ] || [ -f "vite.config.mjs" ]; then
+            HAS_VITE="true"
+            PREVIEW_PATH="dist"
+            echo "Detected Vite"
+          elif [ -f "astro.config.mjs" ] || [ -f "astro.config.ts" ]; then
+            PREVIEW_PATH="dist"
+            echo "Detected Astro"
+          elif [ -f "nuxt.config.ts" ] || [ -f "nuxt.config.js" ]; then
+            PREVIEW_PATH=".output/public"
+            echo "Detected Nuxt"
+          else
+            PREVIEW_PATH="dist"
+            echo "No specific framework detected, using dist"
+          fi
+
+          echo "has-dist=$HAS_DIST" >> $GITHUB_OUTPUT
+          echo "has-next=$HAS_NEXT" >> $GITHUB_OUTPUT
+          echo "has-vite=$HAS_VITE" >> $GITHUB_OUTPUT
+          echo "preview-path=$PREVIEW_PATH" >> $GITHUB_OUTPUT
+
+      - name: Build
+        id: build
+        run: |
+          echo "Building preview for PR #${{ github.event.pull_request.number }}"
+          pnpm build || echo "Build script not found or failed - trying alternative builds"
+
+          # Try framework-specific builds if generic build didn't produce output
+          if [ ! -d "dist" ] && [ ! -d ".next" ] && [ ! -d "build" ] && [ ! -d ".output" ]; then
+            echo "No build output found, trying vite build..."
+            pnpm build:vite 2>/dev/null || pnpm exec vite build 2>/dev/null || echo "Vite build not available"
+          fi
+
+          ls -la || true
+          ls -la dist 2>/dev/null || echo "No dist"
+          ls -la .next 2>/dev/null || echo "No .next"
+          ls -la build 2>/dev/null || echo "No build"
+          ls -la .output 2>/dev/null || echo "No .output"
+
+      - name: Prepare preview artifact
+        id: prepare
+        run: |
+          mkdir -p preview
+          PREVIEW_PATH="${{ steps.detect.outputs.preview-path }}"
+
+          # Find actual build output
+          if [ -d "dist" ]; then
+            echo "Using dist"
+            cp -r dist/* preview/ 2>/dev/null || cp -r dist preview/
+            echo "preview-dir=dist" >> $GITHUB_OUTPUT
+          elif [ -d "build" ]; then
+            echo "Using build"
+            cp -r build/* preview/ 2>/dev/null || cp -r build preview/
+            echo "preview-dir=build" >> $GITHUB_OUTPUT
+          elif [ -d ".next" ]; then
+            echo "Using .next (Next.js)"
+            # For Next.js, we need static export or just keep .next
+            if [ -d ".next/static" ]; then
+              cp -r .next/static preview/ 2>/dev/null || true
+            fi
+            # Create simple index for preview
+            echo "<html><body><h1>Next.js Preview Build</h1><p>Build output in .next</p><p>Run <code>pnpm dev:next</code> locally for full preview</p></body></html>" > preview/index.html
+            echo "preview-dir=.next" >> $GITHUB_OUTPUT
+          elif [ -d ".output/public" ]; then
+            echo "Using .output/public (Nuxt)"
+            cp -r .output/public/* preview/ 2>/dev/null || cp -r .output/public preview/
+            echo "preview-dir=.output/public" >> $GITHUB_OUTPUT
+          else
+            echo "No build output, creating placeholder"
+            cat > preview/index.html << 'HTML'
+          <!DOCTYPE html>
+          <html>
+          <head><title>Preview - No Build Output</title>
+          <style>body{font-family:system-ui;padding:2rem;max-width:800px;margin:0 auto} .box{border:1px solid #ddd;padding:1rem;border-radius:8px;background:#f9f9f9}</style>
+          </head>
+          <body>
+          <h1>🔍 Preview Build</h1>
+          <div class="box">
+          <p>This is a template repository - no build output was generated.</p>
+          <p>To enable preview deploys:</p>
+          <ul>
+          <li>Add a <code>build</code> script to package.json</li>
+          <li>Configure your framework (Vite, Next.js, Astro, etc.)</li>
+          <li>Build output should be in <code>dist/</code>, <code>build/</code>, or <code>.next/</code></li>
+          </ul>
+          <p>PR: #${{ github.event.pull_request.number }}</p>
+          <p>Commit: ${{ github.sha }}</p>
+          </div>
+          </body>
+          </html>
+          HTML
+            echo "preview-dir=placeholder" >> $GITHUB_OUTPUT
+          fi
+
+          # Add preview metadata
+          cat > preview/preview.json << JSON
+          {
+            "pr": ${{ github.event.pull_request.number || 0 }},
+            "sha": "${{ github.sha }}",
+            "branch": "${{ github.head_ref || github.ref_name }}",
+            "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "framework": "${{ steps.detect.outputs.preview-path }}"
+          }
+          JSON
+
+          ls -lh preview/ | head -20
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-pr-${{ github.event.pull_request.number || inputs.pr || 'manual' }}
+          path: preview/
+          retention-days: 7
+
+      - name: Upload build stats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-stats-pr-${{ github.event.pull_request.number || 'manual' }}
+          path: |
+            dist/
+            build/
+            .next/
+            .output/
+            preview/
+          retention-days: 3
+          if-no-files-found: ignore
+
+  # ==========================================================================
+  # Comment PR with preview info
+  # ==========================================================================
+  comment-preview:
+    name: Comment preview info
+    runs-on: ubuntu-latest
+    needs: build-preview
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+    steps:
+      - name: Comment PR
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+            const sha = context.sha.substring(0, 7);
+            const hasDist = '${{ needs.build-preview.outputs.has-dist }}';
+            const previewPath = '${{ needs.build-preview.outputs.preview-path }}';
+
+            const body = `### 🔍 Preview Deploy
+
+            | Item | Value |
+            |------|-------|
+            | **PR** | #${pr} |
+            | **Commit** | \`${sha}\` |
+            | **Branch** | \`${{ github.head_ref }}\` |
+            | **Preview path** | \`${previewPath}\` |
+            | **Build** | ✅ Success |
+
+            #### 📦 Artifacts
+            - **Preview build**: Download from [Actions artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (name: \`preview-pr-${pr}\`)
+            - **Build stats**: Available for 3 days
+
+            #### 🚀 Deploy options (configure one)
+
+            **GitHub Pages (current template default):**
+            \`\`\`yaml
+            # Already configured if you enable Pages
+            # Settings > Pages > Source: GitHub Actions
+            \`\`\`
+
+            **Vercel:**
+            \`\`\`bash
+            # Install Vercel GitHub App
+            # https://vercel.com/github
+            # Auto-deploys PRs by default
+            \`\`\`
+
+            **Cloudflare Pages:**
+            \`\`\`bash
+            # Connect repo in Cloudflare dashboard
+            # Build command: pnpm build
+            # Output: dist
+            \`\`\`
+
+            **Netlify:**
+            \`\`\`bash
+            # Connect repo in Netlify
+            # Build: pnpm build
+            # Publish: dist
+            \`\`\`
+
+            > 💡 This template supports auto-detection for Vite, Next.js, Astro, Nuxt.
+            > To customize preview, edit \`.github/workflows/preview.yml\`.
+
+            ---
+            *Built at ${new Date().toISOString()}*
+            `;
+
+            // Find existing preview comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr
+            });
+
+            const existing = comments.data.find(c => c.body.includes('### 🔍 Preview Deploy'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                body: body
+              });
+            }
+
+  # ==========================================================================
+  # Deploy to GitHub Pages (preview path)
+  # ==========================================================================
+  deploy-pages-preview:
+    name: Deploy Pages preview
+    runs-on: ubuntu-latest
+    needs: build-preview
+    if: github.event_name == 'pull_request' && false # Disabled by default - enable when Pages configured
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: preview-pr-${{ github.event.pull_request.number }}
+      url: ${{ steps.deployment.outputs.page_url }}preview/pr-${{ github.event.pull_request.number }}/
+    steps:
+      - name: Download preview artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-pr-${{ github.event.pull_request.number }}
+          path: preview/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: preview/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

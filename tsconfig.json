@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "types": ["node", "bun"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@packages/*": ["./packages/*"],
+      "@apps/*": ["./apps/*"]
+    },
+    "jsx": "preserve",
+    "allowJs": true,
+    "checkJs": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "allowImportingTsExtensions": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*",
+    "packages/**/*",
+    "apps/**/*",
+    "scripts/**/*",
+    "tests/**/*",
+    "_tests_/**/*",
+    "*.config.*",
+    ".claude/**/*.ts",
+    "vite.config.*",
+    "next.config.*",
+    "vitest.config.*",
+    "playwright.config.*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".next",
+    "build",
+    "out",
+    ".output",
+    ".vercel",
+    "coverage",
+    ".turbo"
+  ]
+}

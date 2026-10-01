@@ -1,0 +1,56 @@
+# Labeler — PRの変更ファイルに基づいて自動ラベル付け
+# https://github.com/actions/labeler
+
+"dependencies":
+  - renovate.json
+  - package.json
+  - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+  - .nvmrc
+  - .node-version
+
+"ci":
+  - .github/workflows/*
+
+"claude":
+  - .claude/**
+
+"docs":
+  - docs/**
+  - README.md
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - SECURITY.md
+  - .changeset/**
+
+"scripts":
+  - scripts/**
+
+"docker":
+  - Dockerfile
+  - docker-compose.yml
+  - .dockerignore
+  - .devcontainer/**
+
+"config":
+  - biome.json
+  - tsconfig.json
+  - vitest.config.ts
+  - cspell.json
+  - knip.json
+  - commitlint.config.js
+  - .editorconfig
+  - .vscode/**
+
+"husky":
+  - .husky/**
+
+"release":
+  - .changeset/**
+  - CHANGELOG.md
+
+"dx":
+  - size-limit*
+  - .size-limit*
+  - Dockerfile
+  - .devcontainer/**

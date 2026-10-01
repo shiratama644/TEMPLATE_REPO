@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/shiratama644/TEMPLATE_REPO/tree/main/docs
+    about: ドキュメントを確認する
+  - name: 💬 Discussions (Q&A)
+    url: https://github.com/shiratama644/TEMPLATE_REPO/discussions
+    about: 質問やアイデア交換はDiscussionで
+  - name: 🔒 Security Issue
+    url: https://github.com/shiratama644/TEMPLATE_REPO/security/policy
+    about: セキュリティ関連は非公開で報告してください
