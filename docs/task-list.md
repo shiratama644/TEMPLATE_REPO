@@ -26,7 +26,7 @@
 
 | ID | 状態 | 残作業 |
 |---|---|---|
-| TEMPLATE-19 | ローカル検証済み | コミット SHA を証拠に記録して「完了」へ更新 |
+| — | — | なし |
 
 ---
 
@@ -89,5 +89,5 @@
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
 | TEMPLATE-17 | Web / Node 固有の成果物を削除し、分野を問わない汎用テンプレートに簡素化 | 完了 | 100% | — | 1. scripts/・src/・テスト・CI・Node/pnpm 設定を削除 2. AGENTS.md・.agent/・docs/・README.md・LICENSE のみ残す 3. `.agent/` の設定・フックが Node/pnpm に依存しない 4. フックスクリプトの構文・動作確認 | コミット: 545dc8a / 検証: post_edit_verify.sh 正常終了、pre_edit_guard.sh が .git/ を exit 2 でブロック、settings.json 有効な JSON |
-| TEMPLATE-19 | 上流の agent 資産（ECC・superpowers・mattpocock/skills・anthropics/skills）を取り込み、Claude Code から使える構成にする | ローカル検証済み | 90% | TEMPLATE-18 | 1. 再配布可能（MIT / Apache-2.0）な skill・agent・command・hook のみ取り込み、独自ライセンスは除外 2. `.claude` → `.agent`、`CLAUDE.md` → `AGENTS.md` の symlink 3. hook（SessionStart / 破壊的 git の PreToolUse）を sh で実装し動作確認 4. 出典は `.agent/THIRD_PARTY_NOTICES.md`・`skills/index.md` に記録 5. 参照切れ（superpowers: / docs/superpowers / ECC 専用パス）が残らない | 検証結果は activity.md 参照 |
+| TEMPLATE-19 | 上流の agent 資産（ECC・superpowers・mattpocock/skills・anthropics/skills）を取り込み、Claude Code から使える構成にする | 完了 | 100% | TEMPLATE-18 | 1. 再配布可能（MIT / Apache-2.0）な skill・agent・command・hook のみ取り込み、独自ライセンスは除外 2. `.claude` → `.agent`、`CLAUDE.md` → `AGENTS.md` の symlink 3. hook（SessionStart / 破壊的 git の PreToolUse）を sh で実装し動作確認 4. 出典は `.agent/THIRD_PARTY_NOTICES.md`・`skills/index.md` に記録 5. 参照切れ（superpowers: / docs/superpowers / ECC 専用パス）が残らない | コミット b43f0e4。検証: 全 48 skill の frontmatter、hooks の sh 構文・動作（破壊的 git ブロック / SessionStart の JSON 出力）、settings.json の JSON、symlink 解決、内部リンク切れ 0 件 |
 | TEMPLATE-18 | docs/・README.md・AGENTS.md を汎用テンプレートの実態に合わせて全面改訂 | 完了 | 100% | TEMPLATE-17 | 1. 旧システムの仕様書・計画・設定例を削除 2. arch/ を汎用テンプレートの仕様（product / architecture / adr / milestones）に改訂 3. docs/README.md・planning・research・audit・ops を改訂 4. AGENTS.md の Web/Node 固有記述を分野非依存にする 5. 内部リンク切れなし | 実装中 |
