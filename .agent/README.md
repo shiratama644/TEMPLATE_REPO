@@ -1,92 +1,79 @@
 # .agent/ — Agent設定ディレクトリ
 
-> 本ディレクトリはClaude Code公式の `.claude/` ディレクトリ構成に準拠しつつ、ディレクトリ名は `.agent/` のまま維持しています。
+> 本ディレクトリは Claude Code の `.claude/` 構成に準拠する。リポジトリ直下の `.claude` は本ディレクトリへの **symlink**、`CLAUDE.md` は `AGENTS.md` への **symlink** で、Claude Code はどちらの名前でも同じ内容を読む。
 > 公式仕様: https://code.claude.com/docs/en/claude-directory.md
+>
+> **本ディレクトリは Node.js・pnpm 等の特定のランタイムに依存しない。** フックは `sh` と標準的な Unix コマンド（`git`・`sed`・`awk`）だけで動く。
 
 ## ディレクトリ構成
 
 ```
 .agent/
-├── settings.json              # チーム共有設定（permissions, hooks, env, model）— コミット対象
+├── settings.json              # チーム共有設定（permissions, hooks, env）— コミット対象
 ├── settings.local.json        # 個人オーバーライド（gitignore）— 個人のみ
+├── THIRD_PARTY_NOTICES.md     # 取り込んだ上流 OSS のライセンス表示
 ├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）
-│   ├── 01_information-hierarchy.md
-│   ├── 02_git-workflow.md
-│   ├── 03_doc-style.md
-│   ├── 04_verification.md
-│   └── project-template.md
-├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）
-│   ├── project-overview/      # 製品概要・構成把握
-│   ├── tech-stack/            # 技術スタック・ハマりどころ
-│   ├── sandbox-constraints/   # Sandbox制約・迂回策
-│   ├── verify-doc-integrity/  # ドキュメント整合性検証
-│   ├── diff-review-report/    # 差分レビューレポート
-│   ├── docs-maintenance/      # ドキュメント整理・URL検証
-│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理
-│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略
-│   ├── import-boundaries/     # レイヤー境界・import制限
-│   ├── determinism/           # 決定論・禁止API検出
-│   ├── e2e/                   # Playwright E2E・webServer配列
-│   ├── memory-leak/           # メモリリーク防止・leave時clear
-│   └── zero-alloc/            # ゼロアロケーション・GC削減
-├── agents/                    # サブエージェント定義（name, description, tools, model等）
-│   ├── explore.md
-│   ├── plan.md
-│   ├── doc-editor.md
-│   ├── code-reviewer.md
-│   └── test-writer.md
+├── skills/<name>/SKILL.md     # 再利用プロンプト（48 件。入口は skills/index.md）
+├── agents/                    # サブエージェント定義（planner, architect, code-explorer, docs-lookup ほか）
 ├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh)
-│   ├── index.md               # 索引
-│   ├── pre-task.md            # タスク開始時
-│   ├── verify-commit.md # commit直前
-│   ├── log-task.md            # タスク完了時
-│   ├── sandbox-recovery.md
-│   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック
+│   ├── index.md
+│   ├── session-start.sh       # SessionStart: 作業状態の注入
+│   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
+│   ├── pre_edit_guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
 │   └── post_edit_verify.sh    # PostToolUse: 事後検証
-├── commands/                  # 旧commands互換（新しくはskills/を使う）
-│   ├── commit.md
-│   ├── review.md
-│   └── test.md
-├── output-styles/             # 出力スタイル（concise, detailed等）
-│   ├── concise.md
-│   └── detailed.md
+├── commands/                  # スラッシュコマンド（commit, test, code-review, checkpoint, plan, update-docs）
+├── output-styles/             # 出力スタイル（concise, detailed）
 ├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）
-│   └── implement-task.js
-├── agent-memory/              # サブエージェント永続メモリ（自動生成）
-└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）
-    └── YYYY-MM-DD_<summary>.md
+├── agent-memory/              # サブエージェント永続メモリ（自動生成・gitignore）
+└── logs/                      # タスク実行ログ（追加のみ）
 ```
 
-## 各ファイルの役割（公式準拠）
+## 各ファイルの役割
 
-| ファイル | Scope | Commit | 役割 | 参考 |
-|---|---|---|---|---|
-| `settings.json` | Project | ✓ | Permissions, hooks, env, model | [Settings](https://code.claude.com/docs/en/settings-reference.md) |
-| `settings.local.json` | Project |  | 個人オーバーライド、gitignore | [Settings scopes](https://code.claude.com/docs/en/settings-reference.md) |
-| `rules/*.md` | Project | ✓ | トピック別ルール、pathsで発火条件 | [Rules](https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/) |
-| `skills/<name>/SKILL.md` | Project | ✓ | 再利用プロンプト、/nameで呼び出し | [Skills](https://code.claude.com/docs/en/skills.md) |
-| `commands/*.md` | Project | ✓ | 単一ファイルプロンプト、skillsと同じ機構 | [Skills](https://code.claude.com/docs/en/skills.md) |
-| `output-styles/*.md` | Project | ✓ | 出力スタイルのカスタマイズ | [Output styles](https://code.claude.com/docs/en/output-styles.md) |
-| `agents/*.md` | Project | ✓ | サブエージェント定義 | [Subagents](https://code.claude.com/docs/en/sub-agents.md) |
-| `workflows/*.js` | Project | ✓ | 動的ワークフロー | [Workflows](https://code.claude.com/docs/en/workflows.md) |
-| `agent-memory/<name>/` | Project | ✓ | サブエージェント永続メモリ | [Persistent memory](https://code.claude.com/docs/en/sub-agents#enable-persistent-memory) |
-| `logs/` | Project | ✓ | タスク実行ログ | テンプレート独自 |
+| ファイル | Commit | 役割 | 参考 |
+|---|---|---|---|
+| `settings.json` | ✓ | Permissions, hooks, env | [Settings](https://code.claude.com/docs/en/settings-reference.md) |
+| `settings.local.json` |  | 個人オーバーライド（gitignore） | [Settings scopes](https://code.claude.com/docs/en/settings-reference.md) |
+| `rules/*.md` | ✓ | トピック別ルール（pathsで発火条件） | [Rules](https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/) |
+| `skills/<name>/SKILL.md` | ✓ | 再利用プロンプト（/name、自動発火） | [Skills](https://code.claude.com/docs/en/skills.md) |
+| `commands/*.md` | ✓ | 単一ファイルのスラッシュコマンド | [Skills](https://code.claude.com/docs/en/skills.md) |
+| `agents/*.md` | ✓ | サブエージェント定義 | [Subagents](https://code.claude.com/docs/en/sub-agents.md) |
+| `output-styles/*.md` | ✓ | 出力スタイル | [Output styles](https://code.claude.com/docs/en/output-styles.md) |
+| `workflows/*.js` | ✓ | 動的ワークフロー | [Workflows](https://code.claude.com/docs/en/workflows.md) |
+| `logs/` | ✓ | タスク実行ログ（テンプレート独自） | — |
+
+## フック（settings.json に登録済み）
+
+| イベント | matcher | スクリプト | 役割 |
+|---|---|---|---|
+| `SessionStart` | `startup\|resume\|clear\|compact` | `hooks/session-start.sh` | 正本の所在・ブランチ・直近コミット・未コミット変更・未完了サマリーを注入 |
+| `PreToolUse` | `Bash` | `hooks/block-dangerous-git.sh` | force push・`reset --hard`・main への push 等をブロック（exit 2） |
+| `PreToolUse` | `Edit\|MultiEdit\|Write` | `hooks/pre_edit_guard.sh` | 編集禁止領域（`.git/`・依存・生成物）をブロック |
+| `PostToolUse` | `Edit\|MultiEdit\|Write` | `hooks/post_edit_verify.sh` | 編集後の事後検証 |
+
+フックの動作確認例:
+
+```bash
+echo '{"tool_input":{"command":"git push --force origin x"}}' | sh .agent/hooks/block-dangerous-git.sh; echo $?   # 2（ブロック）
+sh .agent/hooks/session-start.sh | head -c 200                                                                  # JSON（hookSpecificOutput）
+```
 
 ## 運用ルール
 
-- **settings.json** はチーム共有。permissions, hooks, envを定義。個人の上書きは `settings.local.json` へ。
-- **rules/** はトピック別に分割。`paths` フロントマターで発火条件を絞る。例: `paths: ["docs/**"]` ならdocs編集時のみ読まれる。
-- **skills/** は `<name>/SKILL.md` 形式。frontmatterに `name`, `description` 必須。`description` は自動発火の判断材料なので具体的に書く。
-- **agents/** は `name`, `description`, `tools`, `model` 等のfrontmatter + システムプロンプト本文。
+- **settings.json** はチーム共有。個人の上書きは `settings.local.json` へ。
+- **rules/** はトピック別に分割。`paths` フロントマターで発火条件を絞る。
+- **skills/** は `<name>/SKILL.md` 形式。frontmatter に `name`, `description` 必須。`description` は自動発火の判断材料なので具体的に書く。
+- **agents/** は `name`, `description`, `tools`, `model` 等の frontmatter + システムプロンプト本文。
 - **hooks/** は手順(.md)と実行スクリプト(.sh)の両方を置く。実行登録は `settings.json` の `hooks` で行う。
 - **logs/** は追加のみ。過去ログを書き換えない。
+- 上流から取り込んだ skill / agent / command / hook は出典を `skills/index.md` と `THIRD_PARTY_NOTICES.md` に記録する。
 
-## 今後の使い方（新規プロジェクトへの適用手順）
+## 新規プロジェクトへの適用手順
 
 1. GitHubで「Use this template」から新規リポジトリ作成
 2. `AGENTS.md §6` にプロジェクト固有のルールを追記（特に §6.1 に検証コマンドを記録）
 3. `.agent/skills/project-overview/SKILL.md` をプロジェクト用に書き換え
 4. `README.md` をプロジェクト用に書き換え
 5. `docs/` を必要に応じて整理（`docs/README.md` の目次も更新）
-6. 不要な `.agent/skills/` のうち、分野に合わないもの（例: Web 専用の `e2e`）は削除してよい
+6. 分野に合わない skill（例: Web 専用の `e2e`、ソフトウェア専用の `import-boundaries`）は削除してよい
 7. ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK）

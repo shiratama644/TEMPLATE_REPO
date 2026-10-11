@@ -11,10 +11,12 @@
 
 | トリガー（いつ） | フック | 形式 | 登録先 |
 | :--- | :--- | :--- | :--- |
-| **タスク開始時**（ユーザー指示を受けた直後） | [`pre-task.md`](./pre-task.md) | 手順 | `settings.json` → `UserPromptSubmit` |
+| **セッション開始時**（startup / resume / clear / compact） | [`session-start.sh`](./session-start.sh) | スクリプト | `settings.json` → `SessionStart` |
+| **タスク開始時**（ユーザー指示を受けた直後） | [`pre-task.md`](./pre-task.md) | 手順 | 手動（現状把握の手順） |
+| **Bash 実行前**（破壊的 git 操作の直前） | [`block-dangerous-git.sh`](./block-dangerous-git.sh) | スクリプト | `settings.json` → `PreToolUse`（matcher: Bash） |
 | **編集前**（Edit/Write前） | [`pre_edit_guard.sh`](./pre_edit_guard.sh) | スクリプト | `settings.json` → `PreToolUse` |
 | **編集後**（Edit/Write後） | [`post_edit_verify.sh`](./post_edit_verify.sh) | スクリプト | `settings.json` → `PostToolUse` |
-| **commit直前**（§3.1検証） | [`verify-commit.md`](./verify-commit.md) | 手順 | 手動参照 + `Stop` フック |
+| **commit直前**（§3.1検証） | [`verify-commit.md`](./verify-commit.md) | 手順 | 手動参照 |
 | **タスク完了時**（完了直後） | [`log-task.md`](./log-task.md) | 手順 | 手動参照 |
 | **Sandbox再構築を検知** | [`sandbox-recovery.md`](./sandbox-recovery.md) | 手順 | 手動参照 |
 
@@ -44,5 +46,5 @@
 ## 公式構成との対応
 
 - 公式 `.claude/settings.json` の `hooks` フィールドに、本ディレクトリの `.sh` スクリプトを登録する形が公式推奨。
-- 本テンプレートでは `settings.json` に `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop` の4イベントを登録。
+- 本テンプレートでは `settings.json` に `SessionStart`, `PreToolUse`, `PostToolUse` のイベントを登録。
 - 旧来の手順md（pre-task.md等）は人間の参照用として残し、自動実行は `.sh` + `settings.json` で行うハイブリッド構成。

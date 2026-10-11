@@ -9,12 +9,12 @@ GitHub の「Use this template」から新しいリポジトリを作成し、�
 
 | パス | 役割 |
 | :--- | :--- |
-| `AGENTS.md` | Agent が必ず守る作業規約（作業単位・検証・Git 運用・コミュニケーション規約）。§6 にプロジェクト固有のルールを書く |
-| `.agent/` | Agent の設定と知識。ルール（`rules/`）・スキル（`skills/`）・フック（`hooks/`）・サブエージェント定義（`agents/`）など |
-| `docs/` | ドキュメント一式。`task-list.md`（進捗の正本）・`arch/`（仕様）・`planning/`（計画）・`research/`（調査）・`audit/`（監査）・`ops/`（運用）・`examples/`（設定例） |
+| `AGENTS.md` | Agent が必ず守る作業規約（作業単位・検証・Git 運用・コミュニケーション規約）。§6 にプロジェクト固有のルールを書く。`CLAUDE.md` はこのファイルへの symlink |
+| `.agent/` | Agent の設定と知識。ルール（`rules/`）・スキル（`skills/`）・フック（`hooks/`）・サブエージェント定義（`agents/`）・コマンド（`commands/`）など。`.claude` はこのディレクトリへの symlink。上流由来の資産の出典は `.agent/THIRD_PARTY_NOTICES.md` |
+| `docs/` | ドキュメント一式。`task-list.md`（進捗の正本）・`arch/`（仕様）・`adr/`（個別の設計判断）・`planning/`（計画）・`research/`（調査）・`audit/`（監査）・`ops/`（運用） |
 | `LICENSE` | ライセンス |
 
-ソフトウェア開発向けの設定（ビルド・テスト・Lint・CI など）は含めていません。必要になったプロジェクトで、`AGENTS.md §6.1` に検証手段を記録しながら追加してください。
+ソフトウェア開発向けの設定（ビルド・テスト・Lint・CI など）は含めていません。Agent 側の skill にはソフトウェア向けのものも含みますが、分野に合わなければ使わなくてよく、`.agent/` は Node.js・pnpm などのランタイムに依存しません。必要になったプロジェクトで、`AGENTS.md §6.1` に検証手段を記録しながら追加してください。
 
 ## 使い方
 

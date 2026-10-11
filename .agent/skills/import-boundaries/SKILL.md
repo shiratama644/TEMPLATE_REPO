@@ -127,7 +127,7 @@ grep -R "from ['\"]@babylonjs" apps/web/src/components --include="*.ts"
 grep -R "from ['\"]three" apps/web/src --include="*.ts" | grep -v profile-fps | grep -v world.ts
 
 # biomeでチェック
-pnpm lint
+<Lint コマンド>   # AGENTS.md §6.1 に記録したコマンドを使う
 ```
 
 ## 関連

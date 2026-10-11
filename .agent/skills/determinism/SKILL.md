@@ -47,7 +47,7 @@ const randomValue = rng(); // 0..1
 | smoke | `tests/.../determinism.test.ts` unit | 100ticks x10 scenarios、purity、factory isolation | 20-50ms |
 | heavy | `scripts/determinism-heavy.ts` | 1000ticks x100 scenarios、tolerance 1e-10、LCG | 0.8-0.9s |
 
-- smokeは常時 `test:unit` で実行、heavyは `pnpm check:determinism:heavy` でCI/手動実行
+- smoke は通常のテスト実行に含め、heavy は CI または手動の別コマンド（AGENTS.md §6.1 に記録したもの）で実行する
 - 軽いworld（例: 平面のみ）を使えば heavyでも軽い。重い依存（BVH等）を含むworldだと重くなるため、seamで差し替え
 
 ```ts
@@ -87,7 +87,7 @@ grep -R "Math\.random\|Date\.now\|performance\.now\|setTimeout\|setInterval\|fet
 grep -R "if.*type.*===" packages/engine-core/src --include="*.ts"
 
 # 自動スクリプト
-pnpm check:determinism
+<禁止API検出コマンド>   # AGENTS.md §6.1 に記録したコマンドを使う
 ```
 
 ## check-determinism.ts スクリプト（本テンプレート用）

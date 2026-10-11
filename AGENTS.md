@@ -8,6 +8,9 @@
 > （技術スタック・制約・実装ルール）を追記してください。
 > それ以外の節は汎用規約のため、原則そのまま使えます。
 
+> 🔗 **Claude Code 向けの対応**: `CLAUDE.md` は本ファイルへの symlink、`.claude/` は `.agent/` への symlink です。
+> Claude Code はどちらの名前でも同じ内容を読みます。正本は `AGENTS.md` と `.agent/` です。
+
 ---
 
 ## 1. 基本方針 & 作業単位
@@ -41,7 +44,7 @@
    ↓
 3. 実装 (最小限の差分)
    ↓
-4. プロジェクト検証 (Lint / Typecheck / Test / Build)
+4. プロジェクト検証（§3.1・§6.1 に記録された検証をすべて実行）
    ↓ 失敗時は原因特定して修正し、再度全検証
 5. 差分確認 (git diff で意図しない変更がないか確認)
    ↓
@@ -117,7 +120,7 @@ git reset --hard FETCH_HEAD
 ```
 
 - `git reset --hard FETCH_HEAD` は §4.3 の厳禁ルールの例外で、**サンドボックス再構築後の初回のみ**許可される（未コミット変更は元々存在しない状態のため）。
-- 再構築を判定するヒント：`git log --oneline` が起点コミット 1 個しか返ってこない / `git status` が大量の削除を示す / node_modules がない。
+- 再構築を判定するヒント：`git log --oneline` が起点コミット 1 個しか返ってこない / `git status` が大量の削除を示す / 依存の展開先や生成物（§6.1 で記録したもの）がない。
 - 復旧後は必ず `git log --oneline -5` と §6.1 の検証コマンドで健全性を確認してから作業を再開する。
 
 ### 4.2 コミットルール
@@ -332,53 +335,58 @@ git reset --hard FETCH_HEAD
 
 ### 8.1 ディレクトリ構成（公式準拠 + テンプレート拡張）
 
+
 ```
-.agent/
-├── settings.json              # チーム共有設定（permissions, hooks, env, model）— コミット対象
+.agent/   （Claude Code からは .claude/ として読まれる。.claude → .agent の symlink）
+├── settings.json              # チーム共有設定（permissions, hooks, env）— コミット対象
 ├── settings.local.json        # 個人オーバーライド（gitignore）— 個人のみ
-├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）— 公式準拠
+├── THIRD_PARTY_NOTICES.md     # 取り込んだ上流 OSS のライセンス表示
+├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）
 │   ├── 01_information-hierarchy.md
 │   ├── 02_git-workflow.md
 │   ├── 03_doc-style.md
 │   ├── 04_verification.md
 │   └── project-template.md
-├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 公式準拠
-│   ├── project-overview/      # 製品概要・構成把握
-│   ├── tech-stack/            # 技術スタック・ハマりどころ
-│   ├── sandbox-constraints/   # Sandbox制約・迂回策
-│   ├── verify-doc-integrity/  # ドキュメント整合性検証
-│   ├── diff-review-report/    # 差分レビューレポート
-│   ├── docs-maintenance/      # ドキュメント整理・URL検証
-│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理
-│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略
-│   ├── import-boundaries/     # レイヤー境界・import制限
-│   ├── determinism/           # 決定論・禁止API検出
-│   ├── e2e/                   # Playwright E2E・webServer配列
-│   ├── memory-leak/           # メモリリーク防止・leave時clear
-│   └── zero-alloc/            # ゼロアロケーション・GC削減
-├── agents/                    # サブエージェント定義（name, description, tools, model等）— 公式準拠
-│   ├── explore.md
-│   ├── plan.md
-│   ├── doc-editor.md
+├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 48 件
+│   ├── index.md               # 入口（読み方ガイド・一覧）
+│   ├── 自作: project-overview / tech-stack / sandbox-constraints / verify-doc-integrity / docs-maintenance
+│   ├── 自作(ソフトウェア/Web): testing / ci-quality-gates / import-boundaries / determinism / memory-leak / zero-alloc / e2e
+│   ├── superpowers（MIT）由来: brainstorming / writing-plans / executing-plans / subagent-driven-development / test-driven-development / systematic-debugging / verification-before-completion / requesting-code-review / receiving-code-review / using-git-worktrees / finishing-a-development-branch / dispatching-parallel-agents / writing-skills / using-superpowers
+│   ├── ECC: verification-loop / search-first / documentation-lookup / deep-research / council / architecture-decision-records / article-writing
+│   ├── mattpocock/skills: grill-me / grilling / handoff / teach / writing-for-agents / to-questionnaire / prototype / research / retro / codebase-design / diagnosing-bugs / improve-codebase-architecture / domain-modeling
+│   └── anthropics/skills (Apache-2.0): skill-creator / discernment-nudge
+├── agents/                    # サブエージェント定義（name, description, tools, model等）
+│   ├── planner.md
+│   ├── architect.md
+│   ├── code-explorer.md
+│   ├── docs-lookup.md
 │   ├── code-reviewer.md
+│   ├── doc-editor.md
 │   └── test-writer.md
-├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh) — テンプレート拡張 + 公式hooks登録
-│   ├── index.md
-│   ├── pre-task.md
-│   ├── verify-commit.md
-│   ├── log-task.md
+├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh)
+│   ├── index.md               # 索引
+│   ├── pre-task.md            # タスク開始時
+│   ├── verify-commit.md       # commit直前
+│   ├── log-task.md            # タスク完了時
 │   ├── sandbox-recovery.md
-│   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック
+│   ├── session-start.sh       # SessionStart: 作業状態の注入
+│   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
+│   ├── pre_edit_guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
 │   └── post_edit_verify.sh    # PostToolUse: 事後検証
-├── commands/                  # 旧commands互換（新しくはskills/を使う）— 公式互換
+├── commands/                  # スラッシュコマンド（/name で呼び出し）
 │   ├── commit.md
-│   ├── review.md
-│   └── test.md
-├── output-styles/             # 出力スタイル（concise, detailed等）— 公式準拠
-├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）— 公式準拠
+│   ├── test.md
+│   ├── code-review.md
+│   ├── checkpoint.md
+│   ├── plan.md
+│   └── update-docs.md
+├── output-styles/             # 出力スタイル（concise, detailed等）
+│   ├── concise.md
+│   └── detailed.md
+├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）
 │   └── implement-task.js
-├── agent-memory/              # サブエージェント永続メモリ（自動生成）— 公式準拠
-└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）— テンプレート独自
+├── agent-memory/              # サブエージェント永続メモリ（自動生成）
+└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）
     └── YYYY-MM-DD_<summary>.md
 ```
 
@@ -390,7 +398,7 @@ git reset --hard FETCH_HEAD
 | `skills/<name>/` | コードベースの**事実/仕様/暗黙了解**をサブシステム別に格納 | `<kebab-case>/SKILL.md` | 公式準拠 |
 | `agents/` | サブエージェント定義（name, description, tools等） | `kebab-case.md` | 公式準拠 |
 | `hooks/` | トリガー別の**定型手順/スクリプト** + 実行スクリプト | `kebab-case.md` / `.sh` | 公式hooks登録 + テンプレート拡張 |
-| `commands/` | 単一ファイルプロンプト（旧形式、互換性のため） | `kebab-case.md` | 公式互換 |
+| `commands/` | 単一ファイルプロンプト（`/name` で呼び出し） | `kebab-case.md` | 公式準拠 |
 | `output-styles/` | 出力スタイルのカスタマイズ | `kebab-case.md` | 公式準拠 |
 | `workflows/` | 動的ワークフロー（JS） | `kebab-case.js` | 公式準拠 |
 | `agent-memory/` | サブエージェント永続メモリ | `<name>/MEMORY.md` | 公式準拠 |
@@ -402,12 +410,12 @@ git reset --hard FETCH_HEAD
 
 | 公式 `.claude/` | 本テンプレート `.agent/` | 備考 |
 |---|---|---|
-| `CLAUDE.md` | `AGENTS.md`（本ファイル） | Claude CodeはAGENTS.mdも読める。CLAUDE.mdがあれば併用も可 |
+| `CLAUDE.md` | `CLAUDE.md` → `AGENTS.md`（symlink） | 同一内容。Claude Code は CLAUDE.md を読む |
 | `settings.json` | `settings.json` | 同型。permissions, hooks, env, model等 |
 | `settings.local.json` | `settings.local.json` | 同型。gitignore対象 |
 | `rules/*.md` | `rules/*.md` | 同型。pathsフロントマターで発火条件 |
 | `skills/<name>/SKILL.md` | `skills/<name>/SKILL.md` | 同型。name, description必須 |
-| `commands/*.md` | `commands/*.md` | 同型。旧形式だが互換性のため残す |
+| `commands/*.md` | `commands/*.md` | 同型 |
 | `agents/*.md` | `agents/*.md` | 同型。name, description, tools, model等 |
 | `output-styles/*.md` | `output-styles/*.md` | 同型 |
 | `workflows/*.js` | `workflows/*.js` | 同型。agent(), parallel(), phase()プリミティブ |
@@ -416,7 +424,9 @@ git reset --hard FETCH_HEAD
 | — | `logs/` | テンプレート拡張。4セクションの実行ログ |
 
 ### 8.3 `index.md` 起点のピンポイント読込（核心ワークフロー）
-- **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。`settings.json` の `UserPromptSubmit` フックでも自動実行。
+- **セッション開始時**: `settings.json` の `SessionStart` フックで [`session-start.sh`](.agent/hooks/session-start.sh) が、正本の所在・ブランチ・直近のコミット・未コミット変更・未完了サマリーをモデルへ注入する。
+- **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。
+- **Bash 実行前**: `settings.json` の `PreToolUse` フックで [`block-dangerous-git.sh`](.agent/hooks/block-dangerous-git.sh) が force push・`reset --hard`・`main` への push 等の破壊的 git 操作をブロックする。
 - **編集前**: `settings.json` の `PreToolUse` フックで [`pre_edit_guard.sh`](.agent/hooks/pre_edit_guard.sh) が編集禁止領域をブロック。
 - **編集後**: `settings.json` の `PostToolUse` フックで [`post_edit_verify.sh`](.agent/hooks/post_edit_verify.sh) が事後検証。
 - **トリガー発生時**: [`.agent/hooks/index.md`](.agent/hooks/index.md) の「対応表」で該当フックを特定し実行。

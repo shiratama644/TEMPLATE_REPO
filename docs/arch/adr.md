@@ -91,3 +91,27 @@
 **決定**: `docs/examples/`（Vite/Next の設定例）と `docs/planning/complete/` の参照、`docs/planning/robustness-plan.md`、`docs/planning/index.md`（`README.md` と重複）を削除する。`docs/arch/` は product / architecture / adr / milestones の 4 文書に絞る（README を含む）。`docs/audit/` と `docs/ops/` は索引のみを残す。
 
 **理由**: 旧構成の文書の大半が削除した成果物を説明しており、残すと実態と食い違う。判断の履歴は ADR に残し、旧文書の本文は `git log` から参照できる。
+
+## ADR-012: 上流の agent 資産を取り込み、分野を問わず使える範囲に限る
+
+**日付**: 2026-10-12
+
+**決定**: ECC・superpowers・mattpocock/skills・anthropics/skills から、単体で動き再配布可能な skill / agent / command / hook だけを取り込む。取り込み元の設定（ECC 固有の `.claude/` 設定、プラグイン登録、ランタイム依存の hook）と、ライセンスの不明なもの・独自ライセンスのもの（Anthropic の docx / pdf / pptx / xlsx、`doc-coauthoring`）は取り込まない。上流の hook は `jq` や Node に依存しない `sh` 版に書き直す。出典とライセンス全文は `.agent/THIRD_PARTY_NOTICES.md` と各 skill の `LICENSE.txt` に残す。
+
+**理由**: 上流の多くは特定のプラグイン基盤や Web 開発を前提にしており、そのままでは分野を問わないテンプレートに合わない。また独自ライセンスのものを再配布すると、テンプレートを使う人に権利上の問題が生じる。ユーザーの指示（2026-10-12）で、`.agent/` を Claude Code の `.claude/` に、`AGENTS.md` を `CLAUDE.md` に対応させることになった。
+
+**影響**:
+- `.agent/skills/` は 48 件になった（自作 14 件 ＋ 上流由来 34 件）。出典は `skills/index.md` の「出典」列に記載。
+- `diff-review-report` は superpowers の `requesting-code-review` に置き換えた。`explore` / `plan` は ECC の `code-explorer` / `planner` に置き換えた。
+- 上流由来の skill が参照する `docs/superpowers/`・`.superpowers/`・`docs/adr/` は、`docs/planning/`・`tmp/superpowers/`（gitignore 済み）・`docs/adr/`（個別 ADR）に読み替えた。
+- ECC の `strategic-compact` / `blueprint` / `resume-session` / `save-session` は、ECC ランタイム（`~/.claude/session-data/` 等）に依存するため取り込まない。
+
+## ADR-013: CLAUDE.md と .claude/ を symlink で対応させる
+
+**日付**: 2026-10-12
+
+**決定**: リポジトリ直下に `CLAUDE.md -> AGENTS.md`、`.claude -> .agent` の symlink を置く。正本は `AGENTS.md` と `.agent/` の実体のみとし、symlink 側は編集しない。
+
+**理由**: Claude Code は `CLAUDE.md` と `.claude/` を自動で読む。symlink を使えば、規約と設定を二重管理せずに Claude Code から同じ内容を読ませられる。ADR-002（`.agent/` の名前維持）とは両立する。
+
+**影響**: Windows の git（`core.symlinks=false`）では symlink がテキストとして展開される。その環境では再度 symlink を張り直すか、実体を直接参照すること。

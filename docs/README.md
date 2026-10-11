@@ -12,8 +12,10 @@ docs/
 │   ├── README.md      仕様書の一覧と読み方
 │   ├── product.md     目的・対象・用語
 │   ├── architecture.md ディレクトリ構成・読み込みの流れ
-│   ├── adr.md         判断の記録（なぜそうしたか）
+│   ├── adr.md         判断の記録（ADR-001〜013 の履歴）
 │   └── milestones.md  段階と完了条件
+├── adr/               個別の ADR（1 判断 1 ファイル。今後の新規判断はここに書く）
+│   └── README.md      書き方と番号規則
 ├── planning/          計画書（タスクごとの範囲と完了条件）
 │   ├── README.md      計画書の一覧と作り方
 │   └── _TEMPLATE.md   計画書の書式
@@ -33,7 +35,7 @@ docs/
 | 今どの作業が進んでいるか | [`task-list.md`](./task-list.md) |
 | テンプレートの目的と使い方 | [`arch/product.md`](./arch/product.md)、[`../README.md`](../README.md) |
 | 構成と Agent の読み込みの流れ | [`arch/architecture.md`](./arch/architecture.md) |
-| なぜこの構成なのか | [`arch/adr.md`](./arch/adr.md) |
+| なぜこの構成なのか | [`arch/adr.md`](./arch/adr.md)（履歴）、[`adr/`](./adr/README.md)（個別 ADR） |
 | 次に何をするか・段階の状況 | [`arch/milestones.md`](./arch/milestones.md) |
 | タスクの詳細計画 | [`planning/README.md`](./planning/README.md) |
 | 作業規約・検証手段 | [`../AGENTS.md`](../AGENTS.md) |
@@ -43,6 +45,6 @@ docs/
 
 - **進捗の正本は `task-list.md`**。チャットや他の文書と矛盾したら `task-list.md` を正とする。
 - 文書を追加・削除・移動したら、**この目次を同じ変更の中で更新する**。
-- 判断を変える場合は `arch/adr.md` に新しい ADR を追加する（過去の ADR は書き換えない）。
+- 判断を変える場合は新しい ADR を追加する（過去の ADR は書き換えない）。新規は `adr/NNNN-title.md`、既存の履歴は `arch/adr.md` に追記する。
 - 作業の事実は `audit/activity.md` と `.agent/logs/` に追記する（書き換えない）。
 - ファイル名は短く正確に。ハイフンは最大 1 つ。
