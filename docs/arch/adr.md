@@ -48,3 +48,46 @@
 **決定**: `scripts/lib/termux.ts` の `isTermuxEnvironment()` は9種で判定: TERMUX_VERSION, PREFIX com.termux, TERMUX__USER_ID, /data/data/com.termux存在, termux-infoバイナリ, platform android, ANDROID_ROOT+PREFIX, ANDROID_DATA termux, TERMUX_API_VERSION。
 
 **理由**: Android TermuxでNext.jsはTurbopack不可、Webpack強制が必要。Viteはメモリ制限。
+
+---
+
+> **注記 (2026-10-12)**: 以下の ADR-008 以降は、ADR-001・003・005・006・007 の対象だった成果物を
+> 削除したことによる追記。過去の ADR 本文は書き換えず、上記の記録をそのまま残している。
+> 当時の成果物は `git log` / 旧コミットから参照できる。
+
+## ADR-008: テンプレートを分野非依存にする（ADR-001 / 004 / 005 / 006 / 007 を置換）
+
+**日付**: 2026-10-12
+
+**決定**: `scripts/`・`src/`・テスト・CI（`.github/`）・パッケージ管理（`package.json`・`pnpm-lock.yaml`）・ビルド/Lint/テストの設定ファイルを削除する。Node.js・pnpm・Bootstrap CLI・Termux 判定・ビルドキャッシュ・カバレッジ閾値は、テンプレートの対象外とする。
+
+**理由**: Web / Node.js 向けの構成が前面に出ており、文書作成・調査・データ整理などでは不要なファイルが多く分かりにくかった。ユーザーの指示（2026-10-12）。
+
+**影響**:
+- ADR-001（pnpm 統一）、ADR-005（coverage 100%）、ADR-006（Bootstrap CLI）、ADR-007（Termux 判定）は、テンプレートとしては適用されない。
+- `docs/arch/` の旧仕様書（bootstrap / cache / cicd / detector / engineering / quality / security / termux / tech-stack）は削除した。
+- 検証手段は各プロジェクトで定義し、`AGENTS.md §6.1` に記録する（ADR-009 参照）。
+
+## ADR-009: 検証手段はプロジェクトごとに定義する
+
+**日付**: 2026-10-12
+
+**決定**: テンプレートは特定の検証コマンドを前提にしない。検証手段（型チェック・テスト・ビルド・校正など）は `AGENTS.md §6.1` に記録し、Agent は記録されたものだけを実行する。記録がなければ推測で実行せず、ユーザーに確認する。
+
+**理由**: 検証手段は分野ごとに大きく異なるため、テンプレートに固定すると他の用途で使えなくなる。ADR-005（完了は証拠で判定）の考え方は維持する。
+
+## ADR-010: 分野固有のスキルは残し、分野を明示する
+
+**日付**: 2026-10-12
+
+**決定**: ソフトウェア・Web 向けのスキル（testing / e2e / ci-quality-gates / determinism / import-boundaries / memory-leak / zero-alloc）は残す。`.agent/skills/index.md` で分野を明示し、該当しない利用者は削除してよいとする。
+
+**理由**: 削除すると知識が失われる。一方で、読み込みの対象は索引で絞れるため、残しても作業の妨げにならない。
+
+## ADR-011: docs/ の構成を整理する
+
+**日付**: 2026-10-12
+
+**決定**: `docs/examples/`（Vite/Next の設定例）と `docs/planning/complete/` の参照、`docs/planning/robustness-plan.md`、`docs/planning/index.md`（`README.md` と重複）を削除する。`docs/arch/` は product / architecture / adr / milestones の 4 文書に絞る（README を含む）。`docs/audit/` と `docs/ops/` は索引のみを残す。
+
+**理由**: 旧構成の文書の大半が削除した成果物を説明しており、残すと実態と食い違う。判断の履歴は ADR に残し、旧文書の本文は `git log` から参照できる。

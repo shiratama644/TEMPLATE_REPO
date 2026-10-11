@@ -5,7 +5,6 @@ description: GitHub Actionsのquality-gatesを唯一の正本として扱い、t
 
 # CI Quality Gates — quality-gatesを正本として扱うスキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `ci-quality-gates/SKILL.md` をpnpm用に汎用化
 > 正本: `.github/workflows/ci.yml`（本テンプレートではci.ymlが唯一の正本）、`docs/ops/`（あれば）
 
 ## 原則
@@ -14,7 +13,7 @@ description: GitHub Actionsのquality-gatesを唯一の正本として扱い、t
 - Agentは `.github/workflows/` を直接作成しない（提案→承認フローが基本）。ただしテンプレート整備やCI効率化のための直接書き込みは例外として許可
 - `ci.yml` の解説は `docs/ops/` や `README.md` に書くが、workflow自体の複製はしない（正本は1つ）
 
-## ci.yml構成（本テンプレート現行、DropMod + cod-web最新arena統合）
+## ci.yml構成
 
 ```yaml
 name: ci
@@ -94,7 +93,7 @@ jobs:
 
 - GitHub Actions UI → ci → Run workflow → job選択
 - docs: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax (on.workflow_dispatch.inputs)
-- 公式docsで `inputs` の書き方を確認済み（cod-web 2026-09-22検証）
+- 公式docsで `inputs` の書き方を確認済み
 
 ## Sandboxでの代替検証（AGENTS.md §3.1準拠）
 
@@ -113,8 +112,7 @@ jobs:
 
 - `.github/workflows/ci.yml` 正本
 - `docs/README.md` 索引
-- `scripts/check.ts` 並列品質ゲートスクリプト（check-all.tsから改名、cod-web最新arena由来）
+- `scripts/check.ts` 並列品質ゲートスクリプト
 - `scripts/check-determinism.ts` 禁止API検出スクリプト
 - `.agent/skills/determinism/SKILL.md` 決定論スキル
 - `.agent/skills/testing/SKILL.md` テストスキル
-- cod-web `arena/01a0b161-cod-web` の `ci-quality-gates/SKILL.md`（元出典）

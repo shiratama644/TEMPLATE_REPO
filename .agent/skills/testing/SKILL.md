@@ -5,7 +5,6 @@ description: Vitest unit/coverageで意味あるテストを書くスキル。in
 
 # Testing — 意味あるテストでcoverage 100%を達成するスキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `testing/SKILL.md` を汎用化
 > 正本: `vitest.config.ts`、`docs/ops/quality-gates.md`（あれば）、`AGENTS.md §3`
 
 ## 原則
@@ -15,7 +14,7 @@ description: Vitest unit/coverageで意味あるテストを書くスキル。in
 - assertion弱体化をしない、意味あるテストのみ
 - `bun test`（bun:test）は使わない場合もある（jsdom + @testing-library/react のDOMテスト資産との互換を優先する場合はVitest維持）。本テンプレートはpnpn + Vitest
 
-## Coverage方針（cod-web EM02で確立を汎用化）
+## Coverage方針
 
 ### include-all方針
 
@@ -75,7 +74,7 @@ export default defineConfig({
 - reporterは `text`, `json-summary`, `lcov` を基本、HTMLはローカル確認用
 - coverage/ はartifact、Gitに入れない（.gitignore）
 
-## 低カバレッジファイルの改善パターン（cod-web EM02実績を汎用化）
+## 低カバレッジファイルの改善パターン
 
 | File | Before | After | 方法 |
 |---|---|---|---:|
@@ -177,4 +176,3 @@ pnpm test:e2e -- --list  # E2E discovery
 - `.agent/skills/ci-quality-gates/SKILL.md` CIスキル
 - `.agent/skills/e2e/SKILL.md` E2Eスキル
 - `AGENTS.md §3` テスト・品質保証ルール
-- cod-web `arena/01a0b161-cod-web` の `testing/SKILL.md`（元出典）

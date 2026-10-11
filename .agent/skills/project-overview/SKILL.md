@@ -33,11 +33,10 @@ docs/
 ├── README.md          # 全ドキュメントの目次
 ├── task-list.md       # タスク管理の唯一の正本（進捗・証拠）
 ├── arch/              # 仕様書（どう作るか / 何を作るか）
-├── planning/          # 計画書（_TEMPLATE.md 形式）、完了済みは complete/
+├── planning/          # 計画書（_TEMPLATE.md 形式）
 ├── research/          # 調査結果
 ├── audit/             # 差分・バグ・品質の監査
 ├── ops/               # 運用手順
-└── examples/          # 設定例・サンプル
 ```
 
 ## 進捗管理

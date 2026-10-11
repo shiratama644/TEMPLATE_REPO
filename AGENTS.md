@@ -22,11 +22,11 @@
 
 | 区分 | 例 |
 | :--- | :--- |
-| **良い例（適切な粒度）** | 一覧画面の実装 / 検索機能の実装 / 詳細モーダルの実装 / キャッシュ層の実装 |
-| **悪い例（細かすぎる）** | ボタン1個追加ごとにコミット / CSS margin変更ごとにテスト |
-| **悪い例（大きすぎる）** | UI + API + 認証 + DB + キャッシュ を1タスクで一括実装 |
+| **良い例（適切な粒度）** | 章の執筆 / データの一括変換 / 調査項目の一つを完了させる / 設定の一つの移行 |
+| **悪い例（細かすぎる）** | 語句を1つ直すごとにコミット / 数値を1つ変えるごとに検証 |
+| **悪い例（大きすぎる）** | 複数の章・データ源・成果物を1タスクで一括作成 |
 
-※フレームワーク移行やDB変更などの大規模変更は、「設計 → 基盤 → 機能A（検証・commit） → 機能B（検証・commit）」と段階的に分割すること。
+※大規模な構成変更や移行は、「設計 → 基盤 → 項目A（検証・commit） → 項目B（検証・commit）」と段階的に分割すること。
 
 ---
 
@@ -121,7 +121,7 @@ git reset --hard FETCH_HEAD
 - 復旧後は必ず `git log --oneline -5` と §6.1 の検証コマンドで健全性を確認してから作業を再開する。
 
 ### 4.2 コミットルール
-- **タイミング**: 検証（Lint/Type/Test/Build）がすべてPASSした状態でのみコミットする。
+- **タイミング**: §6.1 の検証がすべてPASSした状態でのみコミットする。
 - **事前チェック**: `git status` および `git diff` を確認し、意図しないファイルが含まれていないことを確認する。
 - **重要な変更前のチェックポイント**: 大規模リファクタリング、スキーマ変更、依存関係更新の前には、作業前の正常状態を一度コミット（checkpoint）しておく。
 - **コミットメッセージ**: Conventional Commits 形式に従う。
@@ -158,7 +158,7 @@ git reset --hard FETCH_HEAD
 以下の条件が**すべて満たされた時点で作業を完了とし、停止（回答）**する。追加の改善を勝手に開始してはならない。
 
 - [ ] 指定された機能/修正が実装されている
-- [ ] すべての検証（Lint, Typecheck, Test, Build）がPASSしている
+- [ ] §6.1 に記録されたすべての検証がPASSしている
 - [ ] タスクと無関係なファイルの変更・意図しない差分がない
 - [ ] 適切なメッセージで Git Commit が完了している
 - [ ] Working tree が clean である（`git status` で確認）
@@ -190,21 +190,21 @@ git reset --hard FETCH_HEAD
 ### 6.3 リポジトリ固有の Git 制約
 - （例）特定ディレクトリへの書き込み不可・不変ディレクトリの存在など
 
-### 6.4 フレームワーク実装ルール
-- （例）Hooks の呼び出し順序・Server/Client 境界・状態管理の方針など
+### 6.4 実装ルール
+- （例）採用する設計方針・命名規則・依存の方向、過去に踏んだ地雷と回避策など
 
-### 6.5 Lint 特有ルール
-- （例）ignore コメントの置き場所・自動生成ファイルの除外設定など
+### 6.5 Lint・フォーマット特有ルール
+- （例）ignore コメントの置き場所・自動生成ファイルの除外設定、文書の校正ルールなど
 
-### 6.6 UI 実装ルール
-- （例）ブレークポイント分離・z-index 序列・アニメーション方針など
+### 6.6 成果物・表現ルール
+- （例）出力形式・用語集・表記ゆれの統一方針、図表の規格、データの単位など
 
 ### 6.7 ドキュメント運用
 - 構成・命名規則・運用ルール: `docs/README.md`（全ドキュメントの目次）
 - タスク進捗管理: `docs/task-list.md`（**唯一の正本**。状態定義・証拠記録のルールは同ファイル冒頭）
 - 仕様書: `docs/arch/`（どう作るか / 何を作るか）
-- 計画書: `docs/planning/`（`_TEMPLATE.md` 形式）、完了済みは `docs/planning/complete/`
-- 調査: `docs/research/` / 監査: `docs/audit/` / 運用: `docs/ops/` / 設定例: `docs/examples/`
+- 計画書: `docs/planning/`（`_TEMPLATE.md` 形式）
+- 調査: `docs/research/` / 監査: `docs/audit/` / 運用: `docs/ops/`
 - ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する
 - ファイル名は短く正確、ハイフン最大1つ
 
@@ -348,14 +348,14 @@ git reset --hard FETCH_HEAD
 │   ├── sandbox-constraints/   # Sandbox制約・迂回策
 │   ├── verify-doc-integrity/  # ドキュメント整合性検証
 │   ├── diff-review-report/    # 差分レビューレポート
-│   ├── docs-maintenance/      # ドキュメント整理・URL検証（cod-web最新arena由来）
-│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理（cod-web最新arena由来）
-│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略（cod-web最新arena由来）
-│   ├── import-boundaries/     # レイヤー境界・import制限（cod-web最新arena由来）
-│   ├── determinism/           # 決定論・禁止API検出（cod-web deterministic-sim由来）
-│   ├── e2e/                   # Playwright E2E・webServer配列（cod-web最新arena由来）
-│   ├── memory-leak/           # メモリリーク防止・leave時clear（cod-web最新arena由来）
-│   └── zero-alloc/            # ゼロアロケーション・GC削減（cod-web最新arena由来）
+│   ├── docs-maintenance/      # ドキュメント整理・URL検証
+│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理
+│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略
+│   ├── import-boundaries/     # レイヤー境界・import制限
+│   ├── determinism/           # 決定論・禁止API検出
+│   ├── e2e/                   # Playwright E2E・webServer配列
+│   ├── memory-leak/           # メモリリーク防止・leave時clear
+│   └── zero-alloc/            # ゼロアロケーション・GC削減
 ├── agents/                    # サブエージェント定義（name, description, tools, model等）— 公式準拠
 │   ├── explore.md
 │   ├── plan.md
@@ -368,8 +368,8 @@ git reset --hard FETCH_HEAD
 │   ├── verify-commit.md
 │   ├── log-task.md
 │   ├── sandbox-recovery.md
-│   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック（PalmIDE由来）
-│   └── post_edit_verify.sh    # PostToolUse: 事後検証（PalmIDE由来）
+│   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック
+│   └── post_edit_verify.sh    # PostToolUse: 事後検証
 ├── commands/                  # 旧commands互換（新しくはskills/を使う）— 公式互換
 │   ├── commit.md
 │   ├── review.md
@@ -378,7 +378,7 @@ git reset --hard FETCH_HEAD
 ├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）— 公式準拠
 │   └── implement-task.js
 ├── agent-memory/              # サブエージェント永続メモリ（自動生成）— 公式準拠
-└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）— テンプレート独自（PalmIDE由来）
+└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）— テンプレート独自
     └── YYYY-MM-DD_<summary>.md
 ```
 
@@ -413,12 +413,12 @@ git reset --hard FETCH_HEAD
 | `workflows/*.js` | `workflows/*.js` | 同型。agent(), parallel(), phase()プリミティブ |
 | `agent-memory/` | `agent-memory/` | 同型。サブエージェント永続メモリ |
 | — | `hooks/` | テンプレート拡張。手順md + 実行sh + settings.jsonで登録 |
-| — | `logs/` | テンプレート拡張。PalmIDE由来の4セクションログ |
+| — | `logs/` | テンプレート拡張。4セクションの実行ログ |
 
 ### 8.3 `index.md` 起点のピンポイント読込（核心ワークフロー）
 - **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。`settings.json` の `UserPromptSubmit` フックでも自動実行。
-- **編集前**: `settings.json` の `PreToolUse` フックで [`pre_edit_guard.sh`](.agent/hooks/pre_edit_guard.sh) が編集禁止領域をブロック（PalmIDE由来）。
-- **編集後**: `settings.json` の `PostToolUse` フックで [`post_edit_verify.sh`](.agent/hooks/post_edit_verify.sh) が事後検証（PalmIDE由来）。
+- **編集前**: `settings.json` の `PreToolUse` フックで [`pre_edit_guard.sh`](.agent/hooks/pre_edit_guard.sh) が編集禁止領域をブロック。
+- **編集後**: `settings.json` の `PostToolUse` フックで [`post_edit_verify.sh`](.agent/hooks/post_edit_verify.sh) が事後検証。
 - **トリガー発生時**: [`.agent/hooks/index.md`](.agent/hooks/index.md) の「対応表」で該当フックを特定し実行。
 - 初回/全体把握が必要な時だけ、`project-overview/SKILL.md` を読む。未作成なら作成を検討する。
 
@@ -443,9 +443,3 @@ git reset --hard FETCH_HEAD
     書かれているのは**正しい状態**。書き換えると記録が偽になる。
   - 一括置換の射程は**現用ドキュメント**（`AGENTS.md` / `.agent/skills/` / `.agent/hooks/` / `.agent/rules/` / `.agent/agents/` / 現用の `docs/`）に限定する。`.agent/logs/` 等の時点記録に触れる必要がある場合は、**必ず事前にユーザーへ確認**する。
   - 当時の事実（旧ブランチ名など）を残す必要がある場合は、過去ログを書き換えるのではなく**当日の新規ログに記録**する。
-- **他リポジトリからの良い部分の採用**:
-  - **PalmIDE**: rules/のトピック分割、agents/の定義、skills/のモジュール化、hooks/のPOSIX sh + exit code規約、settings.example.jsonの配線例、verify-doc-integrity / diff-review-reportスキル
-  - **cod-web (main)**: hooks/settings.jsonのイベント登録パターン、skills/<name>/SKILL.mdのfrontmatter形式、scripts/execute.tsの汎用ランナー
-  - **cod-web (arena/01a0b161-cod-web 最新arena)**: 18スキルへの拡張（docs-maintenance, ci-quality-gates, testing, import-boundaries, determinism, e2e, memory-leak, zero-alloc等）、check-all.tsの並列品質ゲート（install先行+abort+hang修正+setsid+summary保存、check.tsに改名）、check-determinism.tsの禁止API検出、quality-gates.ymlの構成（checkout@v6, inputs.job, quality+e2e分離、coverage閾値100%、E2E discovery --list）
-  - **DropMod**: GitHub ActionsのCI構成（static-checks + build + e2e、pnpm/action-setup@v4のバージョン非明示、cache、artifact共有、paths-ignore）、packageManagerのengines整備
-  - **ytdl**: 検証キットのUXルール（?probe=1 / 1 fetch / 外部リトライ / raw URL + 自己チェック）、sandbox-constraintsの詳細化

@@ -49,4 +49,4 @@ paths:
 - テンプレート同梱のドキュメント規約を既定とする
 - 構成・命名規則・運用ルール: `docs/README.md`
 - タスク進捗管理: `docs/task-list.md`（唯一の正本）
-- 仕様書: `docs/arch/` / 計画書: `docs/planning/`（`_TEMPLATE.md` 形式）— 完了済みは `complete/`
+- 仕様書: `docs/arch/` / 計画書: `docs/planning/`（`_TEMPLATE.md` 形式）

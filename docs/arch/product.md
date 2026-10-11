@@ -1,34 +1,48 @@
-# product.md — プロダクト定義
+# プロダクト定義
 
-## 目的
+## 1. 目的
 
-AI Agent によるソフトウェア開発を規律立てて進めるための**テンプレートリポジトリ**。速く大量に作ることではなく、**常に復旧可能で、壊れた状態を長時間維持しないこと**を最優先。
+AI Agent に作業を任せるとき、**毎回ゼロから規約を説明しなくても、安全に・復旧可能な形で・記録を残しながら**進められるようにする。
 
-## 用語
+- 速く大量に作ることより、**常に復旧可能で、壊れた状態を長時間維持しない**ことを優先する。
+- 小さく実行 → 検証 → 記録 → 次へ、の順で進める。
+- 進捗・判断・証拠を文書に残し、後から人間も Agent も追えるようにする。
 
-| 用語 | 定義 |
+## 2. 対象
+
+| 利用者 | 得られるもの |
 |---|---|
-| Template Bootstrap CLI | `pnpm setup` で対話的セットアップ。Feature Manifestパターン、7プリセット、バックアップ/ロールバック、冪等性検出 |
-| ProjectDetector | `scripts/lib/detector.ts` — Vite/Next/Turbo/Monorepo自動検出、空ディレクトリ誤爆防止 |
-| Cache | `scripts/lib/cache.ts` — ハッシュベースビルドスキップ、Termux分離 |
-| Termux | Android Termux環境検出9種、Next.jsはWebpack強制、Viteはメモリ制限 |
-| Quality Gates | `pnpm check` 13タスク: 8必須(blocking: lint/determinism/cspell/knip/typecheck/unit/coverage/build) + 2任意(non-blocking: publint/size-limit) + 3 infra (install/e2e:list/security:check) |
+| Agent（AI） | 作業規約（AGENTS.md）、分野別のノウハウ（skills）、トリガー別の手順（hooks）、編集ルール（rules） |
+| 人間の開発者・作業者 | 進捗の正本（task-list.md）、計画書テンプレート、判断の記録（ADR）、作業ログ |
 
-## 現行資産
+## 3. 想定する用途（例）
 
-- Node 24 LTS + pnpm 12.6.0 + TypeScript 6.0.3
-- Biome 2.5.14, Vitest 5.0.2 + coverage-v8, Playwright 1.63.0 (coverage 100%)
-- husky 9.1.7 + lint-staged, commitlint 21.2.3, cspell 10.3.4, knip 6.38.0
-- size-limit 14.0.0, publint 0.3.24, taze 21.1.0
-- Renovate + Changesets, Docker + DevContainer
-- GitHub Templates full, Bootstrap CLI 7 presets
+| 分野 | 例 |
+|---|---|
+| ソフトウェア | アプリ・ライブラリ・CLI の開発（検証手段はプロジェクトで定義） |
+| 文書 | 仕様書・マニュアル・記事の執筆と校正 |
+| 調査 | 技術・市場の調査、比較資料の作成 |
+| データ | 集計・変換・分析レポートの作成 |
+| 設定・運用 | 手順書の整備、設定変更の計画と記録 |
 
-## ライセンス
+テンプレート自体は特定の言語・ツール・フレームワークを含まない。検証手段（型チェック・テスト・ビルド・校正など）は、プロジェクトごとに `AGENTS.md §6.1` へ記録する。
 
-MIT。初期はテンプレートとして公開。
+## 4. 非目標
 
-## 参考
+- 特定の言語・フレームワーク・CI サービスの設定を提供すること（必要なら各プロジェクトで追加する）。
+- Agent の実行基盤（ツール呼び出しの仕組み）を提供すること。
+- 大規模な成果物や生成データを Git で管理すること。
 
-- `shiratama644/cod-web` arena/01a0b161-cod-web ブランチ — 活発なリポジトリの `arch/` 構成を参考（2026-09-27調査）
-- `shiratama644/DropMod` — CI構成、pnpm/action-setup
-- `shiratama644/PalmIDE` — rules/トピック分割、agents/定義
+## 5. 用語
+
+| 用語 | 意味 |
+|---|---|
+| AGENTS.md | Agent が必ず守る作業規約。§6 はプロジェクト固有 |
+| rules | 特定のファイル・作業に発火する、トピック別のルール（`.agent/rules/`） |
+| skills | 分野別のノウハウ・手順（`.agent/skills/<name>/SKILL.md`） |
+| hooks | 編集前後・タスク開始時などのトリガーに対応する手順・スクリプト（`.agent/hooks/`） |
+| task-list | 進捗の唯一の正本（`docs/task-list.md`） |
+| 計画書 | 個別タスクの目的・範囲・完了条件を書いた文書（`docs/planning/`） |
+| ADR | 設計・方針の決定とその理由（`docs/arch/adr.md`） |
+| 実行ログ | タスク完了ごとの記録。追加のみ（`.agent/logs/`） |
+| 証拠 | 完了判定の根拠（検証結果・成果物・コミット SHA など） |

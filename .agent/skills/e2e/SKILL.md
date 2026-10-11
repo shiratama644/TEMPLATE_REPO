@@ -5,13 +5,12 @@ description: Playwright E2EをSandboxでも安全に扱うスキル。webServer�
 
 # E2E — PlaywrightをSandboxで安全に扱うスキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `e2e/SKILL.md` を汎用化
 > 正本: `docs/ops/quality-gates.md`（あれば）、`playwright.config.ts`、`AGENTS.md §6.2`
 
 ## Sandbox制約
 
 - E2E browser実行をSandboxで捏造しない（PlaywrightのbrowserはSandboxのegress制限や依存不足で動かないことが多い）
-- `pnpm test:e2e -- --list` はbrowserを起動しないdiscovery検証として有用（cod-web PH1.5-C/Dで確立）
+- `pnpm test:e2e -- --list` はbrowserを起動しないdiscovery検証として有用
 - 本物のbrowser実行はCI (`ci.yml` e2e job) またはpreviewで
 
 ## playwright.config.ts 正しい構成（汎用テンプレート用）
@@ -51,7 +50,7 @@ export default defineConfig({
 - `PLAYWRIGHT_BASE_URL` がある場合はpreview/CIの既存URLを対象にし、local `webServer` を起動しない構成にすると、同じspecをlocalとCI/previewで使い回せる
 - `reuseExistingServer: !CI` でCIでは毎回fresh、localでは再利用
 
-## 公式docs検証（cod-web PH1.5-C/Dで確認済み）
+## 公式docs検証
 
 | 項目 | 公式URL | 要点 |
 |---|---|---|
@@ -109,4 +108,3 @@ pnpm test:e2e -- --list 2>&1 | grep "test:"
 - `.agent/skills/ci-quality-gates/SKILL.md` CIスキル
 - `.agent/skills/testing/SKILL.md` テストスキル
 - `AGENTS.md §6.2` E2E制約
-- cod-web `arena/01a0b161-cod-web` の `e2e/SKILL.md`（元出典）

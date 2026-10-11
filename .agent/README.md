@@ -21,14 +21,14 @@
 │   ├── sandbox-constraints/   # Sandbox制約・迂回策
 │   ├── verify-doc-integrity/  # ドキュメント整合性検証
 │   ├── diff-review-report/    # 差分レビューレポート
-│   ├── docs-maintenance/      # ドキュメント整理・URL検証（cod-web最新arena由来）
-│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理（cod-web最新arena由来）
-│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略（cod-web最新arena由来）
-│   ├── import-boundaries/     # レイヤー境界・import制限（cod-web最新arena由来）
-│   ├── determinism/           # 決定論・禁止API検出（cod-web deterministic-sim由来）
-│   ├── e2e/                   # Playwright E2E・webServer配列（cod-web最新arena由来）
-│   ├── memory-leak/           # メモリリーク防止・leave時clear（cod-web最新arena由来）
-│   └── zero-alloc/            # ゼロアロケーション・GC削減（cod-web最新arena由来）
+│   ├── docs-maintenance/      # ドキュメント整理・URL検証
+│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理
+│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略
+│   ├── import-boundaries/     # レイヤー境界・import制限
+│   ├── determinism/           # 決定論・禁止API検出
+│   ├── e2e/                   # Playwright E2E・webServer配列
+│   ├── memory-leak/           # メモリリーク防止・leave時clear
+│   └── zero-alloc/            # ゼロアロケーション・GC削減
 ├── agents/                    # サブエージェント定義（name, description, tools, model等）
 │   ├── explore.md
 │   ├── plan.md
@@ -70,7 +70,7 @@
 | `agents/*.md` | Project | ✓ | サブエージェント定義 | [Subagents](https://code.claude.com/docs/en/sub-agents.md) |
 | `workflows/*.js` | Project | ✓ | 動的ワークフロー | [Workflows](https://code.claude.com/docs/en/workflows.md) |
 | `agent-memory/<name>/` | Project | ✓ | サブエージェント永続メモリ | [Persistent memory](https://code.claude.com/docs/en/sub-agents#enable-persistent-memory) |
-| `logs/` | Project | ✓ | タスク実行ログ | テンプレート独自（PalmIDE由来） |
+| `logs/` | Project | ✓ | タスク実行ログ | テンプレート独自 |
 
 ## 運用ルール
 

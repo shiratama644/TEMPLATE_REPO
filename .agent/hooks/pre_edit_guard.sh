@@ -1,6 +1,5 @@
 #!/bin/sh
 # pre_edit_guard.sh — 編集禁止領域への変更をブロックする PreToolUse フック
-# TEMPLATE_REPO用に一般化。PalmIDEの設計をベースに、テンプレートとして再利用可能な形に調整。
 #
 # ブロック対象:
 #   .git/ 以下、node_modules/ 以下、dist/ 以下、.next/ 以下、coverage/ 以下

@@ -5,7 +5,6 @@ description: レイヤー間のimport境界を守り、循環参照と責務混�
 
 # Import Boundaries — レイヤー境界を守るスキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `import-boundaries/SKILL.md` を汎用化
 > 正本: `docs/arch/`（あれば）、`biome.json` の `no-restricted-imports`、`AGENTS.md §6`
 
 ## 原則
@@ -137,4 +136,3 @@ pnpm lint
 - `docs/arch/` アーキテクチャ文書（あれば）
 - `AGENTS.md §6` プロジェクト固有ルール
 - `.agent/skills/determinism/SKILL.md` 決定論スキル（L1の純粋性と関連）
-- cod-web `arena/01a0b161-cod-web` の `import-boundaries/SKILL.md`（元出典）

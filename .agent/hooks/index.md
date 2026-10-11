@@ -5,7 +5,7 @@
 > ここは「いつ・どのフック」の索引と、再利用可能な具体手順。
 >
 > ディレクトリ構造はClaude Code公式準拠: 実行スクリプトを `.sh` で置き、トリガー登録は
-> `.agent/settings.json`（`hooks` フィールド）で行う。PalmIDEのPOSIX sh規約 + cod-webのsettings.json登録パターンを統合。
+> `.agent/settings.json`（`hooks` フィールド）で行う。実行スクリプトは POSIX sh で書き、`settings.json` に登録する。
 
 ## トリガー → フック 対応表
 
@@ -45,4 +45,4 @@
 
 - 公式 `.claude/settings.json` の `hooks` フィールドに、本ディレクトリの `.sh` スクリプトを登録する形が公式推奨。
 - 本テンプレートでは `settings.json` に `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop` の4イベントを登録。
-- 旧来の手順md（pre-task.md等）は人間の参照用として残し、自動実行は `.sh` + `settings.json` で行うハイブリッド構成（cod-web + PalmIDE統合）。
+- 旧来の手順md（pre-task.md等）は人間の参照用として残し、自動実行は `.sh` + `settings.json` で行うハイブリッド構成。

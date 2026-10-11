@@ -5,8 +5,8 @@ description: ホットパスでのゼロアロケーションを守る実装ス�
 
 # Zero-Alloc — ホットパスでGCを出さないスキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `zero-alloc/SKILL.md` を汎用化
-> 正本: `docs/arch/engineering.md`（ゼロアロケ、あれば）、`docs/arch/server.md`
+> 対象: 性能が重要なホットパス（高頻度に呼ばれる処理・大量データの反復処理）。
+> 正本: プロジェクトの仕様（`docs/arch/`）と `AGENTS.md §6`
 
 ## 原則
 
@@ -14,7 +14,7 @@ description: ホットパスでのゼロアロケーションを守る実装ス�
 - 送信は `subarray()`（コピーしない）、毎送信 `buffer.slice()` はGCを生むので置換対象
 - GCはフレームドロップの原因。ゼロアロケーションで安定したフレームレートを維持
 
-## 違反パターンと修正（cod-web EM01実績を汎用化）
+## 違反パターンと修正
 
 | # | 場所 | 違反 | 修正 | 効果 |
 |---|---|---|---|---|
@@ -132,7 +132,6 @@ grep -R "new Map\|new Set\|\.map(" src/game/net --include="*.ts" | head -n 20
 grep -R "new " src/engine --include="*.ts" | wc -l
 ```
 
-- cod-web EM01後は hot pathで `getPlayers()` 0件、`shift()` 0件、`slice` は互換1件のみ（hot path外）
 
 ## パフォーマンス測定
 
@@ -153,8 +152,5 @@ if (global.gc) {
 
 ## 関連
 
-- `docs/arch/engineering.md` ゼロアロケ（あれば）
-- `docs/arch/server.md` Room（あれば）
 - `.agent/skills/memory-leak/SKILL.md` メモリリーク防止スキル
 - `.agent/skills/determinism/SKILL.md` 決定論スキル（ホットパスの純粋性と関連）
-- cod-web `arena/01a0b161-cod-web` の `zero-alloc/SKILL.md`（元出典）

@@ -5,7 +5,6 @@ description: 純粋関数・決定論ロジックの決定論を守るスキル�
 
 # Determinism — 決定論を守る実装スキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `deterministic-sim/SKILL.md` を汎用化
 > 正本: `docs/arch/`（あれば、決定論・禁止API）、`AGENTS.md §6`
 
 ## なぜ決定論が重要か
@@ -41,7 +40,7 @@ const randomValue = rng(); // 0..1
 - 直接 `Math.random()` を呼ばない。seedから作ったrngを使う
 - seedはサーバーから配布、または `createLCG(12345)` のように固定
 
-### 2. 軽量smoke vs heavy分離（cod-web PH2-Eで確立を汎用化）
+### 2. 軽量smoke vs heavy分離
 
 | 層 | 配置 | 内容 | 時間 |
 |---|---|---|---|
@@ -133,4 +132,3 @@ for (const file of glob('src/**/*.{ts,tsx}')) {
 - `.agent/skills/import-boundaries/SKILL.md` レイヤー境界スキル
 - `.agent/skills/ci-quality-gates/SKILL.md` CIスキル
 - `docs/arch/` 決定論・禁止API文書（あれば）
-- cod-web `arena/01a0b161-cod-web` の `deterministic-sim/SKILL.md`（元出典）

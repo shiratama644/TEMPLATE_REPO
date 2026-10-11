@@ -5,10 +5,10 @@ description: Room leave時やリソース解放時のメモリリークを防ぐ
 
 # Memory Leak — リークを防ぐスキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `memory-leak/SKILL.md` を汎用化
-> 正本: `docs/arch/server.md`（あれば、Roomライフサイクル）、`docs/arch/engineering.md`
+> 対象: 長時間動作するプログラム・常駐プロセス・ループでリソースを確保するコード。
+> 正本: プロジェクトの仕様（`docs/arch/`）と `AGENTS.md §6`
 
-## 潜在リーク箇所（cod-web EM01発見を汎用化）
+## 潜在リーク箇所
 
 | # | 場所 | リーク内容 | 影響 |
 |---|---|---|---|
@@ -133,4 +133,3 @@ grep -R "clearInterval" src --include="*.ts"
 - `docs/arch/server.md` Roomライフサイクル（あれば）
 - `.agent/skills/zero-alloc/SKILL.md` ゼロアロケーションスキル（GC削減と関連）
 - `AGENTS.md §6` プロジェクト固有ルール
-- cod-web `arena/01a0b161-cod-web` の `memory-leak/SKILL.md`（元出典）
