@@ -41,7 +41,6 @@
 │   ├── verify-commit.md # commit直前
 │   ├── log-task.md            # タスク完了時
 │   ├── sandbox-recovery.md
-│   ├── restore-env.sh
 │   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック
 │   └── post_edit_verify.sh    # PostToolUse: 事後検証
 ├── commands/                  # 旧commands互換（新しくはskills/を使う）
@@ -82,22 +81,12 @@
 - **hooks/** は手順(.md)と実行スクリプト(.sh)の両方を置く。実行登録は `settings.json` の `hooks` で行う。
 - **logs/** は追加のみ。過去ログを書き換えない。
 
-## 他リポジトリからの良い部分の採用
-
-- **PalmIDE**: rules/のトピック分割、agents/の定義、skills/のモジュール化、hooks/のPOSIX sh + exit code規約、settings.example.jsonの配線例
-- **cod-web (main)**: hooks/settings.jsonのイベント登録パターン、skills/<name>/SKILL.mdのfrontmatter形式、scripts/execute.tsの汎用ランナー
-- **cod-web (arena/01a0b161-cod-web 最新arena)**: 18スキルへの拡張、docs-maintenance/ci-quality-gates/testing/import-boundaries/determinism/e2e/memory-leak/zero-allocの汎用スキル、check-all.tsの並列品質ゲート（install先行+abort+hang修正+setsid+summary.log）、check-determinism.tsの禁止API検出、quality-gates.ymlの構成（checkout@v6, setup-bun@v2, inputs.job, quality+e2e分離、coverage閾値100%、E2E discovery --list）
-- **DropMod**: GitHub ActionsのCI構成（static-checks + build + e2e、pnpm/action-setup@v4のバージョン非明示、cache、artifact共有、paths-ignore）
-- **ytdl**: 検証キットのUXルール（?probe=1 / 1 fetch / 外部リトライ / raw URL + 自己チェック）
-
-## 今後の使い方（新規リポジトリへの適用手順）
+## 今後の使い方（新規プロジェクトへの適用手順）
 
 1. GitHubで「Use this template」から新規リポジトリ作成
-2. `AGENTS.md §6` にプロジェクト固有のルールを追記
+2. `AGENTS.md §6` にプロジェクト固有のルールを追記（特に §6.1 に検証コマンドを記録）
 3. `.agent/skills/project-overview/SKILL.md` をプロジェクト用に書き換え
-4. `README.md` をプロジェクト用に書き換え（現在の機能 + arch/planning/research構成）
-5. `package.json` の `name`, `description`, `packageManager` を更新（`pnpm@12.6.0`）
-6. `.nvmrc` をNodeのLTSバージョンに更新
-7. `.github/workflows/ci.yml` をプロジェクト用に調整
-8. `docs/` は cod-web arena/01a0b161-cod-web準拠で復旧 — arch/ (仕様) + planning/ (計画) + research/ (調査) + audit/ (監査) + ops/ (運用) + examples/ (設定例) + task-list.md (正本) — 以前は削除していたが、活発リポジトリ調査（2026-09-27）により必要と判断し復旧
-9. ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK）
+4. `README.md` をプロジェクト用に書き換え
+5. `docs/` を必要に応じて整理（`docs/README.md` の目次も更新）
+6. 不要な `.agent/skills/` のうち、分野に合わないもの（例: Web 専用の `e2e`）は削除してよい
+7. ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK）

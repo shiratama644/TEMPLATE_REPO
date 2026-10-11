@@ -70,7 +70,7 @@ paths:
 | スキル | `kebab-case/SKILL.md` | `project-overview/SKILL.md` |
 | ルール | `kebab-case.md`（ハイフン最大1つ） | `project-template.md` |
 | フック手順 | `kebab-case.md`（ハイフン最大1つ） | `verify-commit.md` |
-| フックスクリプト | `kebab-case.sh`（ハイフン最大1つ） | `restore-env.sh` |
+| フックスクリプト | `kebab-case.sh`（ハイフン最大1つ） | `post_edit_verify.sh` |
 | テスト | `kebab-case.test.ts`（ハイフン最大1つ） | `yaml-top.test.ts` |
 
 ## 4. リンク規約

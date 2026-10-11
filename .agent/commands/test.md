@@ -10,20 +10,20 @@ description: テストを実行し、カバレッジを確認する。Use when y
 
 1. **単体テスト**:
    ```bash
-   pnpm test:unit
+   <単体テスト>
    ```
    - watchモードではなく `vitest run` 相当のスクリプトを使う
 
 2. **カバレッジ**:
    ```bash
-   pnpm test:coverage
+   <カバレッジ>
    ```
    - 意味のあるカバレッジか確認（数字だけのshallow testを避ける）
    - 新規コードのカバレッジが80%以上あるか
 
 3. **E2Eテスト** (必要な場合、CI上のみ):
    ```bash
-   pnpm test:e2e
+   <E2Eテスト>
    ```
    - Sandboxで実行不可の場合はCI上のみ実行
 

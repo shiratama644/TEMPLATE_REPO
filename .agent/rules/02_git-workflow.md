@@ -28,12 +28,12 @@ git log -5 --oneline
 - `git status` が「大量の削除 + 大量の未追跡」
 - `node_modules` が無い
 
-→ `.agent/hooks/sandbox-recovery.md` + `restore-env.sh` で復旧。
+→ `.agent/hooks/sandbox-recovery.md` の手順で復旧。
 
 ```bash
 git fetch origin <現在のブランチ>
 git reset --hard FETCH_HEAD   # この場合のみ --hard 許可（§4.1.1例外）
-bash .agent/hooks/restore-env.sh
+# 以降は AGENTS.md §6.1 の環境セットアップ手順を実行
 ```
 
 ## 2. コミットルール

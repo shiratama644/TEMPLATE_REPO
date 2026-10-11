@@ -15,12 +15,12 @@ description: 変更を検証し、Conventional Commits形式でコミットす�
    git log -5 --oneline
    ```
 
-2. **検証** (package.json のスクリプトに合わせる):
+2. **検証** (AGENTS.md §6.1 の記録に合わせる):
    ```bash
-   pnpm typecheck
-   pnpm lint
-   pnpm test:unit
-   pnpm build
+   <型チェック>
+   <Lint>
+   <単体テスト>
+   <ビルド>
    ```
    1つでも失敗したら原因を特定して修正し、再検証。
 

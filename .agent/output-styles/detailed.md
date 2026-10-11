@@ -50,10 +50,10 @@ description: 詳細な出力スタイル。変更の背景・設計判断・検�
 ## 4. 検証結果
 ### 実行コマンドと結果
 ```bash
-pnpm typecheck  # OK
-pnpm lint       # 0 error, 0 warning
-pnpm test:unit  # 24 passed
-pnpm build      # OK, 1.2MB
+<型チェック>  # OK
+<Lint>       # 0 error, 0 warning
+<単体テスト>  # 24 passed
+<ビルド>      # OK, 1.2MB
 ```
 
 ### テスト詳細

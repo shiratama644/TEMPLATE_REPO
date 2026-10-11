@@ -35,7 +35,7 @@
 各タスクは必ず以下の順序で進め、途中の検証が失敗した状態で次へ進んではならない。
 
 ```text
-1. 仕様・既存コード確認 (git status / package.json / 関連ファイル)
+1. 仕様・既存コード確認 (git status / README / 関連ファイル / docs/)
    ↓
 2. 実装方針決定
    ↓
@@ -55,41 +55,22 @@
 ## 3. テスト・品質保証ルール
 
 ### 3.1 検証コマンドの実行
-- `package.json` に定義されたスクリプトのみを使用する（存在しないコマンドを捏造・実行しない）。
-- 原則として commit 前に、プロジェクトで定義された検証をすべて pass させる。本テンプレートでは以下の 8 必須 + 2 任意(non-blocking) + infra 3種 + pre-commit:
-  ```bash
-  # 必須 8 gates（blocking, CIでも必須）
-  pnpm typecheck          # 型チェック (tsc --noEmit, TypeScript 6.0.3)
-  pnpm lint               # Lint / Format (Biome 2.5.14, zero-alloc/memory-leak lint含む)
-  pnpm check:determinism  # 決定論・禁止API検出 (Math.random/Date.now等が純粋層に混入していないか)
-  pnpm cspell             # スペルチェック (cspell 10.3.4)
-  pnpm knip               # 未使用コード検出 (knip 6.38.0, KNIP_DISABLE_RAW_TRANSFER=1)
-  pnpm test:unit          # 単体テスト (Vitest 5.0.2)
-  pnpm test:coverage      # カバレッジ (threshold 100%)
-  pnpm build              # 本番ビルド
+- プロジェクトで**定義された検証手段のみ**を使用する（存在しないコマンドを捏造・実行しない）。
+- 検証手段は **§6.1「検証コマンド」** に記録する。未記録の場合は、推測で実行せず先にユーザーへ確認する。
+- commit 前に、記録済みの検証をすべて pass させる。
+- 検証の例（分野ごとに読み替える）:
 
-  # 任意 2 gates（non-blocking, warningのみ, CIでもnon-blocking）
-  pnpm publint            # パッケージ公開検証
-  pnpm size-limit         # バンドルサイズ (10kB)
+  | 分野 | 検証の例 |
+  | :--- | :--- |
+  | ソフトウェア（TS/Python/Go/Rust 等） | 型チェック → Lint/Format → 単体テスト → ビルド |
+  | Web アプリ | 上記 + E2E テスト、ブラウザでの表示確認 |
+  | ドキュメント / 文章 | リンク切れチェック、表記ゆれ・誤字チェック、目次の整合性 |
+  | データ / 分析 | スキーマ検証、再現実行（同じ入力で同じ出力になるか）、集計値の突き合わせ |
+  | 設定・インフラ | 構文チェック、dry-run / plan による差分確認 |
 
-  # infra 3 tasks（check.ts内でのみ実行, 必須ではないが常にpass期待）
-  pnpm install            # 依存インストール（check.ts先頭で先行実行）
-  pnpm e2e:list           # E2E discovery (browser未インストール時はfallback)
-  pnpm security:check     # セキュリティ統合チェック（secret/dependency check）
-
-  # pre-commit (husky + lint-staged): commit時にstagedファイルのみ自動で lint + cspell(all) + typecheck
-  ```
-  ※ 実際のスクリプト名はプロジェクトの `package.json` を確認すること
-  （`pnpm lint` が linter 直接呼び出しの別名だったり、`pnpm test` が watch モードだったりする）。
-  ※ 一括実行は `pnpm check`（install先行→残り並列、publint/size-limitはnon-blocking, logs/に保存、cod-web最新arena由来）
-- テストの watch モードは commit 前検証に使わない。必ず run 相当のスクリプトを使う。
-- E2E テストは実行環境によってはローカルで実行できないことがある（§6 の制約を確認）。
-  実行できない場合は CI 上のみ実行し、ローカルで無理に実行しようとしない。
-- ビルドログに環境起因の既知エラー（外部 API への接続失敗等）が出ても、exit code が
-  0 であれば成功扱いで問題ない（既知事象は §6 に追記して引き継ぐ）。
-- **テストファイル命名規則（公式ルール）**: テストファイルは `_tests_/` ディレクトリに同じディレクトリ構造で配置し、命名は `<name>.test.ts` 形式に統一する（例: `src/index.ts` → `_tests_/src/index.test.ts`, `scripts/lib/cache.ts` → `_tests_/scripts/cache.test.ts`）。`test-*.ts` 等の旧形式は禁止。詳細は `.agent/rules/04_verification.md` §5 を参照
-- **pre-commit**: husky 9.1.7 + lint-staged 17.6.0 により、commit時にstagedファイルのみ `biome check --write` + `biome lint` + `cspell` が自動実行される。`--no-verify` でスキップ可能だが、原則使わない
-- **commit-msg**: husky + commitlint 21.2.3 により、Conventional Commits形式（feat, fix, docs等）が強制される。不正なメッセージはcommit失敗。`pnpm commit` (commitizen) で対話的に作成可能
+- テストの watch モードは commit 前検証に使わない。必ず一回実行（run 相当）のコマンドを使う。
+- 外部ネットワーク・外部 API・GUI 等に依存する検証が環境上実行できない場合は、無理に回避せず、実行できなかった事実と理由を報告する（§6.2 参照）。
+- ビルドや検証ログに環境起因の既知エラーが出ても、exit code が 0 であれば成功扱いで問題ない（既知事象は §6 に追記して引き継ぐ）。
 
 ### 3.2 エラー対応と品質維持
 - エラー発生時はエラーメッセージやスタックトレースから根本原因を特定し、最小限の範囲で修正する。
@@ -132,14 +113,12 @@ git fetch origin <現在のブランチ>
 # 2. FETCH_HEAD にワークツリーごとリセット（この場合の --hard は例外的に必要）
 git reset --hard FETCH_HEAD
 
-# 3. 依存を再構築（復旧スクリプトがある場合はそれを使う。例: .agent/hooks/restore-env.sh）
-corepack enable pnpm >/dev/null 2>&1
-pnpm install --frozen-lockfile
+# 3. 環境を再構築（§6.1 に記録された手順に従う。依存のインストールなど）
 ```
 
 - `git reset --hard FETCH_HEAD` は §4.3 の厳禁ルールの例外で、**サンドボックス再構築後の初回のみ**許可される（未コミット変更は元々存在しない状態のため）。
 - 再構築を判定するヒント：`git log --oneline` が起点コミット 1 個しか返ってこない / `git status` が大量の削除を示す / node_modules がない。
-- 復旧後は必ず `git log --oneline -5` とテスト（`pnpm test:unit` 等）で健全性を確認してから作業を再開する。
+- 復旧後は必ず `git log --oneline -5` と §6.1 の検証コマンドで健全性を確認してから作業を再開する。
 
 ### 4.2 コミットルール
 - **タイミング**: 検証（Lint/Type/Test/Build）がすべてPASSした状態でのみコミットする。
@@ -193,8 +172,17 @@ pnpm install --frozen-lockfile
 > 集約する場所。計画書と矛盾する指定があった場合は計画書を優先するが、
 > それ以外は本節を厳守する。不要なサブセクションは削除してよい。
 
-### 6.1 環境・ツールチェーン
-- （例）Node.js LTS / パッケージマネージャ / フレームワーク・主要ライブラリのバージョン方針
+### 6.1 環境・ツールチェーン・検証コマンド
+- （例）使用言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
+- **検証コマンド**（§3.1 の正本。プロジェクトに合わせて記入）:
+  ```bash
+  # 例:
+  # <型チェック>    # 例: tsc --noEmit / mypy
+  # <Lint>          # 例: biome check / ruff check
+  # <テスト>        # 例: vitest run / pytest
+  # <ビルド>        # 例: npm run build / make
+  ```
+- 環境の初期セットアップ手順（例: 依存のインストール）
 
 ### 6.2 サンドボックス制約（乗り越えず、迂回する）
 - （例）外部 API に到達不可 / ブラウザバイナリの install 不可 等。修正対象ではない恒常的制約とその対処を書く。
@@ -211,23 +199,14 @@ pnpm install --frozen-lockfile
 ### 6.6 UI 実装ルール
 - （例）ブレークポイント分離・z-index 序列・アニメーション方針など
 
-### 6.7 ドキュメント運用（活発リポジトリ準拠 — cod-web arena/01a0b161-cod-web復旧）
-
-- テンプレート同梱のドキュメント規約を既定とする:
-  - 構成・命名規則・運用ルール: `docs/README.md`
-  - タスク進捗管理: `docs/task-list.md`（**唯一の正本**。状態定義・証拠記録のルールは同ファイル冒頭）— cod-web arena準拠
-  - 仕様書: `docs/arch/`（どう作るか）— product, architecture, tech-stack, bootstrap, detector, cache, termux, adr
-  - 計画書: `docs/planning/`（_TEMPLATE.md形式）— 計画書索引は README.md、完了済みは complete/
-  - 調査: `docs/research/`（競合・技術調査）— cod-web arena準拠で復旧
-  - 監査: `docs/audit/`（差分・バグ）— DropMod準拠で復旧
-  - 完了済み計画: `docs/planning/complete/`（cod-web準拠）
-  - 運用: `docs/ops/`（デプロイ・CI）
-  - 設定例: `docs/examples/`（Vite/Next）— 現在の機能
+### 6.7 ドキュメント運用
+- 構成・命名規則・運用ルール: `docs/README.md`（全ドキュメントの目次）
+- タスク進捗管理: `docs/task-list.md`（**唯一の正本**。状態定義・証拠記録のルールは同ファイル冒頭）
+- 仕様書: `docs/arch/`（どう作るか / 何を作るか）
+- 計画書: `docs/planning/`（`_TEMPLATE.md` 形式）、完了済みは `docs/planning/complete/`
+- 調査: `docs/research/` / 監査: `docs/audit/` / 運用: `docs/ops/` / 設定例: `docs/examples/`
 - ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する
-- ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK、`yaml-utils-top-level.test.ts` NG）— 長過ぎると意味がない
-- 重要なのは現在の機能（Node 24 LTS + pnpm 12.6.0 + TS 6, Vite/Next/Monorepo/Turbo自動検出, Termux 9判定, キャッシュhash-skip, 12品質ゲート, coverage 100%, Bootstrap CLI 7プリセット, GitHub templates full, DX tools all）+ 活発リポジトリの構成（arch, audit, planning, research）
-- 参考: cod-web arena/01a0b161-cod-web（2026-09-26活発）— docs/: README, task-list.md, arch/ (15 files), planning/ (with complete/), ops/, research/ (DR-1..5)
-- プロジェクトに不要なディレクトリ（`audit/` 等）は削除してよいが、本テンプレートでは活発リポジトリ準拠で全て保持
+- ファイル名は短く正確、ハイフン最大1つ
 
 ---
 
@@ -253,10 +232,10 @@ pnpm install --frozen-lockfile
 3. **ファイル変更数**: `新規/変更ファイル (N files, +X / -Y)`
 4. **検証結果チェックリスト**:
    ```text
-   - ✅ pnpm typecheck: 0 error
-   - ✅ pnpm lint: 0 error (N files)
-   - ✅ pnpm test:unit: X passed / Y files
-   - ✅ pnpm build: Compiled successfully
+   - ✅ <型チェック>: 0 error
+   - ✅ <Lint>: 0 error (N files)
+   - ✅ <テスト>: X passed / Y files
+   - ✅ <ビルド>: 成功
    - ✅ push 済み (`prev..head`)
    ```
    ※ スクリプト名・検証項目はプロジェクトの実情に合わせる。
@@ -389,7 +368,6 @@ pnpm install --frozen-lockfile
 │   ├── verify-commit.md
 │   ├── log-task.md
 │   ├── sandbox-recovery.md
-│   ├── restore-env.sh
 │   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック（PalmIDE由来）
 │   └── post_edit_verify.sh    # PostToolUse: 事後検証（PalmIDE由来）
 ├── commands/                  # 旧commands互換（新しくはskills/を使う）— 公式互換
