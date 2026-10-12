@@ -41,6 +41,7 @@
 |---|---|---|---:|---|---|---|
 | PROJECTINIT-1 | 新規プロジェクトの初期設定スキルを追加する | 完了 | 100% | — | `project-init` スキルがあり、読み方ガイド・一覧から辿れ、質問→計画承認→書き換えの手順が書かれている。`make links` が PASS | `31b4d21`。`make links` PASS（139 files）。スキル 49 件 |
 | SKILLALIGN-1 | スキルをこの環境の function call 名に揃え、DOT を Mermaid 化し、同義ファイルを統合する | 完了 | 100% | PROJECTINIT-1 | スキル本文が web_search / fetch_page / ask_user 等を使い、DOT が Mermaid になり、同義スキルが統合されている。`make links` PASS | `make links` PASS（123 files）。スキル 44 件 |
+| INITFLOW-1 | project-init にユーザー提案の事実確認ループ（web_search depth 可変 + fetch_page）と ask_user ループを入れる | 完了 | 100% | SKILLALIGN-1 | スキルに両ループと Mermaid フローがある。`make links` PASS | `make links` PASS（123 files） |
 
 ---
 
