@@ -144,81 +144,116 @@ snapshots: []            # 承認時点の {path, sha256}。実行直前に変�
 
 ```mermaid
 flowchart TD
-  S(["開始"]) --> D["0 現状判定 + INIT_STATE 復元"]
-  D --> INIT{"未初期化?"}
-  INIT -->|初期化済み| Rerun["ask_user 再実行?"]
-  Rerun -->|しない| STOP1(["停止"])
-  Rerun -->|する 再実行可| ASK
-  INIT -->|未初期化 / 一部| ASK
+flowchart TD
+  classDef ok fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef ng fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ask fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef chk fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef act fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
 
-  ASK["ask_user 4問/回 8ラウンド"] --> RESP{"応答"}
-  RESP -->|未回答 / 拒否| HOLD["unknown または rejected"]
-  RESP -->|検証不要| CONF["confirmed"]
-  RESP -->|検証可能| FACT["1b 事実確認"]
-  HOLD --> REQ
-  CONF --> REQ
-  FACT --> FRES{"result"}
-  FRES -->|verified / unverified| REQ
-  FRES -->|conflict| JUDGE["ask_user 採用側"]
-  JUDGE --> REQ
-  FRES -->|error| STOPERR(["停止 状態を保存"])
+  S(["開始"]):::ok --> D
 
-  REQ{"必須スロットが埋まった?"}
+  subgraph P0["① 現状確認"]
+    D["現状判定 + INIT_STATE 復元"]:::act --> INIT{"初期化済み?"}:::chk
+    INIT -->|はい| RERUN{"再実行する?"}:::ask
+  end
+  RERUN -->|しない| STOP1(["停止"]):::ng
+  RERUN -->|する| ASK
+  INIT -->|"未初期化 / 一部"| ASK
+
+  subgraph P1["② ヒアリング (4問/回 × 最大8ラウンド)"]
+    ASK["ask_user で質問"]:::ask --> RESP{"回答の種類"}:::chk
+    RESP -->|"未回答 / 拒否"| HOLD["unknown / rejected で保持"]
+    RESP -->|検証不要| CONF["confirmed で保持"]
+    RESP -->|検証可能| FACT["事実確認 (図2)"]:::act
+    FACT --> FRES{"確認結果"}:::chk
+    FRES -->|"verified / unverified"| REQ
+    FRES -->|conflict| JUDGE["ask_user: どちらを採用?"]:::ask
+    FRES -->|error| STOPERR(["状態を保存して停止"]):::ng
+    JUDGE --> REQ
+    HOLD --> REQ
+    CONF --> REQ
+    REQ{"必須スロットが<br/>埋まった?"}:::chk
+    REQ -->|いいえ| BUD{"質問の予算が<br/>残っている?"}:::chk
+    BUD -->|はい| ASK
+    BUD -->|いいえ| LAST{"未定のまま<br/>計画へ進む?"}:::chk
+  end
+
   REQ -->|はい| PLAN
-  REQ -->|いいえ| BUD{"ask 予算あり?"}
-  BUD -->|はい| ASK
-  BUD -->|いいえ| LAST["未定で計画へ / 中止"]
-  LAST -->|中止| STOP2(["停止"])
-  LAST -->|計画へ| PLAN
+  LAST -->|進む| PLAN
+  LAST -->|中止| STOP2(["停止"]):::ng
 
-  PLAN["2 計画提示 文書は触らない"] --> GO{"実行 / 修正 / 質問 / 中止"}
-  GO -->|質問| QONLY["計画は不変"]
-  QONLY --> GO
-  GO -->|修正| FACT
+  subgraph P2["③ 計画提示"]
+    PLAN["計画を提示<br/>(文書は変更しない)"]:::act --> GO{"ユーザーの選択"}:::ask
+    GO -->|質問| QONLY["回答のみ (計画は不変)"]
+    QONLY --> GO
+  end
+  GO -->|"修正 (内容を再確認)"| FACT
   GO -->|中止| STOP2
-  GO -->|実行| GATE1{"許可リスト内?"}
-  GATE1 -->|いいえ| STOP3(["実行しない"])
-  GATE1 -->|はい| GATE2{"承認計画と一致?"}
-  GATE2 -->|いいえ| STOP3
-  GATE2 -->|はい| GATE3{"ファイル未変化?"}
-  GATE3 -->|いいえ| STOP3
-  GATE3 -->|はい| WRITE["4 書き換え 再実行可"]
-  WRITE --> VERIFY["5 検証 記録 停止"]
-  VERIFY --> DONE(["完了 製品実装しない"])
+  GO -->|実行| G1
+
+  subgraph P3["④ 実行前ゲート (1つでも不合格なら実行しない)"]
+    G1{"許可リスト内?"}:::chk -->|はい| G2{"承認した計画と一致?"}:::chk
+    G2 -->|はい| G3{"ファイル未変更?"}:::chk
+  end
+  G1 -->|いいえ| STOP3(["実行しない"]):::ng
+  G2 -->|いいえ| STOP3
+  G3 -->|いいえ| STOP3
+  G3 -->|はい| WRITE
+
+  subgraph P4["⑤ 実行"]
+    WRITE["書き換え (再実行可)"]:::act --> VERIFY["検証 → 記録 → 停止"]:::act
+  end
+  VERIFY --> DONE(["完了 (製品実装はしない)"]):::ok
 ```
 
 事実確認。順序は `search_count` → `web_search` → 公式 URL → `fetch_page`。入れ替えない。
 
 ```mermaid
 flowchart TD
-  FACT["depth を決める"] --> SC{"search_count が 3未満?"}
-  SC -->|いいえ| UV["unverified 根拠不足"]
-  SC -->|はい| WS["web_search"]
-  WS --> WSOK{"ツール成功?"}
-  WSOK -->|error| ERTRY{"再試行済み?"}
-  ERTRY -->|いいえ| WS
-  ERTRY -->|はい| ERR(["error 保存して停止"])
-  WSOK -->|成功| OFF{"公式 URL?"}
-  OFF -->|ない| MORE{"再検索 2回未満?"}
-  MORE -->|はい| WS
+  classDef ok fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+  classDef ng fill:#ffebee,stroke:#c62828,color:#b71c1c
+  classDef ask fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+  classDef chk fill:#fff8e1,stroke:#f9a825,color:#5d4037
+  classDef act fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  classDef warn fill:#fff3e0,stroke:#ef6c00,color:#e65100
+
+  FACT["depth を決める"]:::act --> SC{"検索回数 < 3?"}:::chk
+  SC -->|いいえ| UV
+  SC -->|はい| WS
+
+  subgraph SRCH["検索"]
+    WS["web_search"]:::act --> WSOK{"ツール成功?"}:::chk
+    WSOK -->|成功| OFF{"公式 URL あり?"}:::chk
+    OFF -->|なし| MORE{"再検索は<br/>2回未満?"}:::chk
+    MORE -->|はい| WS
+  end
+
+  subgraph PAGE["公式ページ確認"]
+    FP["fetch_page"]:::act --> FPOK{"ツール成功?"}:::chk
+    FPOK -->|成功| CMP{"提案との比較"}:::chk
+  end
+
+  OFF -->|あり| FP
   MORE -->|いいえ| UV
-  OFF -->|ある| FP["fetch_page"]
-  FP --> FPOK{"ツール成功?"}
-  FPOK -->|error| ERTRY
-  FPOK -->|成功| CMP{"提案と一致?"}
-  CMP -->|一致| VER["verified"]
-  CMP -->|公式間で矛盾| CF["conflict"]
-  CMP -->|ずれ / 不足| CONF2["ask_user"]
-  CONF2 -->|再検索| FACT
-  CONF2 -->|維持| UV
-  CONF2 -->|採用| VER
+
+  WSOK -->|エラー| RETRY{"再試行済み?"}:::chk
+  FPOK -->|エラー| RETRY
+  RETRY -->|いいえ| WS
+  RETRY -->|はい| ERR
+
+  CMP -->|一致| VER
+  CMP -->|公式間で矛盾| CF
+  CMP -->|"ずれ / 不足"| ASKU{"ask_user:<br/>どうする?"}:::ask
+  ASKU -->|再検索| FACT
+  ASKU -->|維持| UV
+  ASKU -->|採用| VER
+
+  VER(["verified"]):::ok
+  UV(["unverified<br/>(根拠不足)"]):::warn
+  CF(["conflict"]):::ng
+  ERR(["error<br/>(保存して停止)"]):::ng
 ```
-
-図（全体）: ![project-init フロー](flowchart.png)
-
-図（事実確認）: ![事実確認ループ](flowchart-fact.png)
-
-PNG は Mermaid 本文から `python3 scripts/render_mermaid.py`（mermaidx）で描く。AI 画像生成は使わない。
 
 ---
 
