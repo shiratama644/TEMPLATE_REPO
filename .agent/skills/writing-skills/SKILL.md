@@ -313,6 +313,8 @@ flowchart TD
 
 フローチャートは Mermaid（`flowchart TD` / `flowchart LR`）で書く。DOT / graphviz / `render-graphs.js` は使わない。
 
+PNG にするときは Python の **mermaidx**（`python3 scripts/render_mermaid.py`）だけを使う。AI 画像生成でフローを描かない。ノード ID は 3 文字以下の英語略号を避け、実在する語（`RESP` / `REQ` など）にする。codespell が略号を別単語の誤字と判定するため。
+
 - 判断は `{"question"}`、処理は `["action"]`、終端は `(["state"])`
 - 枝には `yes` / `no` などの短いラベル
 - コードや線形手順は図にしない（リストかコードブロック）

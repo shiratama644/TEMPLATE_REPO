@@ -33,7 +33,7 @@ description: 分野を問わず、検証を段階的に実行する品質ゲー�
 | `.gitleaks.toml` | 秘密情報検出の許可リスト（最小限） |
 | `.github/workflows/ci.yml` | `check`（make check）と `secrets`（gitleaks）の 2 ジョブ |
 | `.github/workflows/release.yml` | バージョンタグで検証 → GitHub Release |
-| `.github/workflows/dependency-review.yml` | PR の依存関係の差分レビュー |
+| `.github/workflows/dependency-review.yml` | PR の依存関係の差分レビュー（GitHub の Dependency graph が有効なときだけ動く） |
 | `.github/dependabot.yml` | GitHub Actions の版を週次で更新 |
 
 ## 分野固有の検証を追加する手順
