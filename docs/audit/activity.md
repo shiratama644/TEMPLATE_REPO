@@ -8,3 +8,4 @@
 | 2026-10-12 | PROJECTINIT-1 の証拠にコミット SHA を記録 | `31b4d21` |
 | 2026-10-12 | スキルの function call 名揃え、DOT→Mermaid、同義スキル統合（SKILLALIGN-1） | `make links` PASS |
 | 2026-10-12 | project-init に事実確認ループと ask_user ループを追加（INITFLOW-1） | `make links` PASS |
+| 2026-10-12 | project-init に終了条件・スロット状態・差分再検証・承認と実行の分離を追加（INITFLOW-2） | `make links` PASS |

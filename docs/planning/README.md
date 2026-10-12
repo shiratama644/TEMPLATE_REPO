@@ -22,6 +22,7 @@
 | 文書 | 対応 ID | 状態 | 役割 |
 |---|---|---|---|
 | [`_TEMPLATE.md`](./_TEMPLATE.md) | — | 現用 | 製品実装など個別タスクの必須形式 |
-| `INIT_PLAN.md` | — | 実行時に作成 | 新規プロジェクト初期設定の計画。書式は [`project-init`](../../.agent/skills/project-init/SKILL.md)。テンプレート本体には置かない |
+| `INIT_STATE.md` | — | 実行時に作成 | 初期設定の作業記憶（スロット状態・予算）。承認前に書いてよい唯一のファイル |
+| `INIT_PLAN.md` | — | 実行時に作成 | 承認済みの初期設定計画。書式は [`project-init`](../../.agent/skills/project-init/SKILL.md)。テンプレート本体には置かない |
 
 現在、個別の計画書はありません。派生リポジトリの初期設定時に `INIT_PLAN.md` が作られます。
