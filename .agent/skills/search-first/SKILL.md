@@ -72,36 +72,25 @@ that are relevant to the task and project in front of you.
 | Repository search | `rg --files` and targeted `rg` queries | State that only visible files were inspected |
 | Package registry | `npm --version`, `python -m pip --version`, or project package manager | Use web/docs search and avoid claiming registry coverage |
 | GitHub CLI | `gh auth status` | Use public web or local git history only |
-| MCP/docs tools | Available tool list or local MCP config | Fall back to official docs/web search |
-| Skills directory | `ls ~/.claude/skills ~/.codex/skills` where applicable | Say no local skill catalog was available |
+| 公式ドキュメント | `web_search` → `fetch_page` | 学習データで埋めない |
+| Skills directory | `read_file` `.agent/skills/index.md` | カタログが無ければその旨を書く |
 
 ### Quick Mode (inline)
 
 Before writing a utility or adding functionality, mentally run through:
 
-0. Does this already exist in the repo? → `rg` through relevant modules/tests first
-1. Is this a common problem? → Search npm/PyPI
-2. Is there an MCP for this? → Check `~/.claude/settings.json` and search
-3. Is there a skill for this? → Check `~/.claude/skills/`
-4. Is there a GitHub implementation/template? → Run GitHub code search for maintained OSS before writing net-new code
+0. Does this already exist in the repo? → `bash` で `rg`
+1. Is this a common problem? → `web_search`（npm/PyPI/公式）
+2. Is there a skill for this? → `read_file` `.agent/skills/index.md`
+3. Is there a GitHub implementation? → `web_search` または `bash` `gh search`
 
-### Full Mode (agent)
+### Full Mode
 
-For non-trivial functionality, launch the researcher agent:
+サブエージェントは無い。自分で順に探す。
 
-```
-Agent(subagent_type="general-purpose", prompt="
-  Research existing tools for: [DESCRIPTION]
-  Language/framework: [LANG]
-  Constraints: [ANY]
-
-  Search: npm/PyPI, MCP servers, Claude Code skills, GitHub
-  Return: Structured comparison with recommendation
-")
-```
-
-Older Claude Code docs may call this `Task(...)`; use the current agent/subagent
-tool name exposed by the active harness.
+1. `web_search` `query` を変えて 2〜3 回（`depth`: `"2"`）
+2. 有力ヒットは `fetch_page` で公式 README / docs を読む
+3. 比較表を出して、採用するかは必要なら `ask_user`
 
 ## Search Shortcuts by Category
 
@@ -112,8 +101,8 @@ tool name exposed by the active harness.
 - Pre-commit → `husky`, `lint-staged`, `pre-commit`
 
 ### AI/LLM Integration
-- Claude SDK → Context7 for latest docs
-- Prompt management → Check MCP servers
+- Claude SDK → `web_search` + `fetch_page` on official docs
+- Prompt management → 既存スキルと公式 docs を先に見る
 - Document processing → `unstructured`, `pdfplumber`, `mammoth`
 
 ### Data & APIs

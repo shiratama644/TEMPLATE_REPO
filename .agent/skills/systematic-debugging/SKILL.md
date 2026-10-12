@@ -38,6 +38,19 @@ Use for ANY technical issue:
 
 **Don't skip when:**
 - Issue seems simple (simple bugs have root causes too)
+
+`diagnosing-bugs` は本スキルへ統合した。入口は本ファイルだけ。
+
+## Tools
+
+| 局面 | function call |
+| :--- | :--- |
+| コード・ログを読む | `read_file` |
+| 再現・テスト・bisect | `bash`（§6.1 のコマンド。watch は使わない） |
+| 外部仕様 | `web_search` → `fetch_page` |
+| ユーザーにしか分からない症状 | `ask_user` |
+
+フィードバックループを先に作る。pass/fail がこのバグで赤になる信号が無いなら、推測で直さない。サブエージェントは無いので切り分けは自分で順に行う。
 - You're in a hurry (rushing guarantees rework)
 - Manager wants it fixed NOW (systematic is faster than thrashing)
 

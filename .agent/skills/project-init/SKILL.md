@@ -41,7 +41,7 @@ description: テンプレートから作った新規リポジトリの初回、A
 | 技術・検証コマンドの記録 | [`tech-stack`](../tech-stack/SKILL.md) | 選定結果を §6.1 に書く書式は tech-stack に従う |
 | 品質ゲートの揃え方 | [`ci-quality-gates`](../ci-quality-gates/SKILL.md) | `PROJECT_CHECKS` を足すときだけ読む |
 | 重い技術判断の記録 | [`architecture-decision-records`](../architecture-decision-records/SKILL.md) | 「なぜこのスタックか」が後で効くときだけ ADR を足す |
-| 文書の整合 | [`verify-doc-integrity`](../verify-doc-integrity/SKILL.md) / [`docs-maintenance`](../docs-maintenance/SKILL.md) | 書き換え後に必ず検証する |
+| 文書の整合 | [`docs-maintenance`](../docs-maintenance/SKILL.md) | 書き換え後に `bash` で `make links`、外部 URL は `fetch_page` |
 | 書き換え対象 | [`project-overview`](../project-overview/SKILL.md) | **読む対象ではなく、書き換える対象** |
 | 埋める項目のチェック | [`.agent/rules/project-template.md`](../../rules/project-template.md) | 手順の正本は本スキル。ルールは項目一覧 |
 
@@ -197,7 +197,7 @@ description: テンプレートから作った新規リポジトリの初回、A
 
 ### 5. 検証・記録・停止
 
-1. [`verify-doc-integrity`](../verify-doc-integrity/SKILL.md) に従う。
+1. [`docs-maintenance`](../docs-maintenance/SKILL.md) に従う。内部リンクは `bash`、外部 URL は `fetch_page`。
 2. `make links`。§6.1 に検証が書いてあればそれも実行（`make check`）。未記録のコマンドは捏造しない。
 3. `docs/task-list.md` の初期設定タスクを証拠つきで更新する。
 4. `.agent/hooks/log-task.md` に従いログを残す。

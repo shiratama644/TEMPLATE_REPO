@@ -118,3 +118,18 @@ Skip any step = lying, not verifying
 - Paraphrases and synonyms
 - Implications of success
 - ANY communication suggesting completion/correctness
+
+## How to run verification
+
+この環境では検証コマンドを `bash` で実行する。コマンド名は捏造せず `AGENTS.md §6.1` に書かれたものだけ。未記録なら先に `ask_user`。
+
+`verification-loop` は本スキルへ統合した。入口は本ファイルだけ。
+
+| 段階 | function call | 内容 |
+| :--- | :--- | :--- |
+| 文書リンク | `bash` `python3 scripts/check_doc_links.py` または `make links` | 内部リンク |
+| 全検証 | `bash` `make check` | pre-commit + PROJECT_CHECKS |
+| 差分 | `bash` `git diff --stat` | 意図しない変更 |
+| 個別の型・テスト・ビルド | `bash` に §6.1 のコマンド | watch モードは使わない |
+
+環境で実行できない検証は、省いて「通った」と書かない。事実と理由を報告する。

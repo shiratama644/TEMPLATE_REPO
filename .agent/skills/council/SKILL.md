@@ -7,11 +7,7 @@ metadata:
 
 # Council
 
-Convene four advisors for ambiguous decisions:
-- the in-context Claude voice
-- a Skeptic subagent
-- a Pragmatist subagent
-- a Critic subagent
+Convene four advisors for ambiguous decisions. この環境にサブエージェントは無い。四声は **自分で順に** 書き、最後に `ask_user` で選ばせる。
 
 This is for **decision-making under ambiguity**, not code review, implementation planning, or architecture design.
 
@@ -50,7 +46,7 @@ Examples:
 | Pragmatist | shipping speed, user impact, operational reality |
 | Critic | edge cases, downside risk, failure modes |
 
-The three external voices should be launched as fresh subagents with **only the question and relevant context**, not the full ongoing conversation. That is the anti-anchoring mechanism.
+三声はサブエージェントではなく、同じターンで役割を切り替えて書く。先に Architect の立場を書き、その後 Skeptic / Pragmatist / Critic を書く（後者を書くとき Architect の結論をコピーしない）。事実は `read_file` / `bash` / `web_search` / `fetch_page` で取る。
 
 ## Workflow
 
@@ -61,7 +57,7 @@ Reduce the decision to one explicit prompt:
 - what constraints matter?
 - what counts as success?
 
-If the question is vague, ask one clarifying question before convening the council.
+If the question is vague, `ask_user` で 1 問聞いてから始める。
 
 ### 2. Gather only the necessary context
 
@@ -82,33 +78,14 @@ Before reading other voices, write down:
 
 Do this first so the synthesis does not simply mirror the external voices.
 
-### 4. Launch three independent voices in parallel
+### 4. Write three independent voices (no subagents)
 
-Each subagent gets:
-- the decision question
-- compact context if needed
-- a strict role
-- no unnecessary conversation history
+Each voice, under 300 words:
 
-Prompt shape:
-
-```text
-You are the [ROLE] on a four-voice decision council.
-
-Question:
-[decision question]
-
-Context:
-[only the relevant snippets or constraints]
-
-Respond with:
 1. Position — 1-2 sentences
 2. Reasoning — 3 concise bullets
 3. Risk — biggest risk in your recommendation
 4. Surprise — one thing the other voices may miss
-
-Be direct. No hedging. Keep it under 300 words.
-```
 
 Role emphasis:
 - Skeptic: challenge framing, question assumptions, propose the simplest credible alternative

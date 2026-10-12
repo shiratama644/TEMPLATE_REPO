@@ -7,7 +7,7 @@ argument-hint: "[feature description | path/to/*.prd.md]"
 
 This command creates a comprehensive implementation plan before writing any code. It accepts either free-form requirements or a PRD markdown file.
 
-Run inline by default. Do not call the Task tool or any subagent by default. This keeps `/plan` usable even when the subagent is not available.
+Run inline. サブエージェントは無い。確認は `ask_user`、調査は `web_search` / `fetch_page` / `read_file`。
 
 ## What This Command Does
 

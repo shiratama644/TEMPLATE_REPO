@@ -25,25 +25,37 @@ why?
 
 ## Your First Message
 
-Your first message is two things, in this order:
+質問は `ask_user` で出す（自由文の質問でターンを終わらせない）。最初のラウンドは 1 問。スキップ用の選択肢を必ず付ける。
 
-1. One line letting them know that if they'd rather skip the questions and
-   have you just start, they can say so. If they take you up on it, this
-   skill is done: state any significant how-it-gets-made choice
-   (platform, language, medium) in one plain line, then do what they
-   asked through the normal workflow.
-2. One open question that gets them describing. Ask about a real moment
-   or a concrete picture: "What's the moment you find yourself wishing
-   this existed?" or "Tell me about the people who'll be in the room."
+```json
+{
+  "questions": [
+    {
+      "id": "intent",
+      "question": "何が欲しいかを、具体的な場面で教えてください。スキップして着手しても構いません。",
+      "allowCustomResponse": true,
+      "options": [
+        {
+          "id": "describe",
+          "label": "場面を書く",
+          "description": "自由記述で、誰がどこで困っているかを書く"
+        },
+        {
+          "id": "skip",
+          "label": "質問を飛ばして着手",
+          "description": "手段の大きな選択だけ一行で宣言して通常ワークフローへ"
+        }
+      ]
+    }
+  ]
+}
+```
 
-That's the whole message.
+スキップされたら、プラットフォーム・言語などの大きな選択を一行で述べてこのスキルを終える。
 
 ## The Conversation
 
-Each message ends with one question: a single sentence with no list of
-example answers hanging off it. Use plain language, pitched just a little
-above where your human partner is. Match their vocabulary; never use
-process jargon.
+各ラウンドは `ask_user` 1 問（必要なら最大 4）。選択肢は 2〜4 + 自由記述。言葉は相手に合わせ、工程jargonは使わない。事実は `read_file` / `bash` / `web_search` で自分で取る。
 
 Be clear and concise. Lead with what matters. Avoid jargon. When you
 report what you found, give them the most important findings and offer

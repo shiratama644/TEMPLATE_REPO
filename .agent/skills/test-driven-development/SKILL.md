@@ -46,27 +46,20 @@ Implement fresh from tests. Period.
 
 ## Red-Green-Refactor
 
-```dot
-digraph tdd_cycle {
-    rankdir=LR;
-    red [label="RED\nWrite failing test", shape=box, style=filled, fillcolor="#ffcccc"];
-    verify_red [label="Verify fails\ncorrectly", shape=diamond];
-    green [label="GREEN\nMinimal code", shape=box, style=filled, fillcolor="#ccffcc"];
-    verify_green [label="Verify passes\nAll green", shape=diamond];
-    refactor [label="REFACTOR\nClean up", shape=box, style=filled, fillcolor="#ccccff"];
-    next [label="Next", shape=ellipse];
-
-    red -> verify_red;
-    verify_red -> green [label="yes"];
-    verify_red -> red [label="wrong\nfailure"];
-    green -> verify_green;
-    verify_green -> refactor [label="yes"];
-    verify_green -> green [label="no"];
-    refactor -> verify_green [label="stay\ngreen"];
-    verify_green -> next;
-    next -> red;
-}
+```mermaid
+flowchart LR
+  RED["RED Write failing test"] --> VR{"Verify fails correctly"}
+  VR -->|wrong failure| RED
+  VR -->|yes| GREEN["GREEN Minimal code"]
+  GREEN --> VG{"Verify passes"}
+  VG -->|no| GREEN
+  VG -->|yes| REF["REFACTOR Clean up"]
+  REF -->|stay green| VG
+  VG --> NEXT(["Next"])
+  NEXT --> RED
 ```
+
+テストと検証は `bash` で §6.1 の一回実行コマンドを使う。watch は使わない。失敗の意味が分からなければ `read_file` でテストと実装を読む。
 
 ### RED - Write Failing Test
 
