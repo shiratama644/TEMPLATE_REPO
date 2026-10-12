@@ -12,7 +12,7 @@ description: テストを実行し、カバレッジを確認する。Use when y
    ```bash
    <単体テスト>
    ```
-   - watchモードではなく `vitest run` 相当のスクリプトを使う
+   - watchモードではなく一回実行（run）のコマンドを使う（例: `pytest` / `go test ./...`）
 
 2. **カバレッジ**:
    ```bash

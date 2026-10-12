@@ -7,7 +7,7 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 ## 実装・変更時に守ること
 
 1. **仕様と実物を一致させる**。構成を変えたら、本ディレクトリと `../README.md`・`../../AGENTS.md` を同じ変更で更新する。
-2. **ADR に反する変更をしない**。覆す場合は `adr.md` に新しい ADR を追加してから変える。
+2. **ADR に反する変更をしない**。覆す場合は `../adr/` に新しい ADR を追加してから変える。
 3. **分野固有の内容を共通部分に混ぜない**。特定の言語・ツール・分野の手順は、`AGENTS.md §6` またはプロジェクト側の文書に書く。
 4. **ファイル名は短く正確に**。ハイフンは最大 1 つ。
 
@@ -17,7 +17,7 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 |---|---|
 | テンプレートの目的を知りたい | [product.md](./product.md) |
 | 構成と読み込みの流れを知りたい | [architecture.md](./architecture.md) |
-| なぜそうなっているか知りたい | [adr.md](./adr.md) |
+| なぜそうなっているか知りたい | [`../adr/`](../adr/README.md) |
 | 今どの段階か知りたい | [milestones.md](./milestones.md) → `../task-list.md` |
 
 ## 仕様書一覧
@@ -26,5 +26,4 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 |---|---|
 | [product.md](./product.md) | テンプレートの目的・対象・用語 |
 | [architecture.md](./architecture.md) | ディレクトリ構成・Agent の読み込みの流れ・責務の分担 |
-| [adr.md](./adr.md) | 意思決定ログ（なぜそうしたか） |
 | [milestones.md](./milestones.md) | 段階ごとの完了条件 |

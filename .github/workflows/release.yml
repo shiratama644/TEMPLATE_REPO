@@ -1,0 +1,35 @@
+# リリース（分野を問わない汎用セット）
+# バージョンタグ（例: v1.2.3）を push すると、検証を通したうえで GitHub Release を作成する。
+# デプロイなど分野固有の手順は、「分野固有の公開手順」の位置に追加する（AGENTS.md §6.1 に記録）。
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 検証 → GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+      - name: 検証を実行
+        run: |
+          python -m pip install --upgrade pre-commit
+          make check
+      # 分野固有の公開手順（パッケージ公開・デプロイなど）はここに追加する
+      - name: GitHub Release を作成
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes

@@ -177,6 +177,7 @@ git reset --hard FETCH_HEAD
 
 ### 6.1 環境・ツールチェーン・検証コマンド
 - （例）使用言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
+- **検証の正本**: `make check`（pre-commit の全フック + `Makefile` の `PROJECT_CHECKS`）。文書の内部リンクだけを見る場合は `make links`。CI（`.github/workflows/ci.yml`）も同じ `make check` を呼ぶ。
 - **検証コマンド**（§3.1 の正本。プロジェクトに合わせて記入）:
   ```bash
   # 例:
@@ -331,7 +332,7 @@ git reset --hard FETCH_HEAD
 
 > **構成はClaude Code公式の `.claude/` ディレクトリ構成に準拠**。ディレクトリ名は `.agent/` のまま維持する。
 > 公式仕様: https://code.claude.com/docs/en/claude-directory.md
-> 調査時点の最新仕様（2026-09-26確認）を正とする。
+> 公式の最新仕様を正とする。
 
 ### 8.1 ディレクトリ構成（公式準拠 + テンプレート拡張）
 
@@ -342,15 +343,17 @@ git reset --hard FETCH_HEAD
 ├── settings.local.json        # 個人オーバーライド（gitignore）— 個人のみ
 ├── THIRD_PARTY_NOTICES.md     # 取り込んだ上流 OSS のライセンス表示
 ├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）
+│   ├── index.md               # 入口（一覧・発火条件）
 │   ├── 01_information-hierarchy.md
 │   ├── 02_git-workflow.md
 │   ├── 03_doc-style.md
 │   ├── 04_verification.md
+│   ├── common/                # ECC 由来の共通規約（10 件、paths でコード系のみ絞るものあり）
 │   └── project-template.md
 ├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 48 件
 │   ├── index.md               # 入口（読み方ガイド・一覧）
 │   ├── 自作: project-overview / tech-stack / sandbox-constraints / verify-doc-integrity / docs-maintenance
-│   ├── 自作(ソフトウェア/Web): testing / ci-quality-gates / import-boundaries / determinism / memory-leak / zero-alloc / e2e
+│   ├── 自作(分野非依存): testing / ci-quality-gates / e2e / import-boundaries / determinism / memory-leak / zero-alloc
 │   ├── superpowers（MIT）由来: brainstorming / writing-plans / executing-plans / subagent-driven-development / test-driven-development / systematic-debugging / verification-before-completion / requesting-code-review / receiving-code-review / using-git-worktrees / finishing-a-development-branch / dispatching-parallel-agents / writing-skills / using-superpowers
 │   ├── ECC: verification-loop / search-first / documentation-lookup / deep-research / council / architecture-decision-records / article-writing
 │   ├── mattpocock/skills: grill-me / grilling / handoff / teach / writing-for-agents / to-questionnaire / prototype / research / retro / codebase-design / diagnosing-bugs / improve-codebase-architecture / domain-modeling

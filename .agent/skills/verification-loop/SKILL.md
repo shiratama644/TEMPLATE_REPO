@@ -32,11 +32,8 @@ If build fails, STOP and fix before continuing.
 ### Phase 2: Type Check
 ```bash
 set -o pipefail
-# TypeScript projects
-npx --no-install tsc --noEmit 2>&1 | sed -n '1,30p'
-
-# Python projects
-pyright . 2>&1 | sed -n '1,30p'
+# 例（分野に合わせて選ぶ。AGENTS.md §6.1 の記録を優先）
+# 静的な型検査: tsc --noEmit / pyright . / go vet ./...
 ```
 
 Report all type errors. Fix critical ones before continuing.
@@ -47,18 +44,15 @@ Use `sed` to limit displayed output while consuming the whole stream. This keeps
 successful linter from failing on SIGPIPE when `pipefail` is enabled.
 ```bash
 set -o pipefail
-# JavaScript/TypeScript
-npm run lint 2>&1 | sed -n '1,30p'
-
-# Python
-ruff check . 2>&1 | sed -n '1,30p'
+# 例: biome check . / ruff check . / golangci-lint run
+<lintコマンド> 2>&1 | sed -n '1,30p'
 ```
 
 ### Phase 4: Test Suite
 ```bash
 set -o pipefail
-# Run tests with coverage
-npm run test -- --coverage 2>&1 | tail -50
+# テストを一回実行する（watch モードは使わない）。例: pytest --cov / go test ./...
+<テストコマンド> 2>&1 | tail -50
 
 # Check coverage threshold
 # Target: 80% minimum
@@ -73,11 +67,11 @@ Report:
 ### Phase 5: Security Scan
 ```bash
 # Check for secrets
-grep -rn "sk-" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
-grep -rn "api_key" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
+gitleaks detect --source . --no-git   # 導入済みの場合（CI の secrets ジョブでも検査される）
+grep -rniE "api[_-]?key|secret|token" --exclude-dir=.git . 2>/dev/null | head -10
 
-# Check for console.log
-grep -rn "console.log" --include="*.ts" --include="*.tsx" . 2>/dev/null | head -10   # 対象の言語・ディレクトリに合わせて読み替える
+# デバッグ出力の残り（言語に合わせて読み替える。例: console.log / print( / fmt.Println）
+grep -rn "console.log" --include="*.ts" --include="*.tsx" . 2>/dev/null | head -10
 ```
 
 ### Phase 6: Diff Review

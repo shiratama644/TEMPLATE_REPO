@@ -1,0 +1,8 @@
+# GitHub Actions の版を定期的に更新する（ecosystem を問わない）。
+# パッケージ依存の更新は、プロジェクトの技術選定後に AGENTS.md §6.1 を見て追加する。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

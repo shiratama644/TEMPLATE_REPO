@@ -197,7 +197,7 @@ Watch for these architectural anti-patterns:
 Example architecture for an AI-powered SaaS platform:
 
 ### Current Architecture
-- **Frontend**: Next.js 15 (Vercel/Cloud Run)
+- **Frontend**: （例）採用する技術を記録する。テンプレートでは未定
 - **Backend**: FastAPI or Express (Cloud Run/Railway)
 - **Database**: PostgreSQL (Supabase)
 - **Cache**: Redis (Upstash/Railway)

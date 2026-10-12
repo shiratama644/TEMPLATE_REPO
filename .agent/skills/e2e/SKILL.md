@@ -1,110 +1,59 @@
 ---
 name: e2e
-description: Playwright E2EをSandboxでも安全に扱うスキル。webServer配列、baseURL分岐、discovery検証、WebSocketモック、browser非捏造原則。
+description: 分野を問わず、利用者の操作経路を本番に近い構成で最初から最後まで実行して検証するスキル。Web 画面・CLI・API・バッチなど対象を問わない。対象の起動と待機、テストデータの扱い、失敗時の証跡、実行環境に制約がある場合の扱いを扱う。
 ---
 
-# E2E — PlaywrightをSandboxで安全に扱うスキル
+# E2E — 利用者の経路を通しで検証するスキル
 
-> 正本: `docs/ops/quality-gates.md`（あれば）、`playwright.config.ts`、`AGENTS.md §6.2`
+## 定義と原則
 
-## Sandbox制約
+- E2E = 利用者が行う操作の流れを、**起動 → 操作 → 結果の確認 → 後始末**まで通して検証すること。
+- 部品ごとの単体テストでは分からない、結線（つなぎ込み）の不具合を見つけるためにある。
+- 本物に近い構成で動かす。ただし外部の本番サービスには接続しない。テスト用の環境かデータを使う。
+- 待つときは時間（固定の sleep）ではなく**状態**（ready、表示された、ファイルができた）を待つ。
+- 失敗したら、後から原因を追える証跡（ログ、画面の記録、出力）を残す。
 
-- E2E browser実行をSandboxで捏造しない（PlaywrightのbrowserはSandboxのegress制限や依存不足で動かないことが多い）
-- `pnpm test:e2e -- --list` はbrowserを起動しないdiscovery検証として有用
-- 本物のbrowser実行はCI (`ci.yml` e2e job) またはpreviewで
+## 対象ごとの読み替え
 
-## playwright.config.ts 正しい構成（汎用テンプレート用）
+| 対象 | 操作 | 結果の確認 |
+| :--- | :--- | :--- |
+| Web 画面 | ブラウザ自動操作（例: Playwright、Selenium） | 画面上の表示、URL、保存されたデータ |
+| CLI | コマンドの実行 | 終了コード、標準出力・標準エラー、生成ファイル |
+| API | HTTP リクエストの送信 | ステータスコード、レスポンスの契約（スキーマ） |
+| バッチ・データ処理 | 入力ファイルの投入 | 出力ファイルの内容、件数、突き合わせ |
 
-```ts
-import { defineConfig } from '@playwright/test';
+## 起動と待機
 
-export default defineConfig({
-  testDir: './tests/e2e',
-  use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
-  },
-  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : [
-    {
-      command: 'pnpm server',
-      port: 3000,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-    },
-    {
-      command: 'pnpm dev -- --host 0.0.0.0 --port 5173',
-      port: 5173,
-      url: 'http://localhost:5173',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-  ],
-  projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
-});
-```
+- 対象（サーバーや常駐プロセス）の起動は、テストの前に一度だけ行い、**ready を確認してから**テストを始める。
+- 起動コマンドは役割ごとに分けて記述する（まとめると、ログが混ざって原因が追えなくなる）。
+- ready の判定は、ヘルスチェックのような明示的な条件で行う。
+- テストが終わったら、起動したプロセスを必ず止める（後始末）。
 
-### なぜ配列webServerか
+## テストデータと独立性
 
-- 単一commandでは `pnpm start`（install/build/server/previewまとめる）が使えるが、並列制御とgracefulShutdownが配列の方が明確
-- `PLAYWRIGHT_BASE_URL` がある場合はpreview/CIの既存URLを対象にし、local `webServer` を起動しない構成にすると、同じspecをlocalとCI/previewで使い回せる
-- `reuseExistingServer: !CI` でCIでは毎回fresh、localでは再利用
+- 各テストは、他のテストに依存せず単独で成り立つようにする。
+- 状態を持つ対象は、テストごとに初期化するか、テスト用の名前空間を使う。
+- 外部サービスは、テスト用のダブル（代替）か固定データに置き換える。本番の資格情報を使わない。
 
-## 公式docs検証
+## 失敗時の扱い
 
-| 項目 | 公式URL | 要点 |
-|---|---|---|
-| CI | https://playwright.dev/docs/ci | `pnpm exec playwright install --with-deps chromium` が自然 |
-| webServer | https://playwright.dev/docs/test-webserver | `command/url/reuseExistingServer/timeout/stdout/stderr/gracefulShutdown` と `use.baseURL` 併用推奨 |
-| WebSocket | https://playwright.dev/docs/api/class-websocket | frameのinspect/manipulate |
-| Mock | https://playwright.dev/docs/mock#mock-websockets | websocket mocking、page.route、HAR |
+- 失敗時の証跡（ログ・スクリーンショット・出力）を保存し、CI の成果物として残す。
+- リトライで通ったテストは、フレーキーとして原因を調べる。リトライを既定値にして隠さない。
 
-## E2E specの書き方（汎用）
+## 実行環境に制約があるとき
 
-- browser-facing codeにbackend `localhost` を書かず、app側の `/ws` same-origin proxyをユーザー可視HUD (`net: connected`) で検証
-- `page.waitForSelector('[data-testid="net-connected"]')` のようにHUD経由
-- WebSocketは `page.on('websocket', ws => ws.on('framereceived', ...))` で観測
-
-```ts
-test('connects via ws proxy and shows HUD', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByTestId('start-overlay')).toBeVisible();
-  await page.getByTestId('start-button').click();
-  await expect(page.getByTestId('net-connected')).toBeVisible({ timeout: 10_000 });
-  // WebSocket frames
-  page.on('websocket', ws => {
-    ws.on('framereceived', ({ payload }) => {
-      // payload instanceof ArrayBuffer | string
-    });
-  });
-});
-```
-
-- `data-testid` を使うことで、テキスト変更に強いテストになる
-- `toBeVisible({ timeout: 10_000 })` のようにタイムアウトを明示
-
-## Discovery検証（Sandboxで実行可能）
-
-```bash
-pnpm test:e2e -- --list   # spec列挙のみ、browser起動なし
-pnpm test:e2e -- --list 2>&1 | grep "test:"
-```
-
-- ci.ymlのe2e jobは `pnpm exec playwright install --with-deps chromium` 後に `pnpm test:e2e`
-- `quality-gates` の `static-checks` では `--list` でdiscoveryのみ実行し、spec構文エラーやconfigエラーを早期検出
+- ブラウザや外部ネットワークが使えない環境では、**テストの一覧表示（discovery）**だけを実行して、構文や設定の誤りを確かめる。
+- 実際の実行は CI またはユーザーの環境で行い、その事実を報告する。「通った」と書かない（AGENTS.md §3.1）。
 
 ## よくある失敗
 
-- `localhost:3000` 直叩き: ブラウザ側でlocalhost固定するとpreviewホストで動かない。相対URL + dev server proxyを使う
-- `webServer.command` に `pnpm start` しか書かないと、server/clientのログが混ざってデバッグ困難。配列で分離
-- `page.route` でwsをmockしようとしてhttpのみmock: `mock#mock-websockets` セクションを参照
-- `baseURL` 未設定: `use.baseURL` を設定しないと `page.goto('/')` が失敗
+- 固定の sleep で待ち、遅い環境で失敗する。
+- テストが前のテストの残した状態に依存する。
+- 本番のサービスや実データに接続してしまう。
+- 失敗の証跡がなく、CI で何が起きたか分からない。
 
 ## 関連
 
-- `playwright.config.ts` 設定ファイル
-- `tests/e2e/*.spec.ts` E2E spec
-- `.github/workflows/ci.yml` e2e job
-- `.agent/skills/ci-quality-gates/SKILL.md` CIスキル
-- `.agent/skills/testing/SKILL.md` テストスキル
-- `AGENTS.md §6.2` E2E制約
+- [`testing`](../testing/SKILL.md): 単体・統合の検証
+- [`ci-quality-gates`](../ci-quality-gates/SKILL.md): 通しの検証をどの段階で走らせるか
+- [`sandbox-constraints`](../sandbox-constraints/SKILL.md): 実行できない環境での扱い

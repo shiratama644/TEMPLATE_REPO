@@ -2,12 +2,12 @@
 
 本ディレクトリ（`.agent/`、Claude Code では `.claude/` として読み込まれる）の一部は、以下の上流 OSS から取り込み・改変したものです。各ライセンス文の転記を含みます。
 
-| 出典 | ライセンス | 上流コミット（取り込み時点） | 取り込み内容 |
-|---|---|---|---|
-| [affaan-m/ECC](https://github.com/affaan-m/ECC) (Everything Claude Code) | MIT | `8ce348f` | skill: verification-loop, search-first, documentation-lookup, deep-research, architecture-decision-records, article-writing, council / agent: planner, architect, code-explorer, docs-lookup / command: code-review, checkpoint, plan, update-docs |
-| [obra/superpowers](https://github.com/obra/superpowers) | MIT | `bb92a77` | skill: brainstorming, writing-plans, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, receiving-code-review, using-git-worktrees, finishing-a-development-branch, dispatching-parallel-agents, subagent-driven-development, writing-skills, using-superpowers |
-| [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | `49dd158` | skill: grill-me, grilling, handoff, teach, writing-for-agents, to-questionnaire, prototype, research, retro, codebase-design, diagnosing-bugs, improve-codebase-architecture, domain-modeling / hook: block-dangerous-git.sh（git-guardrails-claude-code を sh 版に書き直し） |
-| [anthropics/skills](https://github.com/anthropics/skills) | 各 skill の LICENSE.txt（Apache License 2.0） | `dbd4588` | skill: skill-creator, discernment-nudge（各ディレクトリに LICENSE.txt を同梱） |
+| 出典 | ライセンス | 取り込み内容 |
+|---|---|---|
+| [affaan-m/ECC](https://github.com/affaan-m/ECC) (Everything Claude Code) | MIT | skill: verification-loop, search-first, documentation-lookup, deep-research, architecture-decision-records, article-writing, council / agent: planner, architect, code-explorer, docs-lookup / command: code-review, checkpoint, plan, update-docs / rule: `rules/common/` の 10 件（coding-style, testing, patterns, performance, code-review, development-workflow, security, agents, git-workflow, hooks。ECC 固有の agent 名・`~/.claude/` 前提・プラグイン前提は本リポジトリの構成に書き換え） |
+| [obra/superpowers](https://github.com/obra/superpowers) | MIT | skill: brainstorming, writing-plans, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, receiving-code-review, using-git-worktrees, finishing-a-development-branch, dispatching-parallel-agents, subagent-driven-development, writing-skills, using-superpowers |
+| [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | skill: grill-me, grilling, handoff, teach, writing-for-agents, to-questionnaire, prototype, research, retro, codebase-design, diagnosing-bugs, improve-codebase-architecture, domain-modeling / hook: block-dangerous-git.sh（git-guardrails-claude-code を sh 版に書き直し） |
+| [anthropics/skills](https://github.com/anthropics/skills) | 各 skill の LICENSE.txt（Apache License 2.0） | skill: skill-creator, discernment-nudge（各ディレクトリに LICENSE.txt を同梱） |
 
 上記以外（`.agent/skills/` の `ci-quality-gates`、`e2e`、`testing`、`docs-maintenance`、`sandbox-constraints`、`verify-doc-integrity` など）は本リポジトリのオリジナルです。
 

@@ -1,0 +1,24 @@
+# gitleaks 設定（分野を問わない汎用セット）
+# 既定ルールを使い、明らかなダミー値だけを許可リストに入れる。
+# 許可を広げすぎると検出漏れになるため、追加は理由を残して最小限にする。
+
+title = "gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "プレースホルダー・ダミー値・生成物のみ許可"
+paths = [
+  '''\.gitleaks\.toml''',
+  '''\.md$''',
+  '''\.example$''',
+  '''\.template$''',
+]
+regexes = [
+  '''your[_-]?api[_-]?key''',
+  '''example\.com''',
+  '''placeholder''',
+  '''fake[_-]?secret''',
+  '''dummy''',
+]

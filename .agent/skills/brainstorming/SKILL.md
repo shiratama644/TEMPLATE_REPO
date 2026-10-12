@@ -89,7 +89,7 @@ several ideas and drop the weak ones, including any that fight what
 they've told you about why. Show the comparison only when it helps them
 decide.
 
-**Show, don't tell.** Offer the visual companion (below) whenever seeing
+**Show, don't tell.** Show a text sketch (a table, an ASCII layout, or a small example) whenever seeing
 would help more than reading:
 
 - something they'll look at: a screen, a page, a printout, a sign
@@ -98,8 +98,8 @@ would help more than reading:
 - options that would look different from each other
 - a structure that's easier to see than read: a diagram, a timeline, a map
 
-Once they've accepted, use it for mockups to react to, side-by-side
-options, and throwaway prototypes they can click.
+Use text sketches for side-by-side options and simple diagrams. Keep prototypes for the
+`prototype` skill.
 
 **Spike to feel things out.** Agentic work is waterfall, but very, very
 fast. A quick throwaway build is often the cheapest way to learn what
@@ -121,10 +121,8 @@ Mark anything you're guessing as your guess; only what they said goes in
 as theirs. End each chunk by asking what's wrong or missing.
 
 Before you send a chunk, check it: does it describe something they'll
-look at, like a page, a screen, a schedule, or a printout? If so, and
-they haven't seen the visual companion offer yet, send the offer instead
-(its own message, below) and hold the chunk for the next message. Once
-they've accepted, put a mockup next to the description.
+look at, like a page, a screen, a schedule, or a printout? If so, add a
+text sketch next to the description so they can see the shape of it.
 
 ## Size the Work
 
@@ -201,25 +199,3 @@ software, invoke writing-plans and no other skill.
 | "I should explain the process first" | Ask your question. The process shows itself. |
 | "They said 'sounds good' to the idea" | Approval covers what you showed them. A description you haven't written isn't approved. |
 | "The spike works, I'll keep building on it" | Keeping it is a new request. Back through the gate. |
-
-## Visual Companion
-
-A browser tab for showing mockups, diagrams, and prototypes. It's a
-tool, not a mode: accepting it doesn't send every question to the
-browser.
-
-**Offer it just-in-time.** Offer it the first time one of the moments
-above comes up, never upfront. The offer is its own message with nothing
-else in it:
-
-> "This might be easier if I show you. Want me to open a browser tab with some mockups?"
-
-If they decline, stay in text and don't offer again unless they raise it.
-
-**Per question, ask: would they understand this better by seeing it?**
-Mockups, layouts, diagrams, and side-by-side designs go in the browser.
-Requirements, scope, tradeoffs, and conceptual choices stay in text. A
-question about a UI topic isn't automatically a visual question.
-
-If they accept, read `visual-companion.md` in this directory before
-starting the server.

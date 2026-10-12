@@ -1,138 +1,70 @@
 ---
 name: import-boundaries
-description: レイヤー間のimport境界を守り、循環参照と責務混在を防ぐスキル。biome no-restricted-imports + アーキテクチャテスト + L1にtype分岐を書かない原則。
+description: 分野を問わず、モジュールやレイヤー間の依存方向を守り、循環参照と責務の混在を防ぐスキル。依存境界の設計、禁止依存の強制（言語ごとの仕組みと grep 監査）、境界を守るテストの書き方を扱う。
 ---
 
-# Import Boundaries — レイヤー境界を守るスキル
-
-> 正本: `docs/arch/`（あれば）、`biome.json` の `no-restricted-imports`、`AGENTS.md §6`
+# Import Boundaries — 依存方向を守るスキル
 
 ## 原則
 
-- レイヤー間のimportは一方向のみ。下位が上位をimportしない
-- L1（engine-core / core）に `if (type === 'fps' | 'voxel')` のような上位type分岐を書かない
-- UI層（hub/store/components）から直接 Engine / Babylon / Three をimportしない（facade経由）
-- 循環参照を作らない。`a -> b -> a` は禁止
+- 依存は**一方向**に流す（上位の層が下位の層を使う。下位は上位を知らない）。
+- 循環参照は作らない。循環が見えたら、共通部分を下位に切り出す。
+- 下位の層で、上位の事情（画面の種類、利用者の種類など）による分岐を書かない。分岐が必要なら、上位で決めて引数や注入で渡す。
+- 境界は、人の注意ではなく**機械的な仕組み**で守る（lint、テスト、CI）。
 
-## レイヤー例（汎用テンプレート用）
+## 層の例（読み替えて使う）
 
-```
-L0: protocol / types / constants（依存なし、純粋）
-  ↓
-L1: engine-core / core（L0のみ依存、決定論・純粋ロジック）
-  ↓
-L2: profiles / features（L0+L1依存、モード別・機能別）
-  ↓
-L3: apps / server / client（L0+L1+L2依存、配線・副作用・I/O）
-  ↓
-L4: UI / hub / components（L3経由でL2を読む、直接L1の重い依存を読まない）
-```
+| 層 | 役割 | 依存してよい先 |
+| :--- | :--- | :--- |
+| 純粋ロジック | 入力から出力を計算する。入出力・時刻・乱数を持たない | なし（標準ライブラリ程度） |
+| アプリケーション | 手順を組み立て、ロジックを呼ぶ | 純粋ロジック |
+| 入出力（I/O） | ファイル・ネットワーク・データベースに触る | 純粋ロジック、アプリケーションの一部 |
+| 表示・インターフェース | 利用者との入出力（画面、CLI、API の受け口） | アプリケーション |
 
-### 禁止例
+分野に合わせて層の名前と数は変えてよい。大事なのは「依存の向きを決め、文書化し、機械的に守ること」。
 
-```ts
-// ❌ L1 (engine-core) で L2 (profile-fps) をimport
-import { createFpsProfile } from '@cod/profile-fps';
+## 禁止例と許可例
 
-// ❌ L1でtype分岐
-if (type === 'fps') { /* fps固有処理 */ }
-if (type === 'voxel') { /* voxel固有処理 */ }
+```text
+禁止: 純粋ロジック → 入出力（ファイルを読む処理を import する）
+許可: 入出力 → 純粋ロジック（読んだ内容を純粋ロジックに渡す）
 
-// ❌ UI層でBabylonを直接import
-import { Engine } from '@babylonjs/core';
+禁止: 下位の層が「種類 == A なら...」と上位の種類で分岐する
+許可: 上位が振る舞いを決め、下位には関数や設定として渡す
 ```
 
-### 許可例
+## 強制の仕組み（言語・分野ごと）
 
-```ts
-// ✅ L2がL1をimport
-import { Room } from '@cod/engine-core';
+| 手段 | 例 | 特徴 |
+| :--- | :--- | :--- |
+| lint の禁止ルール | Biome / ESLint の `no-restricted-imports`、Ruff の禁止 API | 書いた時点で検出できる |
+| 依存グラフの検査 | dependency-cruiser（JS/TS）、import-linter（Python）、ArchUnit（Java） | 層の関係を宣言して検査できる |
+| 可視性 | Go の `internal/`、Rust の `pub(crate)`、Java の package-private | 言語が境界を強制する |
+| 監査コマンド（最終手段） | `grep` で禁止パターンを探す | どの言語でも使える。誤検出に注意 |
 
-// ✅ L3がL1+L2をimport
-import { Room } from '@cod/engine-core';
-import { createFpsProfile } from '@cod/profile-fps';
+## アーキテクチャテスト
 
-// ✅ UIはfacade経由
-import { createEngine } from '../game/engineDeps';
+- 依存の向きを確認するテストを書く。例: 「純粋ロジックの中で入出力のモジュールを import していないこと」を、ファイルの import を読んで確かめる。
+- テストは CI（`make check` の一部）で必ず走るようにする。
+
+## 監査（最終手段）
+
+```text
+# 下位層から上位層への import が無いこと（パスは分野に合わせて読み替える）
+grep -rn "from .*presentation" core/
 ```
 
-## biome.jsonでの強制（no-restricted-imports）
+- 誤検出（コメント・文字列の中の一致）があるので、結果は必ず目で確認する。
 
-```json
-{
-  "linter": {
-    "rules": {
-      "nursery": {
-        "noRestrictedImports": {
-          "level": "error",
-          "options": {
-            "paths": {
-              "@cod/profile-fps": "L1からL2をimportしない。L1は純粋であるべき",
-              "@babylonjs/core": "UI層から直接importしない。engineDepsファサード経由",
-              "three": "profile-fps以外から直接importしない"
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
+## よくある失敗
 
-- biomeの `no-restricted-imports` は `nursery` にある場合あり。`recommended` presetでは有効にならないことがあるため、明示的に有効化
-- 公式: https://biomejs.dev/linter/rules/no-restricted-imports/
-
-## アーキテクチャテスト（Vitestで境界をテスト）
-
-```ts
-// _tests_/import-boundaries.test.ts
-import { readFileSync } from 'node:fs';
-import { glob } from 'glob';
-
-test('L1 does not import L2', async () => {
-  const files = await glob('packages/engine-core/src/**/*.{ts,tsx}');
-  for (const file of files) {
-    const content = readFileSync(file, 'utf8');
-    expect(content).not.toMatch(/from ['\"]@cod\/profile-/);
-    expect(content).not.toMatch(/if\s*\(\s*type\s*===/);
-  }
-});
-
-test('UI does not import Babylon directly', async () => {
-  const files = await glob('apps/web/src/components/**/*.{ts,tsx}');
-  for (const file of files) {
-    const content = readFileSync(file, 'utf8');
-    expect(content).not.toMatch(/from ['\"]@babylonjs\/core/);
-  }
-});
-```
-
-## よくある失敗と対処
-
-- `three` / `three-mesh-bvh` は衝突判定用にL1で使うが、描画用ではない → 衝突用はL1で許可、描画用はfacade経由に分離
-- `type` 分岐が必要 → L1では `type` を持たず、L2のfactoryで分岐。L1は `createWorld` のようなseamを受け取る
-- 循環参照 → `a.ts` が `b.ts` をimportし、`b.ts` が `a.ts` をimport → 共通部分を `c.ts` (L0)に抽出
-
-## 監査コマンド
-
-```bash
-# L1がL2をimportしていないか
-grep -R "from ['\"]@.*profile-" packages/engine-core/src --include="*.ts" | grep -v test | grep -v ".d.ts"
-
-# type分岐がL1にないか
-grep -R "if.*type.*===" packages/engine-core/src --include="*.ts"
-
-# UI層が重い依存を直接importしていないか
-grep -R "from ['\"]@babylonjs" apps/web/src/components --include="*.ts"
-grep -R "from ['\"]three" apps/web/src --include="*.ts" | grep -v profile-fps | grep -v world.ts
-
-# biomeでチェック
-<Lint コマンド>   # AGENTS.md §6.1 に記録したコマンドを使う
-```
+- 「念のため」の import が積み重なり、層の境界が崩れる。
+- 共通の型定義を上位に置き、下位がそれに依存する（型は下位に置く）。
+- 循環を、遅延 import や条件付き import で隠す（循環の根本原因が残る）。
+- 境界を守るテストが無く、リファクタリングで静かに崩れる。
 
 ## 関連
 
-- `biome.json` no-restricted-imports設定
-- `docs/arch/` アーキテクチャ文書（あれば）
-- `AGENTS.md §6` プロジェクト固有ルール
-- `.agent/skills/determinism/SKILL.md` 決定論スキル（L1の純粋性と関連）
+- [`codebase-design`](../codebase-design/SKILL.md): 変更の置き場所と責務を決める
+- [`improve-codebase-architecture`](../improve-codebase-architecture/SKILL.md): 既存の依存問題を段階的に直す
+- [`ci-quality-gates`](../ci-quality-gates/SKILL.md): 境界の検査を CI に組み込む

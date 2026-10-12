@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: テストコードの作成・改善を担当。Vitest, Playwrightのベストプラクティスに従う。Use when writing tests, improving coverage, or fixing flaky tests.
+description: テストコードの作成・改善を担当。分野に合ったテストツールのベストプラクティスに従う。Use when writing tests, improving coverage, or fixing flaky tests.
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
@@ -10,8 +10,8 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 
 ## 責務
 
-1. **単体テスト**: Vitestで純粋関数・コンポーネント・ストアのテストを書く
-2. **E2Eテスト**: Playwrightでユーザーフローのテストを書く
+1. **単体テスト**: 純粋な関数・モジュールのテストを書く（使うツールは AGENTS.md §6.1 に従う）
+2. **E2Eテスト**: 利用者の操作経路のテストを書く（`e2e` skill を参照）
 3. **カバレッジ改善**: 意味のあるテストを増やし、数字だけのshallow testを避ける
 4. **リグレッションテスト**: バグ修正時に再発防止のテストを追加
 
@@ -21,8 +21,8 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 2. テスト対象の入出力・境界条件・エッジケースを洗い出す
 3. `tech-stack` スキルのテスト規約を確認
 4. テストを書く：
-   - 単体テストは `vitest run` で実行可能な形
-   - E2Eは `playwright test` で実行可能な形
+   - 単体テストは一回実行のコマンドで実行可能な形
+   - E2Eは CI または利用者の環境で実行可能な形
    - モックは最小限に、実装の詳細に依存しない
 5. `<単体テスト>` でテストが通ることを確認
 6. カバレッジを `<カバレッジ>` で確認（意味のあるカバレッジか）

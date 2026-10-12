@@ -1,134 +1,79 @@
 ---
 name: determinism
-description: 純粋関数・決定論ロジックの決定論を守るスキル。Math.random/Date.now禁止、same-inputテスト、smoke vs heavy分離、LCG、監査コマンド。
+description: 分野を問わず、同じ入力から同じ結果を得られる（決定論的な）処理を守るスキル。時刻・乱数・外部状態・順序の不定性を排除する方法、シード付き擬似乱数、smoke と heavy の検証の分離、禁止される API の監査を扱う。
 ---
 
-# Determinism — 決定論を守る実装スキル
-
-> 正本: `docs/arch/`（あれば、決定論・禁止API）、`AGENTS.md §6`
+# Determinism — 同じ入力で同じ結果を守るスキル
 
 ## なぜ決定論が重要か
 
-- サーバーとクライアントで同じ入力から同じ結果を再現する必要がある場合、非決定論的APIが混入すると同期が崩れる
-- リプレイ、テスト、デバッグ、チート検出、予測補間等で決定論が前提になる
-- ゲーム以外でも、純粋関数・reducer・state machineでは決定論が重要（例: Redux reducerに `Date.now()` を書かない）
+- 再現できない不具合は直せない。同じ入力で同じ結果が出れば、原因を追える。
+- テストが安定し、差分（前と後の結果の比較）が意味を持つ。
+- 分散した処理やリプレイ（記録の再生）で、結果がずれないことを保証できる。
 
-## 禁止事項（純粋関数・SimProfile.step・reducer内）
+## 禁止事項（決定論が必要な層）
 
-- `Math.random()` / `Date.now()` / `performance.now()` / `setTimeout` / `setInterval` / I/O / `fetch` / `console.log` を書かない
-- 環境依存のAPI（`fs`, `Bun.file`, `Bun.write`, `process.env` の直接参照等）を書かない
-- 上位レイヤーのtype分岐（`if (type === 'fps')`）を下位の純粋層に書かない
+決定論が必要な層（純粋ロジック、変換、集計、判定など）では次を使わない。
+
+| 種類 | 例 | 代わりにすること |
+| :--- | :--- | :--- |
+| 現在時刻 | `now()`、`time.Now()`、`Date.now()` | 時刻を引数で受け取る |
+| 乱数（非シード） | `random()`、`Math.random()` | シード付きの擬似乱数を引数で受け取る |
+| 外部状態 | 環境変数、ファイルの中身、ネットワーク | 入力として事前に読み、引数で渡す |
+| 順序の不定性 | 反復順序が保証されない集合の列挙 | 出力前に並べ替える（キーで安定ソート） |
+| 環境依存の数値 | プラットフォームごとに違う浮動小数の挙動 | 許容誤差を決め、比較はそれで行う |
 
 ## 実装パターン
 
-### 1. LCGで決定論的乱数が必要な場合
+### 1. 時刻・乱数を注入する
 
-```ts
-function createLCG(seed: number) {
-  let s = seed >>> 0;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 0xffffffff;
-  };
-}
+```text
+# 悪い例
+function expire(item):
+    return item.created + TTL < now()
 
-// 使用例: RoomCtx.random / randomInt は welcomeで配布されたseedから作る
-const rng = createLCG(seed);
-const randomValue = rng(); // 0..1
+# 良い例
+function expire(item, current_time):
+    return item.created + TTL < current_time
 ```
 
-- 直接 `Math.random()` を呼ばない。seedから作ったrngを使う
-- seedはサーバーから配布、または `createLCG(12345)` のように固定
+### 2. シード付きの擬似乱数
 
-### 2. 軽量smoke vs heavy分離
+- 乱数が必要なら、シードを入力に含めて線形合同法（LCG）などで生成する。
+- 同じシードには同じ列が返ることをテストで確かめる。
 
-| 層 | 配置 | 内容 | 時間 |
-|---|---|---|---|
-| smoke | `tests/.../determinism.test.ts` unit | 100ticks x10 scenarios、purity、factory isolation | 20-50ms |
-| heavy | `scripts/determinism-heavy.ts` | 1000ticks x100 scenarios、tolerance 1e-10、LCG | 0.8-0.9s |
+### 3. smoke と heavy の分離
 
-- smoke は通常のテスト実行に含め、heavy は CI または手動の別コマンド（AGENTS.md §6.1 に記録したもの）で実行する
-- 軽いworld（例: 平面のみ）を使えば heavyでも軽い。重い依存（BVH等）を含むworldだと重くなるため、seamで差し替え
+- **smoke**: 速く、常に実行する（通常のテストに含める）。
+- **heavy**: 大量の入力で確かめる。時間がかかるので、CI の別段階または手動で実行する。
+- どちらを、どのコマンドで実行するかは AGENTS.md §6.1 に記録する。
 
-```ts
-// 軽量worldのseam例
-function createProfile({ createWorld }: { createWorld: () => World }) {
-  // createWorldを外から注入、テストでは軽いplane worldを注入
-}
-```
+### 4. same-input テスト
 
-### 3. Same-inputテスト（server vs client、汎用）
+- 同じ入力を二度実行して、結果が一致することを確かめる。
+- 別の実装（例: 本番と参照実装）の結果が一致することを確かめる。
+- 入力の順序を変えても、正規化した後の結果が一致することを確かめる。
 
-```ts
-// @vitest-environment node
-const room = new Room({ profile: createProfile({ createWorld: createPlaneWorld }) });
-const peer = { id: 'test', send: vi.fn() } as unknown as Peer;
-room.join(peer);
-const player = room.getPlayer(peer.id);
+## 監査（禁止 API の検出）
 
-// 同じ入力列を2回実行して同じ結果になるか
-const inputs = generateInputs(seed, 100);
-const stateA = runWithInputs(profile, world, inputs);
-const stateB = runWithInputs(profile, world, inputs);
-expect(stateA.x).toBeCloseTo(stateB.x, 10);
-```
+| 分野・言語 | 検出の例 |
+| :--- | :--- |
+| JavaScript / TypeScript | `Math.random`、`Date.now`、`new Date()` |
+| Python | `random.`、`datetime.now`、`time.time` |
+| Go | `time.Now`、`math/rand` のグローバル関数 |
+| Java | `new Random()`、`System.currentTimeMillis` |
 
-- `Room` は `addPlayer` ではなく `join(Peer)` APIの場合、mock Peerを作成
-- `Simulation.receiveInput` は seq巻き戻りガードあり、FIFOキューで入力消費
-- 検証: 120ticks exact `toBeCloseTo(2)` + per-tick error <許容値
-
-### 4. 監査コマンド（禁止API検出）
-
-```bash
-# SimProfile / pure層での禁止API検出
-grep -R "Math\.random\|Date\.now\|performance\.now\|setTimeout\|setInterval\|fetch(" packages/*/src --include="*.ts" | grep -v test | grep -v ".d.ts"
-
-# L1でのtype分岐検出
-grep -R "if.*type.*===" packages/engine-core/src --include="*.ts"
-
-# 自動スクリプト
-<禁止API検出コマンド>   # AGENTS.md §6.1 に記録したコマンドを使う
-```
-
-## check-determinism.ts スクリプト（本テンプレート用）
-
-```ts
-// scripts/check-determinism.ts 概要
-const forbidden = [
-  /Math\.random\s*\(/,
-  /Date\.now\s*\(/,
-  /performance\.now\s*\(/,
-  /setTimeout\s*\(/,
-  /setInterval\s*\(/,
-  /fetch\s*\(/,
-];
-
-for (const file of glob('src/**/*.{ts,tsx}')) {
-  const lines = readFile(file).split('\n');
-  lines.forEach((line, idx) => {
-    for (const re of forbidden) {
-      if (re.test(line) && !line.trim().startsWith('//')) {
-        violations.push({ file, line: idx+1, pattern: re.source });
-      }
-    }
-  });
-}
-```
-
-- biomeでは検出できないパターンを補完
-- CIの `static-checks` で実行、失敗時は exit 1
+- 検出は `make check` の一段（`PROJECT_CHECKS`）に加えてよい。
+- 対象は決定論が必要な層だけに絞る。すべてのファイルに掛けると、正当な用途まで止めてしまう。
 
 ## よくある失敗
 
-- `Math.random()` を純粋層で使う → LCGに置換
-- `Date.now()` でタイムスタンプを取る → 外から注入、または純粋層では使わない
-- `setTimeout` で遅延処理 → 純粋層ではtickベースで管理、外側でsetTimeout
-- `console.log` を純粋層で使う → 副作用なので外側でログ、純粋層は値を返すだけ
+- 「テストでは固定値を使うから大丈夫」と思って、本番コードに時刻取得を残す。
+- 乱数のシードを固定せず、テストが時々失敗する（フレーキー）。
+- 集計結果の順序が、実行環境によって変わる。
+- 浮動小数の完全一致比較で、環境差により失敗する。
 
 ## 関連
 
-- `scripts/check-determinism.ts` 禁止API検出スクリプト
-- `scripts/determinism-heavy.ts` heavy determinismテスト（あれば）
-- `.agent/skills/import-boundaries/SKILL.md` レイヤー境界スキル
-- `.agent/skills/ci-quality-gates/SKILL.md` CIスキル
-- `docs/arch/` 決定論・禁止API文書（あれば）
+- [`testing`](../testing/SKILL.md): テストの設計
+- [`import-boundaries`](../import-boundaries/SKILL.md): 決定論の層に I/O を持ち込まない

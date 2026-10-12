@@ -1,0 +1,18 @@
+# エディタ間で揃える基本の書式（分野を問わない）
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown は行末の空白が改行を表すことがあるため、削除しない
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefile はタブ必須
+[Makefile]
+indent_style = tab

@@ -15,7 +15,7 @@ TEMPLATE_REPO/
 │   ├── skills/            # 分野別ノウハウ（入口: skills/index.md）
 │   ├── hooks/             # トリガー別の手順（.md）と実行スクリプト（.sh）
 │   ├── agents/            # サブエージェントの定義
-│   ├── commands/          # 単一ファイルのプロンプト（旧形式・互換用）
+│   ├── commands/          # 単一ファイルのプロンプト
 │   ├── output-styles/     # 出力スタイル
 │   ├── workflows/         # 複数エージェントをまとめる手順
 │   └── logs/              # タスク実行ログ（追加のみ）

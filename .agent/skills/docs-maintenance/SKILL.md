@@ -52,10 +52,8 @@ for md in pathlib.Path('docs').rglob('*.md'):
 | カテゴリ | 正本URL例 | ミラー・旧URL | 対応 |
 |---|---|---|---|
 | Biome import制限 | https://biomejs.dev/linter/rules/no-restricted-imports/ | `.../javascript/` redirect OK | 公式pathを使う |
-| Playwright | https://playwright.dev/docs/ | dzone / w3cub mirror | 公式に置換 |
-| Vitest coverage | https://vitest.dev/config/coverage | https://v2.vitest.dev/... 404 | 公式に置換 |
-| pnpm | https://pnpm.io/ | - | 公式 |
-| setup-pnpm | https://github.com/pnpm/action-setup | - | 公式 |
+| pre-commit | https://pre-commit.com/ | - | 公式 |
+| gitleaks | https://github.com/gitleaks/gitleaks | - | 公式 |
 | GitHub workflow syntax | https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax | - | 公式 |
 | Claude Code | https://code.claude.com/docs/en/ | - | 公式 |
 
@@ -63,11 +61,11 @@ for md in pathlib.Path('docs').rglob('*.md'):
 
 ```bash
 # fetch_pageで200確認、anchorまで含めて取得できるか確認
-# 例: https://playwright.dev/docs/mock#mock-websockets はanchor付きで取得可能
+# 例: https://biomejs.dev/linter/rules/no-restricted-imports/ のように anchor 付きの URL も取得できるか確認する
 ```
 
 - Mirrors `aidoczh/w3cub` は機能するが非公式、primary usageからは排除、参考リンク程度に留める
-- Truncated URL grep artifact `https://ago`, `https://bu` は bracket cutによる誤検出、better extractionで修正
+- 途中で切れた URL（例: 末尾が欠けた `https://` のみの文字列）は grep の切り出しによる誤検出。抽出方法を直して再検査する
 
 ## docs更新時の5点出力（AGENTS.md準拠）
 

@@ -12,7 +12,9 @@
 ├── settings.json              # チーム共有設定（permissions, hooks, env）— コミット対象
 ├── settings.local.json        # 個人オーバーライド（gitignore）— 個人のみ
 ├── THIRD_PARTY_NOTICES.md     # 取り込んだ上流 OSS のライセンス表示
-├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）
+├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）。入口は rules/index.md
+│   ├── index.md
+│   └── common/                # ECC 由来の共通規約 10 件（一部は paths でコード系に限定）
 ├── skills/<name>/SKILL.md     # 再利用プロンプト（48 件。入口は skills/index.md）
 ├── agents/                    # サブエージェント定義（planner, architect, code-explorer, docs-lookup ほか）
 ├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh)
