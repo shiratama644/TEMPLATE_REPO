@@ -74,6 +74,7 @@ description: 分野を問わず、検証を段階的に実行する品質ゲー�
 
 ## 関連
 
+- [`project-init`](../project-init/SKILL.md): 新規プロジェクトで検証コマンドを §6.1 と `PROJECT_CHECKS` に載せるとき
 - [`testing`](../testing/SKILL.md): 検証の中身を設計する
 - [`verification-loop`](../verification-loop/SKILL.md): 完了前の検証の順序
 - [`sandbox-constraints`](../sandbox-constraints/SKILL.md): 環境制約での迂回

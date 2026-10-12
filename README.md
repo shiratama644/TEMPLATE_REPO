@@ -23,6 +23,16 @@ GitHub の「Use this template」から新しいリポジトリを作成し、�
 
 ## 使い方
 
+### Agent に任せる（推奨）
+
+1. GitHub の「Use this template」から新しいリポジトリを作成する
+2. Agent に「初期設定して」と依頼する（手順の正本は [`.agent/skills/project-init/SKILL.md`](.agent/skills/project-init/SKILL.md)）
+3. 質問に答え、提示された計画を承認する（承認するまでファイルは書き換えない）
+4. 書き換え結果（`README.md` / `AGENTS.md §6` / `project-overview`）を確認する
+5. 通常の作業を依頼する
+
+### 自分で書く場合
+
 1. GitHub の「Use this template」から新しいリポジトリを作成する
 2. `README.md` をプロジェクトの内容に書き換える
 3. `AGENTS.md §6` にプロジェクト固有のルールを書く（特に **§6.1 の検証コマンド**）
@@ -36,7 +46,7 @@ GitHub の「Use this template」から新しいリポジトリを作成し、�
 - **小さく実行 → 検証 → 記録 → 次へ** のサイクルを基本とする（`AGENTS.md §1〜§2`）。
 - **進捗の正本は `docs/task-list.md`**。完了は自己申告ではなく、検証結果や成果物などの証拠で判定する。
 - **Git は復元チェックポイント**として使う。検証が通った状態だけをコミットする（`AGENTS.md §4`）。
-- **分野に合わせてスキルを選ぶ**。`.agent/skills/index.md` の「分野」列を見て、不要なものは削除してよい。
+- **分野に合わせてスキルを選ぶ**。`.agent/skills/index.md` の「分野」列を見て、不要なものは削除してよい（削除は初期設定計画で承認してから）。
 
 ## ドキュメントの探し方
 

@@ -15,7 +15,7 @@
 ├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）。入口は rules/index.md
 │   ├── index.md
 │   └── common/                # ECC 由来の共通規約 10 件（一部は paths でコード系に限定）
-├── skills/<name>/SKILL.md     # 再利用プロンプト（48 件。入口は skills/index.md）
+├── skills/<name>/SKILL.md     # 再利用プロンプト（49 件。入口は skills/index.md）
 ├── agents/                    # サブエージェント定義（planner, architect, code-explorer, docs-lookup ほか）
 ├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh)
 │   ├── index.md
@@ -23,7 +23,7 @@
 │   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
 │   ├── pre_edit_guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
 │   └── post_edit_verify.sh    # PostToolUse: 事後検証
-├── commands/                  # スラッシュコマンド（commit, test, code-review, checkpoint, plan, update-docs）
+├── commands/                  # スラッシュコマンド（commit, test, code-review, checkpoint, plan, update-docs, project-init）
 ├── output-styles/             # 出力スタイル（concise, detailed）
 ├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）
 ├── agent-memory/              # サブエージェント永続メモリ（自動生成・gitignore）
@@ -72,10 +72,14 @@ sh .agent/hooks/session-start.sh | head -c 200                                  
 
 ## 新規プロジェクトへの適用手順
 
+Agent に任せる（推奨）: 「初期設定して」と依頼し、[`.agent/skills/project-init/SKILL.md`](./skills/project-init/SKILL.md) に従う。質問 → 計画の承認 → 文書と Agent 設定の書き換え。承認前にファイルを触らせない。
+
+自分で書く場合:
+
 1. GitHubで「Use this template」から新規リポジトリ作成
 2. `AGENTS.md §6` にプロジェクト固有のルールを追記（特に §6.1 に検証コマンドを記録）
 3. `.agent/skills/project-overview/SKILL.md` をプロジェクト用に書き換え
 4. `README.md` をプロジェクト用に書き換え
 5. `docs/` を必要に応じて整理（`docs/README.md` の目次も更新）
-6. 分野に合わない skill（例: Web 専用の `e2e`、ソフトウェア専用の `import-boundaries`）は削除してよい
+6. 分野に合わない skill（例: Web 専用の `e2e`、ソフトウェア専用の `import-boundaries`）は削除してよい（独断では削らない）
 7. ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK）

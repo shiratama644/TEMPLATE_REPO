@@ -13,6 +13,7 @@
 
 | 状況 | 使うスキル |
 | :--- | :--- |
+| テンプレートから作った新規プロジェクトの初期設定 | [`project-init`](./project-init/SKILL.md) |
 | 初回 / 全体把握 | [`project-overview`](./project-overview/SKILL.md) |
 | 技術の選定・設定・記録 | [`tech-stack`](./tech-stack/SKILL.md) |
 | 「動かない / 検証できない / 外部に接続したい」環境トラブル | [`sandbox-constraints`](./sandbox-constraints/SKILL.md) |
@@ -55,6 +56,7 @@
 | スキル | できるようになること | 分野 | 出典 |
 | :--- | :--- | :--- | :--- |
 | [project-overview](./project-overview/SKILL.md) | テンプレートの構成と運用の全体像を把握する | 共通 | 自作 |
+| [project-init](./project-init/SKILL.md) | 新規プロジェクトの意図確認・計画承認・文書と Agent 設定の書き換え | 共通 | 自作 |
 | [tech-stack](./tech-stack/SKILL.md) | 分野に応じて技術を選び、AGENTS.md §6.1 に記録する | 共通 | 自作 |
 | [sandbox-constraints](./sandbox-constraints/SKILL.md) | Sandbox の制約を見極め、迂回・復旧して作業を続ける | 共通 | 自作 |
 | [verify-doc-integrity](./verify-doc-integrity/SKILL.md) | ドキュメントのリンク実在・目次更新・機密情報の混入なしを検証する | 共通 | 自作 |

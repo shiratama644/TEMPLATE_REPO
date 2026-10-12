@@ -24,7 +24,7 @@
 
 | ファイル | 実行トリガー | 対象 / 内容 |
 | :--- | :--- | :--- |
-| [pre-task.md](./pre-task.md) | タスク開始時 | 現状把握（git status/branch/log）→ `.agent/skills/` から必要スキルをピンポイント読込 → リポジトリ固有の制約確認 |
+| [pre-task.md](./pre-task.md) | タスク開始時 | 現状把握（git status/branch/log）→ `.agent/skills/` から必要スキルをピンポイント読込（未初期化なら `project-init`）→ リポジトリ固有の制約確認 |
 | [pre_edit_guard.sh](./pre_edit_guard.sh) | PreToolUse | 編集禁止領域（.git/, node_modules/, dist/, build/, coverage/ 等の生成物）への変更をブロック（exit 2） |
 | [post_edit_verify.sh](./post_edit_verify.sh) | PostToolUse | 機密ファイル混入・docs/README目次の事後検証 |
 | [verify-commit.md](./verify-commit.md) | commit直前 | プロジェクト検証（typecheck/lint/test/build）+ 意図しない差分の確認 |

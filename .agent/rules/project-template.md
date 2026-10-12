@@ -2,13 +2,17 @@
 paths:
   - "AGENTS.md"
   - ".agent/skills/project-overview/**"
+  - ".agent/skills/project-init/**"
 ---
 
 # Rule 05: プロジェクト固有の遵守事項（テンプレート）
 
 > 優先度: **HIGH** — このファイルはテンプレート利用時にプロジェクトごとに書き換える
+>
+> **手順の正本は [`project-init`](../skills/project-init/SKILL.md)。** 本ルールは埋める項目のチェックリスト。
+> 承認前にファイルを書き換えない。質問と計画の承認を先に行う。
 
-このファイルは `AGENTS.md §6` と対応する。新規プロジェクトを作成したら、以下を埋めること。
+このファイルは `AGENTS.md §6` と対応する。新規プロジェクトを作成したら、`project-init` に従い以下を埋めること。
 
 ## 1. 環境・ツールチェーン（§6.1相当）
 

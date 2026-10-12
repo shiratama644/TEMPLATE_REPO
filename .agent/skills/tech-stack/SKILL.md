@@ -1,12 +1,15 @@
 ---
 name: tech-stack
-description: プロジェクトで使う技術（言語・ツール・検証手段・CI）を選び、設定・運用する際の指針。分野（ソフトウェア / 文書 / データ / 設定）ごとの選び方と、記録の仕方を定める。Use when choosing tools, writing configuration, or setting up verification for a new project.
+description: プロジェクトで使う技術（言語・ツール・検証手段・CI）を選び、設定・運用する際の指針。分野（ソフトウェア / 文書 / データ / 設定）ごとの選び方と、記録の仕方を定める。新規プロジェクトの初期設定そのものは project-init。Use when choosing tools, writing configuration, or setting up verification for a new project.
 ---
 
 # Tech Stack Skill — 技術選定と記録の指針
 
 > このテンプレートは特定の言語やフレームワークを前提にしない。プロジェクトの目的に応じて技術を選び、
 > 選んだ結果を **AGENTS.md §6.1（環境・ツールチェーン・検証コマンド）** に必ず記録する。
+>
+> テンプレートから作った新規リポジトリの初回は [`project-init`](../project-init/SKILL.md) が本スキルを呼び出す。
+> 技術選定だけを後から行うときも、本スキルを単体で使う。
 
 ## 1. 基本原則
 
@@ -49,3 +52,9 @@ description: プロジェクトで使う技術（言語・ツール・検証手�
 ## 5. 分野固有のスキル
 
 ソフトウェア開発・Web 開発に特化したスキル（`testing` / `e2e` / `ci-quality-gates` / `determinism` / `import-boundaries` / `memory-leak` / `zero-alloc`）は、該当する分野のプロジェクトでのみ使う。詳細は `.agent/skills/index.md` を参照。
+
+## 関連
+
+- [`project-init`](../project-init/SKILL.md): 新規プロジェクトの初期設定。本スキルの記録フォーマットで §6.1 を書く
+- [`ci-quality-gates`](../ci-quality-gates/SKILL.md): 検証を `make check` に揃える
+- [`sandbox-constraints`](../sandbox-constraints/SKILL.md): 環境制約は乗り越えない
