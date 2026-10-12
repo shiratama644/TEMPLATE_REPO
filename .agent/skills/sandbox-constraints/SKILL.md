@@ -12,10 +12,10 @@ description: Sandbox / ブラウザ・ネットワーク / GitHub App の恒常�
 
 | 制約 | 影響 | 対処 |
 |---|---|---|
-| **外部APIへの到達不可**（例: `api.example.com:443` に `ECONNRESET`） | `pnpm build` 時に `fetch failed` が出る、SSRデータが空 | exit codeが0なら成功扱い。ローカルではモックや空表示を許容。ユーザー環境では正常動作することを明記 |
-| **Chromiumバイナリのinstall不可** | Playwright E2Eがローカルで実行できない | E2Eは「書けるが実行できない」としてCI上のみ実行。ローカルで無理に実行しようとしない |
-| **sharpのnative build不可** | `next/image` のローカル最適化が動かない | `pnpm-workspace.yaml` で `sharp: false`。Vercelデプロイ後に有効化される。ローカルでは `unoptimized` |
-| **nodejs.orgへの到達不可**（SSLエラー） | `nvm` や公式インストーラが使えない | npm registryの `node-linux-x64` パッケージから取得（`restore-env.sh` の手法） |
+| **外部APIへの到達不可**（例: `api.example.com:443` に `ECONNRESET`） | 外部から取得する処理（ビルド時の取得、データ取り込みなど）が `fetch failed` で止まる | 成功の扱いを決めたうえで、ローカルではモックや固定データを使う。ユーザー環境では正常動作することを明記 |
+| **ブラウザ等の大きなバイナリをinstall不可** | ブラウザ自動操作の E2E がローカルで実行できない | E2Eは「書けるが実行できない」としてCI上のみ実行。ローカルで無理に実行しようとしない |
+| **ネイティブ拡張のビルド不可** | 対象言語のネイティブ拡張（C/C++/Rust 製のパッケージ）が入らない | その機能を任意扱いにして無効化し、無効時の挙動をテストする。有効化は利用者の環境で確認する |
+| **公式サイトへの到達不可**（SSLエラーなど） | 公式インストーラ（言語ランタイムなど）が使えない | パッケージレジストリ経由の取得など、AGENTS.md の環境メモに記録した迂回策を使う |
 | **`.github/workflows/` に書き込み不可**（GitHub App権限制約） | CIワークフローを直接置けない | YAMLは `docs/ops/CI_WORKFLOW.yml` に保管し、ユーザーが手動で `.github/workflows/ci.yml` へ配置。PR本文で手順を案内 |
 | **GitHub APIのrate limit** | `gh api` が403を返すことがある | リトライ + キャッシュ。`gh repo list` は `--limit` を付ける |
 
@@ -23,14 +23,14 @@ description: Sandbox / ブラウザ・ネットワーク / GitHub App の恒常�
 
 ### ネットワーク依存の処理
 
-- バイナリのpack/unpack、入力キュー、純粋関数はソケット非依存でVitestでテスト。
-- `fetch` や `ws.send` の戻り値分岐はモック。実結合は「実環境検証待ち」としてタスクを分離。
+- 外部に依存しない部分（変換、入力の整形、純粋関数）は、ネットワークなしで単体テストする。
+- 外部呼び出しの戻り値による分岐はモックで確かめる。実結合は「実環境検証待ち」としてタスクを分離する。
 - Coverageはbaselineとbefore/afterを記録し、数字だけのshallow testを避ける。
 
-### 3D・Canvas・WebGL
+### GPU・描画・画面を伴う処理
 
-- jsdomでCanvas/WebGLをレンダリングしない。DOMとシムを分離。
-- ライブプレビュー（LIVE PREVIEW）で目視確認。シムはDOM/GPU非依存でテスト。
+- 描画結果をテスト環境で再現しない。描画の前段（データ作成）と描画の処理を分離する。
+- 目視確認は LIVE PREVIEW など利用者が見られる環境で行う。
 
 ### 決定論
 
@@ -38,7 +38,7 @@ description: Sandbox / ブラウザ・ネットワーク / GitHub App の恒常�
 
 ## 3. 復旧手順（Sandbox再構築時）
 
-Sandbox再構築を検知したら（`git log` が起点1件のみ / 大量削除+未追跡 / node_modules無）：
+Sandbox再構築を検知したら（`git log` が起点1件のみ / 大量削除+未追跡 / 生成物ディレクトリ無）：
 
 ```bash
 # 1. リモートの最新をfetch（ブランチ名は git branch --show-current で確認）
@@ -47,16 +47,12 @@ git fetch origin <現在のブランチ>
 # 2. FETCH_HEADにワークツリーごとリセット（この場合のみ --hard 許可）
 git reset --hard FETCH_HEAD
 
-# 3. 依存を再構築
-bash .agent/hooks/restore-env.sh
-# または手動:
-corepack enable pnpm
-pnpm install --frozen-lockfile
+# 3. 環境を再構築（AGENTS.md §6.1 のセットアップ手順に従う）
 ```
 
-復旧後は必ず `git log --oneline -5` と `pnpm test:unit` で健全性を確認してから作業再開。
+復旧後は必ず `git log --oneline -5` と §6.1 の検証コマンドで健全性を確認してから作業再開。
 
-## 4. 検証キットの運用（ytdl由来の良いパターン）
+## 4. 検証キットの運用
 
 ユーザーに実行させる検証キットを書く時のUXルール：
 
@@ -64,11 +60,3 @@ pnpm install --frozen-lockfile
 - 1 fetchで完結する設計
 - 外部リトライはキット側で吸収
 - raw URL + 自己チェック行を必ず含める（ユーザーがコピペで実行できる）
-
-## 5. 参考：restore-env.sh の仕組み
-
-- `.nvmrc` のメジャー版を読み、現在と異なればnpm registryから `node-linux-x64` バイナリを取得して `/usr/local/bin/node` を置換
-- `corepack enable pnpm` + `corepack prepare <packageManager> --activate`
-- `pnpm install --frozen-lockfile`
-
-パッケージマネージャが異なるプロジェクトでは手動2行（`corepack enable` + install）に置き換える。

@@ -1,7 +1,7 @@
 # Hook: Sandbox Rebuild Recovery
 
 > **トリガー**: Sandbox 再構築を検知した時。AGENTS.md §4.1.1 の手順実体版。
-> **検知ヒント**: `git log --oneline` が起点コミット 1 件のみ / `git status` が「大量の削除 + 大量の未追跡」/ `node_modules` が無い。
+> **検知ヒント**: `git log --oneline` が起点コミット 1 件のみ / `git status` が「大量の削除 + 大量の未追跡」/ 依存関係の取得先（プロジェクトが使う `node_modules`・`.venv` などの生成物）が無い。
 
 ## 背景
 
@@ -20,15 +20,14 @@ git fetch origin <session-branch>
 #     未コミット変更は元々存在しない状態のため安全）
 git reset --hard FETCH_HEAD
 
-# 3. 依存を再構築（下記スクリプト、または手動 2 行）
-bash .agent/hooks/restore-env.sh
+# 3. 環境を再構築（AGENTS.md §6.1 に記録されたセットアップ手順に従う）
 ```
 
 ## 復旧後の健全性確認
 
 ```bash
 git log --oneline -5          # push 済みコミットが見えること
-pnpm test:unit                # テストが通ること（スクリプト名は package.json に合わせる）
+# §6.1 に記録された検証コマンドを実行し、通ることを確認する
 ```
 
 → 問題なければ作業再開。
@@ -36,5 +35,4 @@ pnpm test:unit                # テストが通ること（スクリプト名は
 ## 注意
 
 - `git reset --hard` は**この例外場景以外では厳禁**（AGENTS.md §4.3）。誤用に注意。
-- 復旧スクリプト `restore-env.sh` は pnpm + `.nvmrc` 前提。パッケージマネージャが
-  異なるプロジェクトでは手動 2 行（`corepack enable` + install）に置き換えること。
+- 環境セットアップ手順はプロジェクトごとに異なるため、§6.1 に具体的な手順を記録しておくこと。

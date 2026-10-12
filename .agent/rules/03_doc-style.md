@@ -15,74 +15,44 @@ paths:
 - 「〜です/ます」調。計画書の完了条件などは断定形「〜する」。
 - 絵文字は既存ファイルのパターンに従う。新規の飾り絵文字は増やさない（可読性優先）。
 
-## 2. ファイル構成テンプレート（活発リポジトリ準拠 — cod-web arena/01a0b161-cod-web復旧）
+## 2. ファイル構成
 
-> cod-web arena/01a0b161-cod-web（2026-09-26活発）では docs/: README, task-list.md, arch/ (15 files), planning/ (with complete/), ops/, research/ が標準。以前「記録は削除」としたが、ユーザー指摘（arch/audit/planning/researchは必要）により復旧（2026-09-27調査）。
+| 場所 | 内容 | 形式 |
+|---|---|---|
+| `docs/task-list.md` | 進捗の正本 | 固定名 |
+| `docs/arch/` | 仕様・構成・判断の記録 | `kebab-case.md` |
+| `docs/planning/` | 個別タスクの計画 | `_TEMPLATE.md` 準拠 |
+| `docs/research/` | 調査結果 | `<TOPIC>_RESEARCH.md` |
+| `docs/audit/` | 差分・問題・活動の記録 | `diff-{context}.md` / `issues-{context}.md` / `activity.md` |
+| `docs/ops/` | 運用手順 | 大文字スネークケース（例: `RELEASE.md`） |
 
-### 仕様書 (`docs/arch/`)
+計画書の必須セクション: 開始前確認、目的、変更範囲、禁止事項、完了条件、停止条件、実績と証拠。
 
-- `product.md` — プロダクト定義
-- `architecture.md` — レイヤー・依存規則
-- `tech-stack.md` — 技術スタック
-- `adr.md` — 意思決定ログ
+## 3. 命名規約
 
-### 計画書 (`docs/planning/{TOPIC}_PLAN.md`)
-
-`docs/planning/_TEMPLATE.md` 準拠。必須セクション: 開始前確認, 目的, 変更範囲, 禁止事項, 完了条件, テスト方法, 停止条件, 完了時に行うこと, サブタスク分割, 設計詳細, リスク, 実績と証拠
-
-### 調査 (`docs/research/`)
-
-- `{TOPIC}_RESEARCH.md` — 調査結果
-
-### 監査 (`docs/audit/`)
-
-- `diff-{context}.md` — 差分レポート
-- `issues-{context}.md` — バグリスト
-
-### 完了済み計画 (`docs/planning/complete/`)
-
-- `{TOPIC}_COMPLETE.md` — 完了レポート
-
-### 設定例 (`docs/examples/`)
-
-- `vite.config.example.ts` — Vite設定例
-- `next.config.example.mjs` — Next.js設定例
-
-### 運用 (`docs/ops/`)
-
-- `DEPLOY.md` — デプロイ手順
-- `CI_SETUP.md` — CIセットアップ
-
-## 3. 命名規約（活発リポジトリ準拠 — ハイフン最大1つ、短く正確）
+ハイフンは最大 1 つ。短く、内容が正確に分かる名前にする。
 
 | 種類 | 命名規則 | 例 |
 |---|---|---|
-| タスクリスト | `docs/task-list.md`（固定・唯一の正本） | — |
-| 計画書テンプレート | `_TEMPLATE.md`（固定） | — |
-| 計画書 | `{TOPIC}_PLAN.md`（ハイフン最大1つ） | `AUTH_PLAN.md` |
-| 仕様書 | `kebab-case.md`（ハイフン最大1つ） | `tech-stack.md` |
-| 調査 | `{TOPIC}_RESEARCH.md` | `TERMUX_RESEARCH.md` |
+| 計画書 | `kebab-case.md` | `reader-redesign.md` |
+| 仕様書 | `kebab-case.md` | `product.md` |
+| 調査 | `<TOPIC>_RESEARCH.md` | `PRICING_RESEARCH.md` |
 | 監査（差分） | `diff-{context}.md` | `diff-migration.md` |
-| 監査（バグ） | `issues-{context}.md` | `issues-auth.md` |
-| 完了レポート | `{TOPIC}_COMPLETE.md` | `AUTH_COMPLETE.md` |
-| 設定例 | `kebab-case.example.*` | `vite.config.example.ts` |
-| 運用 | 大文字スネークケース | `DEPLOY.md`, `CI_SETUP.md` |
+| 監査（問題） | `issues-{context}.md` | `issues-auth.md` |
 | スキル | `kebab-case/SKILL.md` | `project-overview/SKILL.md` |
-| ルール | `kebab-case.md`（ハイフン最大1つ） | `project-template.md` |
-| フック手順 | `kebab-case.md`（ハイフン最大1つ） | `verify-commit.md` |
-| フックスクリプト | `kebab-case.sh`（ハイフン最大1つ） | `restore-env.sh` |
-| テスト | `kebab-case.test.ts`（ハイフン最大1つ） | `yaml-top.test.ts` |
+| ルール | `NN_kebab-case.md` または `kebab-case.md` | `project-template.md` |
+| フック手順 | `kebab-case.md` | `verify-commit.md` |
+| フックスクリプト | `kebab-case.sh` | `post_edit_verify.sh` |
 
 ## 4. リンク規約
 
-- `docs/` 内の相互リンクは相対パス（`./planning/`, `../README.md` 等）
-- 存在しないファイルへのリンクを残さない。移動時は参照も更新。
-- 外部リンクは可能な限り公式ソースを優先。
+- `docs/` 内の相互リンクは相対パス（`./planning/`、`../README.md` 等）。
+- 存在しないファイルへのリンクを残さない。移動・削除時は参照も更新する。
+- 外部リンクは可能な限り公式ソースを優先し、確認日を書く。
 
-## 5. 運用ルール（活発リポジトリ準拠 — cod-web arena復旧）
+## 5. 運用ルール
 
-- ドキュメントを追加・削除・移動したら**必ず `docs/README.md` の目次を更新**（arch/ + planning/ + research/ + audit/ + ops/ + examples/ + task-list.md）
-- 削除済みファイルを指す参照を残さない
-- タスクIDと進捗は `docs/task-list.md`（正本）にのみ記録、計画書・完了レポートには「対応 task-list ID」を書いて相互参照 — cod-web arena準拠
-- 仕様は `docs/arch/` が正本、計画は `docs/planning/`、調査は `docs/research/`、監査は `docs/audit/`、運用は `docs/ops/`
-- ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` はOK、`yaml-utils-top-level.test.ts` はNG）
+- ドキュメントを追加・削除・移動したら、**必ず `docs/README.md` の目次を更新する**。
+- 削除済みファイルを指す参照を残さない。
+- タスク ID と進捗は `docs/task-list.md` にのみ記録する。計画書には「対応 task-list ID」を書いて相互参照する。
+- 仕様は `docs/arch/`、計画は `docs/planning/`、調査は `docs/research/`、監査は `docs/audit/`、運用は `docs/ops/` に置く。

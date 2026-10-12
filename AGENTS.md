@@ -8,6 +8,9 @@
 > （技術スタック・制約・実装ルール）を追記してください。
 > それ以外の節は汎用規約のため、原則そのまま使えます。
 
+> 🔗 **Claude Code 向けの対応**: `CLAUDE.md` は本ファイルへの symlink、`.claude/` は `.agent/` への symlink です。
+> Claude Code はどちらの名前でも同じ内容を読みます。正本は `AGENTS.md` と `.agent/` です。
+
 ---
 
 ## 1. 基本方針 & 作業単位
@@ -22,11 +25,11 @@
 
 | 区分 | 例 |
 | :--- | :--- |
-| **良い例（適切な粒度）** | 一覧画面の実装 / 検索機能の実装 / 詳細モーダルの実装 / キャッシュ層の実装 |
-| **悪い例（細かすぎる）** | ボタン1個追加ごとにコミット / CSS margin変更ごとにテスト |
-| **悪い例（大きすぎる）** | UI + API + 認証 + DB + キャッシュ を1タスクで一括実装 |
+| **良い例（適切な粒度）** | 章の執筆 / データの一括変換 / 調査項目の一つを完了させる / 設定の一つの移行 |
+| **悪い例（細かすぎる）** | 語句を1つ直すごとにコミット / 数値を1つ変えるごとに検証 |
+| **悪い例（大きすぎる）** | 複数の章・データ源・成果物を1タスクで一括作成 |
 
-※フレームワーク移行やDB変更などの大規模変更は、「設計 → 基盤 → 機能A（検証・commit） → 機能B（検証・commit）」と段階的に分割すること。
+※大規模な構成変更や移行は、「設計 → 基盤 → 項目A（検証・commit） → 項目B（検証・commit）」と段階的に分割すること。
 
 ---
 
@@ -35,13 +38,13 @@
 各タスクは必ず以下の順序で進め、途中の検証が失敗した状態で次へ進んではならない。
 
 ```text
-1. 仕様・既存コード確認 (git status / package.json / 関連ファイル)
+1. 仕様・既存コード確認 (git status / README / 関連ファイル / docs/)
    ↓
 2. 実装方針決定
    ↓
 3. 実装 (最小限の差分)
    ↓
-4. プロジェクト検証 (Lint / Typecheck / Test / Build)
+4. プロジェクト検証（§3.1・§6.1 に記録された検証をすべて実行）
    ↓ 失敗時は原因特定して修正し、再度全検証
 5. 差分確認 (git diff で意図しない変更がないか確認)
    ↓
@@ -55,41 +58,22 @@
 ## 3. テスト・品質保証ルール
 
 ### 3.1 検証コマンドの実行
-- `package.json` に定義されたスクリプトのみを使用する（存在しないコマンドを捏造・実行しない）。
-- 原則として commit 前に、プロジェクトで定義された検証をすべて pass させる。本テンプレートでは以下の 8 必須 + 2 任意(non-blocking) + infra 3種 + pre-commit:
-  ```bash
-  # 必須 8 gates（blocking, CIでも必須）
-  pnpm typecheck          # 型チェック (tsc --noEmit, TypeScript 6.0.3)
-  pnpm lint               # Lint / Format (Biome 2.5.14, zero-alloc/memory-leak lint含む)
-  pnpm check:determinism  # 決定論・禁止API検出 (Math.random/Date.now等が純粋層に混入していないか)
-  pnpm cspell             # スペルチェック (cspell 10.3.4)
-  pnpm knip               # 未使用コード検出 (knip 6.38.0, KNIP_DISABLE_RAW_TRANSFER=1)
-  pnpm test:unit          # 単体テスト (Vitest 5.0.2)
-  pnpm test:coverage      # カバレッジ (threshold 100%)
-  pnpm build              # 本番ビルド
+- プロジェクトで**定義された検証手段のみ**を使用する（存在しないコマンドを捏造・実行しない）。
+- 検証手段は **§6.1「検証コマンド」** に記録する。未記録の場合は、推測で実行せず先にユーザーへ確認する。
+- commit 前に、記録済みの検証をすべて pass させる。
+- 検証の例（分野ごとに読み替える）:
 
-  # 任意 2 gates（non-blocking, warningのみ, CIでもnon-blocking）
-  pnpm publint            # パッケージ公開検証
-  pnpm size-limit         # バンドルサイズ (10kB)
+  | 分野 | 検証の例 |
+  | :--- | :--- |
+  | ソフトウェア（TS/Python/Go/Rust 等） | 型チェック → Lint/Format → 単体テスト → ビルド |
+  | Web アプリ | 上記 + E2E テスト、ブラウザでの表示確認 |
+  | ドキュメント / 文章 | リンク切れチェック、表記ゆれ・誤字チェック、目次の整合性 |
+  | データ / 分析 | スキーマ検証、再現実行（同じ入力で同じ出力になるか）、集計値の突き合わせ |
+  | 設定・インフラ | 構文チェック、dry-run / plan による差分確認 |
 
-  # infra 3 tasks（check.ts内でのみ実行, 必須ではないが常にpass期待）
-  pnpm install            # 依存インストール（check.ts先頭で先行実行）
-  pnpm e2e:list           # E2E discovery (browser未インストール時はfallback)
-  pnpm security:check     # セキュリティ統合チェック（secret/dependency check）
-
-  # pre-commit (husky + lint-staged): commit時にstagedファイルのみ自動で lint + cspell(all) + typecheck
-  ```
-  ※ 実際のスクリプト名はプロジェクトの `package.json` を確認すること
-  （`pnpm lint` が linter 直接呼び出しの別名だったり、`pnpm test` が watch モードだったりする）。
-  ※ 一括実行は `pnpm check`（install先行→残り並列、publint/size-limitはnon-blocking, logs/に保存、cod-web最新arena由来）
-- テストの watch モードは commit 前検証に使わない。必ず run 相当のスクリプトを使う。
-- E2E テストは実行環境によってはローカルで実行できないことがある（§6 の制約を確認）。
-  実行できない場合は CI 上のみ実行し、ローカルで無理に実行しようとしない。
-- ビルドログに環境起因の既知エラー（外部 API への接続失敗等）が出ても、exit code が
-  0 であれば成功扱いで問題ない（既知事象は §6 に追記して引き継ぐ）。
-- **テストファイル命名規則（公式ルール）**: テストファイルは `_tests_/` ディレクトリに同じディレクトリ構造で配置し、命名は `<name>.test.ts` 形式に統一する（例: `src/index.ts` → `_tests_/src/index.test.ts`, `scripts/lib/cache.ts` → `_tests_/scripts/cache.test.ts`）。`test-*.ts` 等の旧形式は禁止。詳細は `.agent/rules/04_verification.md` §5 を参照
-- **pre-commit**: husky 9.1.7 + lint-staged 17.6.0 により、commit時にstagedファイルのみ `biome check --write` + `biome lint` + `cspell` が自動実行される。`--no-verify` でスキップ可能だが、原則使わない
-- **commit-msg**: husky + commitlint 21.2.3 により、Conventional Commits形式（feat, fix, docs等）が強制される。不正なメッセージはcommit失敗。`pnpm commit` (commitizen) で対話的に作成可能
+- テストの watch モードは commit 前検証に使わない。必ず一回実行（run 相当）のコマンドを使う。
+- 外部ネットワーク・外部 API・GUI 等に依存する検証が環境上実行できない場合は、無理に回避せず、実行できなかった事実と理由を報告する（§6.2 参照）。
+- ビルドや検証ログに環境起因の既知エラーが出ても、exit code が 0 であれば成功扱いで問題ない（既知事象は §6 に追記して引き継ぐ）。
 
 ### 3.2 エラー対応と品質維持
 - エラー発生時はエラーメッセージやスタックトレースから根本原因を特定し、最小限の範囲で修正する。
@@ -132,17 +116,15 @@ git fetch origin <現在のブランチ>
 # 2. FETCH_HEAD にワークツリーごとリセット（この場合の --hard は例外的に必要）
 git reset --hard FETCH_HEAD
 
-# 3. 依存を再構築（復旧スクリプトがある場合はそれを使う。例: .agent/hooks/restore-env.sh）
-corepack enable pnpm >/dev/null 2>&1
-pnpm install --frozen-lockfile
+# 3. 環境を再構築（§6.1 に記録された手順に従う。依存のインストールなど）
 ```
 
 - `git reset --hard FETCH_HEAD` は §4.3 の厳禁ルールの例外で、**サンドボックス再構築後の初回のみ**許可される（未コミット変更は元々存在しない状態のため）。
-- 再構築を判定するヒント：`git log --oneline` が起点コミット 1 個しか返ってこない / `git status` が大量の削除を示す / node_modules がない。
-- 復旧後は必ず `git log --oneline -5` とテスト（`pnpm test:unit` 等）で健全性を確認してから作業を再開する。
+- 再構築を判定するヒント：`git log --oneline` が起点コミット 1 個しか返ってこない / `git status` が大量の削除を示す / 依存の展開先や生成物（§6.1 で記録したもの）がない。
+- 復旧後は必ず `git log --oneline -5` と §6.1 の検証コマンドで健全性を確認してから作業を再開する。
 
 ### 4.2 コミットルール
-- **タイミング**: 検証（Lint/Type/Test/Build）がすべてPASSした状態でのみコミットする。
+- **タイミング**: §6.1 の検証がすべてPASSした状態でのみコミットする。
 - **事前チェック**: `git status` および `git diff` を確認し、意図しないファイルが含まれていないことを確認する。
 - **重要な変更前のチェックポイント**: 大規模リファクタリング、スキーマ変更、依存関係更新の前には、作業前の正常状態を一度コミット（checkpoint）しておく。
 - **コミットメッセージ**: Conventional Commits 形式に従う。
@@ -179,7 +161,7 @@ pnpm install --frozen-lockfile
 以下の条件が**すべて満たされた時点で作業を完了とし、停止（回答）**する。追加の改善を勝手に開始してはならない。
 
 - [ ] 指定された機能/修正が実装されている
-- [ ] すべての検証（Lint, Typecheck, Test, Build）がPASSしている
+- [ ] §6.1 に記録されたすべての検証がPASSしている
 - [ ] タスクと無関係なファイルの変更・意図しない差分がない
 - [ ] 適切なメッセージで Git Commit が完了している
 - [ ] Working tree が clean である（`git status` で確認）
@@ -193,8 +175,18 @@ pnpm install --frozen-lockfile
 > 集約する場所。計画書と矛盾する指定があった場合は計画書を優先するが、
 > それ以外は本節を厳守する。不要なサブセクションは削除してよい。
 
-### 6.1 環境・ツールチェーン
-- （例）Node.js LTS / パッケージマネージャ / フレームワーク・主要ライブラリのバージョン方針
+### 6.1 環境・ツールチェーン・検証コマンド
+- （例）使用言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
+- **検証の正本**: `make check`（pre-commit の全フック + `Makefile` の `PROJECT_CHECKS`）。文書の内部リンクだけを見る場合は `make links`。CI（`.github/workflows/ci.yml`）も同じ `make check` を呼ぶ。
+- **検証コマンド**（§3.1 の正本。プロジェクトに合わせて記入）:
+  ```bash
+  # 例:
+  # <型チェック>    # 例: tsc --noEmit / mypy
+  # <Lint>          # 例: biome check / ruff check
+  # <テスト>        # 例: vitest run / pytest
+  # <ビルド>        # 例: npm run build / make
+  ```
+- 環境の初期セットアップ手順（例: 依存のインストール）
 
 ### 6.2 サンドボックス制約（乗り越えず、迂回する）
 - （例）外部 API に到達不可 / ブラウザバイナリの install 不可 等。修正対象ではない恒常的制約とその対処を書く。
@@ -202,32 +194,23 @@ pnpm install --frozen-lockfile
 ### 6.3 リポジトリ固有の Git 制約
 - （例）特定ディレクトリへの書き込み不可・不変ディレクトリの存在など
 
-### 6.4 フレームワーク実装ルール
-- （例）Hooks の呼び出し順序・Server/Client 境界・状態管理の方針など
+### 6.4 実装ルール
+- （例）採用する設計方針・命名規則・依存の方向、過去に踏んだ地雷と回避策など
 
-### 6.5 Lint 特有ルール
-- （例）ignore コメントの置き場所・自動生成ファイルの除外設定など
+### 6.5 Lint・フォーマット特有ルール
+- （例）ignore コメントの置き場所・自動生成ファイルの除外設定、文書の校正ルールなど
 
-### 6.6 UI 実装ルール
-- （例）ブレークポイント分離・z-index 序列・アニメーション方針など
+### 6.6 成果物・表現ルール
+- （例）出力形式・用語集・表記ゆれの統一方針、図表の規格、データの単位など
 
-### 6.7 ドキュメント運用（活発リポジトリ準拠 — cod-web arena/01a0b161-cod-web復旧）
-
-- テンプレート同梱のドキュメント規約を既定とする:
-  - 構成・命名規則・運用ルール: `docs/README.md`
-  - タスク進捗管理: `docs/task-list.md`（**唯一の正本**。状態定義・証拠記録のルールは同ファイル冒頭）— cod-web arena準拠
-  - 仕様書: `docs/arch/`（どう作るか）— product, architecture, tech-stack, bootstrap, detector, cache, termux, adr
-  - 計画書: `docs/planning/`（_TEMPLATE.md形式）— 計画書索引は README.md、完了済みは complete/
-  - 調査: `docs/research/`（競合・技術調査）— cod-web arena準拠で復旧
-  - 監査: `docs/audit/`（差分・バグ）— DropMod準拠で復旧
-  - 完了済み計画: `docs/planning/complete/`（cod-web準拠）
-  - 運用: `docs/ops/`（デプロイ・CI）
-  - 設定例: `docs/examples/`（Vite/Next）— 現在の機能
+### 6.7 ドキュメント運用
+- 構成・命名規則・運用ルール: `docs/README.md`（全ドキュメントの目次）
+- タスク進捗管理: `docs/task-list.md`（**唯一の正本**。状態定義・証拠記録のルールは同ファイル冒頭）
+- 仕様書: `docs/arch/`（どう作るか / 何を作るか）
+- 計画書: `docs/planning/`（`_TEMPLATE.md` 形式）
+- 調査: `docs/research/` / 監査: `docs/audit/` / 運用: `docs/ops/`
 - ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する
-- ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK、`yaml-utils-top-level.test.ts` NG）— 長過ぎると意味がない
-- 重要なのは現在の機能（Node 24 LTS + pnpm 12.6.0 + TS 6, Vite/Next/Monorepo/Turbo自動検出, Termux 9判定, キャッシュhash-skip, 12品質ゲート, coverage 100%, Bootstrap CLI 7プリセット, GitHub templates full, DX tools all）+ 活発リポジトリの構成（arch, audit, planning, research）
-- 参考: cod-web arena/01a0b161-cod-web（2026-09-26活発）— docs/: README, task-list.md, arch/ (15 files), planning/ (with complete/), ops/, research/ (DR-1..5)
-- プロジェクトに不要なディレクトリ（`audit/` 等）は削除してよいが、本テンプレートでは活発リポジトリ準拠で全て保持
+- ファイル名は短く正確、ハイフン最大1つ
 
 ---
 
@@ -253,10 +236,10 @@ pnpm install --frozen-lockfile
 3. **ファイル変更数**: `新規/変更ファイル (N files, +X / -Y)`
 4. **検証結果チェックリスト**:
    ```text
-   - ✅ pnpm typecheck: 0 error
-   - ✅ pnpm lint: 0 error (N files)
-   - ✅ pnpm test:unit: X passed / Y files
-   - ✅ pnpm build: Compiled successfully
+   - ✅ <型チェック>: 0 error
+   - ✅ <Lint>: 0 error (N files)
+   - ✅ <テスト>: X passed / Y files
+   - ✅ <ビルド>: 成功
    - ✅ push 済み (`prev..head`)
    ```
    ※ スクリプト名・検証項目はプロジェクトの実情に合わせる。
@@ -349,58 +332,64 @@ pnpm install --frozen-lockfile
 
 > **構成はClaude Code公式の `.claude/` ディレクトリ構成に準拠**。ディレクトリ名は `.agent/` のまま維持する。
 > 公式仕様: https://code.claude.com/docs/en/claude-directory.md
-> 調査時点の最新仕様（2026-09-26確認）を正とする。
+> 公式の最新仕様を正とする。
 
 ### 8.1 ディレクトリ構成（公式準拠 + テンプレート拡張）
 
+
 ```
-.agent/
-├── settings.json              # チーム共有設定（permissions, hooks, env, model）— コミット対象
+.agent/   （Claude Code からは .claude/ として読まれる。.claude → .agent の symlink）
+├── settings.json              # チーム共有設定（permissions, hooks, env）— コミット対象
 ├── settings.local.json        # 個人オーバーライド（gitignore）— 個人のみ
-├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）— 公式準拠
+├── THIRD_PARTY_NOTICES.md     # 取り込んだ上流 OSS のライセンス表示
+├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）
+│   ├── index.md               # 入口（一覧・発火条件）
 │   ├── 01_information-hierarchy.md
 │   ├── 02_git-workflow.md
 │   ├── 03_doc-style.md
 │   ├── 04_verification.md
+│   ├── common/                # ECC 由来の共通規約（10 件、paths でコード系のみ絞るものあり）
 │   └── project-template.md
-├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 公式準拠
-│   ├── project-overview/      # 製品概要・構成把握
-│   ├── tech-stack/            # 技術スタック・ハマりどころ
-│   ├── sandbox-constraints/   # Sandbox制約・迂回策
-│   ├── verify-doc-integrity/  # ドキュメント整合性検証
-│   ├── diff-review-report/    # 差分レビューレポート
-│   ├── docs-maintenance/      # ドキュメント整理・URL検証（cod-web最新arena由来）
-│   ├── ci-quality-gates/      # CI品質ゲート・workflow正本管理（cod-web最新arena由来）
-│   ├── testing/               # 意味あるテスト・coverage 100%・mock戦略（cod-web最新arena由来）
-│   ├── import-boundaries/     # レイヤー境界・import制限（cod-web最新arena由来）
-│   ├── determinism/           # 決定論・禁止API検出（cod-web deterministic-sim由来）
-│   ├── e2e/                   # Playwright E2E・webServer配列（cod-web最新arena由来）
-│   ├── memory-leak/           # メモリリーク防止・leave時clear（cod-web最新arena由来）
-│   └── zero-alloc/            # ゼロアロケーション・GC削減（cod-web最新arena由来）
-├── agents/                    # サブエージェント定義（name, description, tools, model等）— 公式準拠
-│   ├── explore.md
-│   ├── plan.md
-│   ├── doc-editor.md
+├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 48 件
+│   ├── index.md               # 入口（読み方ガイド・一覧）
+│   ├── 自作: project-overview / tech-stack / sandbox-constraints / verify-doc-integrity / docs-maintenance
+│   ├── 自作(分野非依存): testing / ci-quality-gates / e2e / import-boundaries / determinism / memory-leak / zero-alloc
+│   ├── superpowers（MIT）由来: brainstorming / writing-plans / executing-plans / subagent-driven-development / test-driven-development / systematic-debugging / verification-before-completion / requesting-code-review / receiving-code-review / using-git-worktrees / finishing-a-development-branch / dispatching-parallel-agents / writing-skills / using-superpowers
+│   ├── ECC: verification-loop / search-first / documentation-lookup / deep-research / council / architecture-decision-records / article-writing
+│   ├── mattpocock/skills: grill-me / grilling / handoff / teach / writing-for-agents / to-questionnaire / prototype / research / retro / codebase-design / diagnosing-bugs / improve-codebase-architecture / domain-modeling
+│   └── anthropics/skills (Apache-2.0): skill-creator / discernment-nudge
+├── agents/                    # サブエージェント定義（name, description, tools, model等）
+│   ├── planner.md
+│   ├── architect.md
+│   ├── code-explorer.md
+│   ├── docs-lookup.md
 │   ├── code-reviewer.md
+│   ├── doc-editor.md
 │   └── test-writer.md
-├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh) — テンプレート拡張 + 公式hooks登録
-│   ├── index.md
-│   ├── pre-task.md
-│   ├── verify-commit.md
-│   ├── log-task.md
+├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh)
+│   ├── index.md               # 索引
+│   ├── pre-task.md            # タスク開始時
+│   ├── verify-commit.md       # commit直前
+│   ├── log-task.md            # タスク完了時
 │   ├── sandbox-recovery.md
-│   ├── restore-env.sh
-│   ├── pre_edit_guard.sh      # PreToolUse: 編集禁止領域ブロック（PalmIDE由来）
-│   └── post_edit_verify.sh    # PostToolUse: 事後検証（PalmIDE由来）
-├── commands/                  # 旧commands互換（新しくはskills/を使う）— 公式互換
+│   ├── session-start.sh       # SessionStart: 作業状態の注入
+│   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
+│   ├── pre_edit_guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
+│   └── post_edit_verify.sh    # PostToolUse: 事後検証
+├── commands/                  # スラッシュコマンド（/name で呼び出し）
 │   ├── commit.md
-│   ├── review.md
-│   └── test.md
-├── output-styles/             # 出力スタイル（concise, detailed等）— 公式準拠
-├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）— 公式準拠
+│   ├── test.md
+│   ├── code-review.md
+│   ├── checkpoint.md
+│   ├── plan.md
+│   └── update-docs.md
+├── output-styles/             # 出力スタイル（concise, detailed等）
+│   ├── concise.md
+│   └── detailed.md
+├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）
 │   └── implement-task.js
-├── agent-memory/              # サブエージェント永続メモリ（自動生成）— 公式準拠
-└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）— テンプレート独自（PalmIDE由来）
+├── agent-memory/              # サブエージェント永続メモリ（自動生成）
+└── logs/                      # タスク実行ログ（追加のみ、書き換え禁止）
     └── YYYY-MM-DD_<summary>.md
 ```
 
@@ -412,7 +401,7 @@ pnpm install --frozen-lockfile
 | `skills/<name>/` | コードベースの**事実/仕様/暗黙了解**をサブシステム別に格納 | `<kebab-case>/SKILL.md` | 公式準拠 |
 | `agents/` | サブエージェント定義（name, description, tools等） | `kebab-case.md` | 公式準拠 |
 | `hooks/` | トリガー別の**定型手順/スクリプト** + 実行スクリプト | `kebab-case.md` / `.sh` | 公式hooks登録 + テンプレート拡張 |
-| `commands/` | 単一ファイルプロンプト（旧形式、互換性のため） | `kebab-case.md` | 公式互換 |
+| `commands/` | 単一ファイルプロンプト（`/name` で呼び出し） | `kebab-case.md` | 公式準拠 |
 | `output-styles/` | 出力スタイルのカスタマイズ | `kebab-case.md` | 公式準拠 |
 | `workflows/` | 動的ワークフロー（JS） | `kebab-case.js` | 公式準拠 |
 | `agent-memory/` | サブエージェント永続メモリ | `<name>/MEMORY.md` | 公式準拠 |
@@ -424,23 +413,25 @@ pnpm install --frozen-lockfile
 
 | 公式 `.claude/` | 本テンプレート `.agent/` | 備考 |
 |---|---|---|
-| `CLAUDE.md` | `AGENTS.md`（本ファイル） | Claude CodeはAGENTS.mdも読める。CLAUDE.mdがあれば併用も可 |
+| `CLAUDE.md` | `CLAUDE.md` → `AGENTS.md`（symlink） | 同一内容。Claude Code は CLAUDE.md を読む |
 | `settings.json` | `settings.json` | 同型。permissions, hooks, env, model等 |
 | `settings.local.json` | `settings.local.json` | 同型。gitignore対象 |
 | `rules/*.md` | `rules/*.md` | 同型。pathsフロントマターで発火条件 |
 | `skills/<name>/SKILL.md` | `skills/<name>/SKILL.md` | 同型。name, description必須 |
-| `commands/*.md` | `commands/*.md` | 同型。旧形式だが互換性のため残す |
+| `commands/*.md` | `commands/*.md` | 同型 |
 | `agents/*.md` | `agents/*.md` | 同型。name, description, tools, model等 |
 | `output-styles/*.md` | `output-styles/*.md` | 同型 |
 | `workflows/*.js` | `workflows/*.js` | 同型。agent(), parallel(), phase()プリミティブ |
 | `agent-memory/` | `agent-memory/` | 同型。サブエージェント永続メモリ |
 | — | `hooks/` | テンプレート拡張。手順md + 実行sh + settings.jsonで登録 |
-| — | `logs/` | テンプレート拡張。PalmIDE由来の4セクションログ |
+| — | `logs/` | テンプレート拡張。4セクションの実行ログ |
 
 ### 8.3 `index.md` 起点のピンポイント読込（核心ワークフロー）
-- **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。`settings.json` の `UserPromptSubmit` フックでも自動実行。
-- **編集前**: `settings.json` の `PreToolUse` フックで [`pre_edit_guard.sh`](.agent/hooks/pre_edit_guard.sh) が編集禁止領域をブロック（PalmIDE由来）。
-- **編集後**: `settings.json` の `PostToolUse` フックで [`post_edit_verify.sh`](.agent/hooks/post_edit_verify.sh) が事後検証（PalmIDE由来）。
+- **セッション開始時**: `settings.json` の `SessionStart` フックで [`session-start.sh`](.agent/hooks/session-start.sh) が、正本の所在・ブランチ・直近のコミット・未コミット変更・未完了サマリーをモデルへ注入する。
+- **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。
+- **Bash 実行前**: `settings.json` の `PreToolUse` フックで [`block-dangerous-git.sh`](.agent/hooks/block-dangerous-git.sh) が force push・`reset --hard`・`main` への push 等の破壊的 git 操作をブロックする。
+- **編集前**: `settings.json` の `PreToolUse` フックで [`pre_edit_guard.sh`](.agent/hooks/pre_edit_guard.sh) が編集禁止領域をブロック。
+- **編集後**: `settings.json` の `PostToolUse` フックで [`post_edit_verify.sh`](.agent/hooks/post_edit_verify.sh) が事後検証。
 - **トリガー発生時**: [`.agent/hooks/index.md`](.agent/hooks/index.md) の「対応表」で該当フックを特定し実行。
 - 初回/全体把握が必要な時だけ、`project-overview/SKILL.md` を読む。未作成なら作成を検討する。
 
@@ -465,9 +456,3 @@ pnpm install --frozen-lockfile
     書かれているのは**正しい状態**。書き換えると記録が偽になる。
   - 一括置換の射程は**現用ドキュメント**（`AGENTS.md` / `.agent/skills/` / `.agent/hooks/` / `.agent/rules/` / `.agent/agents/` / 現用の `docs/`）に限定する。`.agent/logs/` 等の時点記録に触れる必要がある場合は、**必ず事前にユーザーへ確認**する。
   - 当時の事実（旧ブランチ名など）を残す必要がある場合は、過去ログを書き換えるのではなく**当日の新規ログに記録**する。
-- **他リポジトリからの良い部分の採用**:
-  - **PalmIDE**: rules/のトピック分割、agents/の定義、skills/のモジュール化、hooks/のPOSIX sh + exit code規約、settings.example.jsonの配線例、verify-doc-integrity / diff-review-reportスキル
-  - **cod-web (main)**: hooks/settings.jsonのイベント登録パターン、skills/<name>/SKILL.mdのfrontmatter形式、scripts/execute.tsの汎用ランナー
-  - **cod-web (arena/01a0b161-cod-web 最新arena)**: 18スキルへの拡張（docs-maintenance, ci-quality-gates, testing, import-boundaries, determinism, e2e, memory-leak, zero-alloc等）、check-all.tsの並列品質ゲート（install先行+abort+hang修正+setsid+summary保存、check.tsに改名）、check-determinism.tsの禁止API検出、quality-gates.ymlの構成（checkout@v6, inputs.job, quality+e2e分離、coverage閾値100%、E2E discovery --list）
-  - **DropMod**: GitHub ActionsのCI構成（static-checks + build + e2e、pnpm/action-setup@v4のバージョン非明示、cache、artifact共有、paths-ignore）、packageManagerのengines整備
-  - **ytdl**: 検証キットのUXルール（?probe=1 / 1 fetch / 外部リトライ / raw URL + 自己チェック）、sandbox-constraintsの詳細化

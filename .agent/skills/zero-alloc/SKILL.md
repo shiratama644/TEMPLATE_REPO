@@ -1,160 +1,71 @@
 ---
 name: zero-alloc
-description: ホットパスでのゼロアロケーションを守る実装スキル。getPlayersIterable、encode once、head indexリング、Map再利用パターン。
+description: 分野を問わず、頻繁に実行されるホットパスで不要な割り当て（新しい配列・文字列・オブジェクトの生成、毎回のコピーや計算）を減らすスキル。計測の進め方、よくある違反パターン、再利用・一度だけの計算・ビューによる修正、効果の確認方法を扱う。
 ---
 
-# Zero-Alloc — ホットパスでGCを出さないスキル
-
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `zero-alloc/SKILL.md` を汎用化
-> 正本: `docs/arch/engineering.md`（ゼロアロケ、あれば）、`docs/arch/server.md`
+# Zero-Alloc — ホットパスで割り当てを減らすスキル
 
 ## 原則
 
-- `doTick` / `frame` / `render` / `step` のようなホットパス（60-120Hz）内で `new`、`[]`/`{}` リテラル、`.slice/.map/.filter`、クロージャ生成、ベクトルの都度オブジェクト返却をしない
-- 送信は `subarray()`（コピーしない）、毎送信 `buffer.slice()` はGCを生むので置換対象
-- GCはフレームドロップの原因。ゼロアロケーションで安定したフレームレートを維持
+- **計測してから直す。** 推測で最適化しない。遅いと測定で示された箇所だけを対象にする。
+- ホットパス（頻繁に実行される処理）に限る。初期化や一度だけの処理まで直す必要はない。
+- 可読性を大きく損なう変更は、効果が測定で確かめられたときだけ行う。
+- 効果が出なければ元に戻す。
 
-## 違反パターンと修正（cod-web EM01実績を汎用化）
+## 違反パターンと修正
 
-| # | 場所 | 違反 | 修正 | 効果 |
-|---|---|---|---|---|
-| B4 | `Room.getPlayers()` | 毎tick `[...players.values()]` 配列確保 | `getPlayersIterable()` 追加、Iterableを返す | `for...of` で回す、GC削減 |
-| B5 | `Broadcaster.maybeSend` | `for(peer)` 内で毎回 `encode` | ループ外1回 encode + per-peer patch | n回 → 1回 |
-| B6 | `Simulation.queues` | `shift()` O(n), `splice(0,excess)` O(n) | `Queue {buf,head}` リング、head index | 60Hz xN人でO(n)解消 |
-| B9 | `interpolation.ts` | `samples.shift()` O(n) | `head` index | 補間履歴数十件だがゼロアロケ観点で改善 |
-| B10 | `lagcomp-store.ts` | `shift()` で古いサンプル削除 | `HistoryBuffer` リング | 最大30件だが違反解消 |
-| B11 | `GameClient.remotes` | 毎フレーム `new Map` | `remotes` Map再利用、`clear()` + `set()`、out Map再利用 | 60-120HzでMap newは予算超過 |
-| B12 | `packer.ts` | `players.map` 毎スナップショット配列確保 | `for` ループで直接書く、map廃止 | Snapshot 30HzでのGC削減 |
-| B13 | `prediction.ts` | `filter` 毎回新配列確保 | in-place削除、head index | 60HzでGC削減 |
+| 違反（ホットパス内） | 修正 |
+| :--- | :--- |
+| ループの中で新しい配列・マップ・集合を作る | 外で一度作り、`clear` して再利用する |
+| 同じ内容を毎回シリアライズ・エンコードする | 変化が無ければ、一度だけ計算して使い回す |
+| 配列の先頭を削除（`shift` 相当）して O(n) になる | 先頭インデックス付きのリングバッファ、または値を読み進める |
+| 部分配列をコピーする（`slice` 相当） | 範囲を指定するビュー（`subarray` 相当）を使う |
+| 全件を配列にして返す（`getAll()` 相当） | イテレータや、コールバックで一件ずつ渡す |
+| 文字列を連結して新しい文字列を作る | バッファに書き込み、最後に一度だけ作る |
+| 小さなオブジェクト（ベクトルなど）を毎回作る | 既存の値を書き換える（変更可能な型を使う場合） |
 
 ## 実装パターン
 
-### getPlayersIterable（配列を作らない）
+### イテレータで配列を作らない
 
-```ts
-// Room.ts
-getPlayersIterable(): Iterable<Player> {
-  return this.players.values(); // 配列を作らない
-}
-getPeersIterable(): Iterable<Peer> {
-  return this.peers.values();
-}
+- 呼び出し側が一件ずつ処理すれば、中間の配列は要らない。
+- 「件数が必要」「二回走査する」など、必要な場合だけ配列にする。
 
-// 使用側
-for (const player of room.getPlayersIterable()) {
-  // hot path、配列確保なし
-}
+### 変化の無いものは一度だけ作る
+
+- 毎フレーム・毎リクエストで同じ結果になるものは、変化したときだけ再計算する。
+
+### 再利用する入れ物
+
+- 毎回 `new Map()` や `[]` を作るのをやめ、一つを持っておいて内容だけ入れ替える。
+
+## 計測
+
+1. 対象の処理を、代表的な入力で繰り返し実行する（ベンチマーク）。
+2. 実行時間と割り当て回数（またはメモリ確保量）を、修正の前後で記録する。
+3. 言語やツールの例: Go は `testing.B` と `-benchmem`、JavaScript は `console.time` や専用のベンチマーク、Python は `timeit` と `tracemalloc`、Java は JMH。
+4. 結果と方法を AGENTS.md §6.1 または docs に残す。
+
+## 監査（grep の例）
+
+```text
+# ホットパスのファイルに、毎回の確保が残っていないか
+grep -rn "new Map\|new Set\|\.map(" src/hot/ | head -n 20
+
+# 先頭削除が残っていないか
+grep -rn "\.shift()" src/hot/
 ```
 
-### Snapshot encode once（ループ外で1回）
+- 監査は候補の一覧にすぎない。ホットパスかどうかは目で確かめる。
 
-```ts
-// snapshot.ts
-const payloadBytes = this.writeSnapshot(world, viewer, writer); // ループ外1回
-for (const peer of room.getPeersIterable()) {
-  // per-peer patch: lastAckSeqのみ書き換え
-  writer.view.setUint32(offset, peer.lastAckSeq, true);
-  peer.sendBinary(writer.subarray()); // コピーなし
-}
-```
+## よくある失敗
 
-### InputQueue head indexリング（shift()のO(n)を解消）
-
-```ts
-class InputQueue {
-  buf: DecodedInput[] = new Array(32);
-  head = 0;
-  tail = 0;
-  len = 0;
-  push(input: DecodedInput) {
-    if (this.len >= 32) { this.head = (this.head+1)%32; this.len--; } // overflowは破棄
-    this.buf[this.tail] = input;
-    this.tail = (this.tail+1)%32;
-    this.len++;
-  }
-  shift(): DecodedInput | undefined {
-    if (this.len===0) return undefined;
-    const v = this.buf[this.head];
-    this.head = (this.head+1)%32;
-    this.len--;
-    return v;
-  }
-}
-```
-
-### GameClient remotes再利用（毎フレームnew Mapしない）
-
-```ts
-// interpolation.ts が out Mapを受け取る形
-sample(out: Map<number, Pose>, now: number, renderDelay: number): void {
-  out.clear();
-  // ... fill
-}
-
-// GameClient
-private remotes = new Map<number, Pose>();
-frame() {
-  this.interpolator.sample(this.remotes, now, renderDelay); // new Mapしない
-}
-```
-
-### ベクトル再利用
-
-```ts
-// ❌ 毎フレーム new Vector3
-function update() {
-  const pos = new Vector3(x, y, z); // GC
-}
-
-// ✅ 再利用
-private pos = new Vector3();
-function update() {
-  this.pos.set(x, y, z); // 既存オブジェクトを再利用
-}
-```
-
-## 監査コマンド
-
-```bash
-# getPlayers() が残っていないか（getPlayersIterableに置換済みか）
-grep -R "getPlayers()" src --include="*.ts" | grep -v "getPlayersIterable\|getPeersIterable"
-
-# shift() がホットパスに残っていないか
-grep -R "\.shift()" src --include="*.ts" | grep -v test | grep -v ".d.ts"
-
-# slice がコピーになっていないか（subarrayを使うべき）
-grep -R "\.slice(" src --include="*.ts" | grep -v "subarray\|test\|spec"
-
-# new Map/Set/map がホットパスにないか
-grep -R "new Map\|new Set\|\.map(" src/game/net --include="*.ts" | head -n 20
-
-# new の頻度を計測（簡易）
-grep -R "new " src/engine --include="*.ts" | wc -l
-```
-
-- cod-web EM01後は hot pathで `getPlayers()` 0件、`shift()` 0件、`slice` は互換1件のみ（hot path外）
-
-## パフォーマンス測定
-
-```ts
-// 簡易GC測定
-let gcCount = 0;
-if (global.gc) {
-  global.gc();
-  const before = process.memoryUsage().heapUsed;
-  for (let i = 0; i < 1000; i++) {
-    doTick(); // 測定対象
-  }
-  global.gc();
-  const after = process.memoryUsage().heapUsed;
-  console.log(`heap diff: ${(after - before) / 1024} KB`);
-}
-```
+- ホットパス以外まで直して、コードが読みにくくなる。
+- 再利用した入れ物を、呼び出し側が保持して後で壊れる（所有権と寿命を決める）。
+- 計測せずに「速くなったはず」で終える。
+- 最適化の前後で結果が変わるのに、テストが無い。
 
 ## 関連
 
-- `docs/arch/engineering.md` ゼロアロケ（あれば）
-- `docs/arch/server.md` Room（あれば）
-- `.agent/skills/memory-leak/SKILL.md` メモリリーク防止スキル
-- `.agent/skills/determinism/SKILL.md` 決定論スキル（ホットパスの純粋性と関連）
-- cod-web `arena/01a0b161-cod-web` の `zero-alloc/SKILL.md`（元出典）
+- [`memory-leak`](../memory-leak/SKILL.md): 解放漏れ（割り当てと対になる問題）
+- [`testing`](../testing/SKILL.md): 最適化の前後で結果が同じことを確かめる

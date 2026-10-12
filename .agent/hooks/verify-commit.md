@@ -7,19 +7,19 @@
 ## 検証（順に実行、1 つでも失敗したら原因特定→修正→再全検証）
 
 ```bash
-pnpm typecheck   # 型チェック
-pnpm lint        # Lint / Format
-pnpm test:unit   # 単体テスト
-pnpm build       # 本番ビルド
+<型チェック>   # 型チェック
+<Lint>        # Lint / Format
+<単体テスト>   # 単体テスト
+<ビルド>       # 本番ビルド
 ```
 
-※ スクリプト名はプロジェクトの `package.json` に合わせる（AGENTS.md §3.1）。
+※ コマンドは AGENTS.md §6.1 の記録に合わせる（§3.1）。
 
 ### 各コマンドの注意
 
-- **typecheck**: プロジェクトが複数 tsconfig を持つ場合はすべて対象にすること。
+- **typecheck**: 型検査の設定が複数ある場合（例: 複数の tsconfig、複数のパッケージ）はすべて対象にすること。
 - **lint**: `0 error / 0 warning` まで。ignore コメントの置き場所・自動生成ファイルの除外は AGENTS.md §6.5 のルールに従う。
-- **test:unit**: watch モード（`pnpm test` 等）**ではない**。必ず run 相当のスクリプトを使う。
+- **test:unit**: watch モード（`--watch` 付きの実行等）**ではない**。必ず run 相当のコマンドを使う。
 - **build**: 環境起因の既知エラー（外部 API への接続失敗等）は AGENTS.md §6.2 の「サンドボックス制約」に従う。**exit code 0 なら成功**。
 
 ## 追加確認（commit 前）

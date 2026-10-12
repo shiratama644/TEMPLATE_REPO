@@ -5,19 +5,18 @@ description: ドキュメント整理とURL検証のスキル。proposal yml削�
 
 # Docs Maintenance — ドキュメント整理とURL検証スキル
 
-> 出典: cod-web `arena/01a0b161-cod-web` 最新arenaブランチの `docs-maintenance/SKILL.md` を汎用化
 > 正本: `AGENTS.md`（読込順序・5点出力・docs-only代替）、`docs/README.md` 索引、`.agent/logs/` 参照
 
 ## 読込順序（AGENTS.md最優先）
 
 1. `AGENTS.md` → 2. `.agent/` recursively → 3. `README.md` → 4. `docs/` recursively 全文、部分読み禁止
 2. `docs/README.md` 索引に無いファイルは孤児・混入・残骸を疑う（例: 旧 `docs/ARCH.md`, `ROADMAP.md`, `TECH_SELECTION.md` 等はPRで混入しやすい）
-3. 正本は `docs/`（仕様: arch/, planning/, research/, ops/, examples/ + 進捗: task-list.md + 監査: audit/ + 完了: complete/） + `.agent/`（Agent設定） — cod-web arena/01a0b161-cod-web準拠で復旧（2026-09-27調査、arch/audit/planning/researchは必要）
+3. 正本は `docs/`（仕様: arch/ + 計画: planning/ + 調査: research/ + 運用: ops/ + 進捗: task-list.md + 監査: audit/）と `.agent/`（Agent設定）
 
-## Proposal yml削除ルール（cod-web 2026-09-22確立を汎用化）
+## 提案ファイルの後始末ルール
 
-- `docs/ops/github-actions-proposal.yml` のような提案用ymlは一時的に作っても、採用後は `.github/workflows/*.yml` が唯一の正本
-- 採用後は提案ymlを削除し、docs内の参照を全て `.github/workflows/` へ書き換える
+- 「提案」として作った一時ファイル（例: `docs/ops/*-proposal.md`）は、採用後に正本の場所へ移し、提案ファイルは削除する
+- 採用後は docs 内の参照を正本の場所へ書き換える
 
 ```bash
 ls docs/ops/  # README.md + quality-gates.md 等のみであることを確認
@@ -46,17 +45,15 @@ for md in pathlib.Path('docs').rglob('*.md'):
 ```
 
 - 階層変更時（例: `docs/` → `docs/arch/`）は `../` / `../../` がずれる。`git mv` + 中身修正を同時に行うと解決先を深くする必要がある
-- 自動リンクチェッカーで回すのが速い（cod-web DOC-4実績）
+- 自動リンクチェッカーで回すのが速い
 
 ## 外部URL検証ルール
 
 | カテゴリ | 正本URL例 | ミラー・旧URL | 対応 |
 |---|---|---|---|
 | Biome import制限 | https://biomejs.dev/linter/rules/no-restricted-imports/ | `.../javascript/` redirect OK | 公式pathを使う |
-| Playwright | https://playwright.dev/docs/ | dzone / w3cub mirror | 公式に置換 |
-| Vitest coverage | https://vitest.dev/config/coverage | https://v2.vitest.dev/... 404 | 公式に置換 |
-| pnpm | https://pnpm.io/ | - | 公式 |
-| setup-pnpm | https://github.com/pnpm/action-setup | - | 公式 |
+| pre-commit | https://pre-commit.com/ | - | 公式 |
+| gitleaks | https://github.com/gitleaks/gitleaks | - | 公式 |
 | GitHub workflow syntax | https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax | - | 公式 |
 | Claude Code | https://code.claude.com/docs/en/ | - | 公式 |
 
@@ -64,11 +61,11 @@ for md in pathlib.Path('docs').rglob('*.md'):
 
 ```bash
 # fetch_pageで200確認、anchorまで含めて取得できるか確認
-# 例: https://playwright.dev/docs/mock#mock-websockets はanchor付きで取得可能
+# 例: https://biomejs.dev/linter/rules/no-restricted-imports/ のように anchor 付きの URL も取得できるか確認する
 ```
 
 - Mirrors `aidoczh/w3cub` は機能するが非公式、primary usageからは排除、参考リンク程度に留める
-- Truncated URL grep artifact `https://ago`, `https://bu` は bracket cutによる誤検出、better extractionで修正
+- 途中で切れた URL（例: 末尾が欠けた `https://` のみの文字列）は grep の切り出しによる誤検出。抽出方法を直して再検査する
 
 ## docs更新時の5点出力（AGENTS.md準拠）
 
@@ -80,17 +77,16 @@ for md in pathlib.Path('docs').rglob('*.md'):
 
 ## 運用ルール
 
-- `docs/README.md` を索引として維持、新規ドキュメント追加時は必ず索引にも追記（arch/, planning/, research/, audit/, ops/, examples/, task-list.md）
-- 設計の正本は `docs/arch/`（どう作るか）、進捗の正本は `docs/task-list.md`、計画は `docs/planning/`、調査は `docs/research/`、監査は `docs/audit/`、運用は `docs/ops/`、設定例は `docs/examples/` — cod-web arena準拠で復旧（2026-09-27調査、arch/audit/planning/researchは必要）
+- `docs/README.md` を索引として維持、新規ドキュメント追加時は必ず索引にも追記（arch/, planning/, research/, audit/, ops/, task-list.md）
+- 設計の正本は `docs/arch/`（どう作るか）、進捗の正本は `docs/task-list.md`、計画は `docs/planning/`、調査は `docs/research/`、監査は `docs/audit/`、運用は `docs/ops/`
 - 実装テクニックは `.agent/skills/`、作業規約は `AGENTS.md` / `.agent/rules/` を正とする
 - 旧名称が残っていないか `grep -R "旧名称" docs/ --include="*.md"` で確認
 - ファイル名は短く正確、ハイフン最大1つ
 
 ## 関連
 
-- `docs/README.md` 索引（arch/ + planning/ + research/ + audit/ + ops/ + examples/ + task-list.md）— cod-web arena準拠で復旧
+- `docs/README.md` 索引（arch/ + planning/ + research/ + audit/ + ops/ + task-list.md）
 - `docs/task-list.md` 進捗正本
 - `docs/arch/README.md` 仕様書一覧
 - `AGENTS.md` 読込順序・5点出力
 - `.agent/skills/verify-doc-integrity/SKILL.md` 機械検証スキル
-- cod-web `arena/01a0b161-cod-web` の `docs-maintenance/SKILL.md`（元出典）

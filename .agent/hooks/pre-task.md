@@ -1,6 +1,6 @@
 # Hook: Pre-Task（タスク開始時）
 
-> **トリガー**: ユーザーから指示を受け、作業を開始する直前。`settings.json` の `UserPromptSubmit` でも自動実行。
+> **トリガー**: ユーザーから指示を受け、作業を開始する直前。`settings.json` の `SessionStart` フック（`session-start.sh`）でも状態が自動注入される。
 > **目的**: 現状を把握し、必要な知識だけを読み込み、スコープ違い/履歴破壊を防ぐ。
 
 ## 手順

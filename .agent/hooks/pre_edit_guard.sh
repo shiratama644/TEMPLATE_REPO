@@ -1,9 +1,8 @@
 #!/bin/sh
 # pre_edit_guard.sh — 編集禁止領域への変更をブロックする PreToolUse フック
-# TEMPLATE_REPO用に一般化。PalmIDEの設計をベースに、テンプレートとして再利用可能な形に調整。
 #
 # ブロック対象:
-#   .git/ 以下、node_modules/ 以下、dist/ 以下、.next/ 以下、coverage/ 以下
+#   .git/ 以下、および生成物ディレクトリ（node_modules/, dist/, build/, coverage/, target/, out/, .venv/, __pycache__/）
 #   .agent/logs/ の既存ファイルの直接編集（追加は log-task.md 経由）
 #
 # 終了コード:
@@ -48,10 +47,13 @@ is_protected() {
     .git/*|.git) return 0 ;;
     node_modules/*|node_modules) return 0 ;;
     dist/*|dist) return 0 ;;
-    .next/*|.next) return 0 ;;
+    build/*|build) return 0 ;;
+    target/*|target) return 0 ;;
+    out/*|out) return 0 ;;
+    .venv/*|.venv) return 0 ;;
+    __pycache__/*|__pycache__) return 0 ;;
     coverage/*|coverage) return 0 ;;
-    .turbo/*|.turbo) return 0 ;;
-    *.tgz|*.zip) 
+    *.tgz|*.zip)
       # 一時ファイルの直接編集はブロック
       case "$1" in
         uploads/*) return 1 ;;
@@ -65,7 +67,7 @@ is_protected() {
 if is_protected "$TARGET"; then
   {
     echo "⛔ [pre_edit_guard] 編集禁止領域です: $TARGET"
-    echo "   .git/, node_modules/, dist/, .next/, coverage/ への直接編集は禁止されています。"
+    echo "   .git/ と生成物ディレクトリ（node_modules/, dist/, build/, coverage/ など）への直接編集は禁止されています。"
     echo "   必要な場合はタスク完了後にビルド成果物として生成してください。"
   } >&2
   exit 2

@@ -1,58 +1,35 @@
-name: Release (Changesets)
+# リリース（分野を問わない汎用セット）
+# バージョンタグ（例: v1.2.3）を push すると、検証を通したうえで GitHub Release を作成する。
+# デプロイなど分野固有の手順は、「分野固有の公開手順」の位置に追加する（AGENTS.md §6.1 に記録）。
+name: Release
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags:
+      - "v*.*.*"
 
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
+permissions:
+  contents: write
 
 jobs:
   release:
-    name: Changesets Release
+    name: 検証 → GitHub Release
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: github.repository == 'shiratama644/TEMPLATE_REPO'
-    permissions:
-      contents: write
-      pull-requests: write
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
         with:
-          run_install: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: pnpm changeset:version
-          publish: pnpm changeset:publish
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
+          node-version: lts/*
+      - name: 検証を実行
+        run: |
+          python -m pip install --upgrade pre-commit
+          make check
+      # 分野固有の公開手順（パッケージ公開・デプロイなど）はここに追加する
+      - name: GitHub Release を作成
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Upload changelog artifact
-        if: steps.changesets.outputs.hasChangesets == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: changelog
-          path: |
-            CHANGELOG.md
-            .changeset/*.md
-          retention-days: 7
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes

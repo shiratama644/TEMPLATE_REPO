@@ -1,3 +1,4 @@
+# エディタ間で揃える基本の書式（分野を問わない）
 root = true
 
 [*]
@@ -7,21 +8,11 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
-max_line_length = 100
 
+# Markdown は行末の空白が改行を表すことがあるため、削除しない
 [*.md]
 trim_trailing_whitespace = false
-max_line_length = off
 
-[*.{ts,tsx,js,jsx,json,jsonc}]
-indent_size = 2
-
-[*.{sh,bash}]
-indent_size = 2
-end_of_line = lf
-
+# Makefile はタブ必須
 [Makefile]
 indent_style = tab
-
-[*.{yml,yaml}]
-indent_size = 2

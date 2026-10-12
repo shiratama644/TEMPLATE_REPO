@@ -5,7 +5,7 @@ description: ドキュメントの整合性（リンク実在・目次更新・�
 
 # Skill: ドキュメント整合性の機械検証
 
-PalmIDEの `verify-doc-integrity` をベースに、テンプレートリポジトリ用に一般化した機械検証手順。
+ドキュメントの整合性を機械的に検証する手順。
 
 ## いつ使うか
 
@@ -54,14 +54,6 @@ git diff --stat
 # 狙いではないファイルが変更されていないか目視
 ```
 
-### Step 5. package.json 整合性
-
-```bash
-# packageManager フィールドが pnpm@x.y.z 形式か
-node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).packageManager"
-# 期待: pnpm@12.6.0 のような形式
-```
-
 ## 完了報告のフォーマット
 
 ```
@@ -69,7 +61,7 @@ node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).packageMa
 - (B) リンク: OK (BROKEN 0件)
 - (C) 目次: OK / 要更新
 - (D) 変更狙い: 意図した N ファイルのみ
-- (E) packageManager: pnpm@12.6.0
+- (E) 目次・索引の件数一致: OK
 ```
 
 どれか1つでもNGが出たら「完了」宣言はしない。先に直す。
