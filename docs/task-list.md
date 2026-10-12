@@ -35,11 +35,15 @@
 > タスクはテーマ（フェーズ・機能・運用）ごとに `###` 見出しで区切り、
 > 下記テーブル形式で管理する。行は**追加のみ**（完了しても行は残し状態を更新する）。
 
-### <テーマ名> (<計画日> 計画)
+### テンプレート運用 (2026-10-12 計画)
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| 例 | タスク内容 | 未着手 | 0% | 依存 ID | 第三者が Yes/No 判定できる条件 | コミット SHA / テスト件数 / 実測値 |
+| PROJECTINIT-1 | 新規プロジェクトの初期設定スキルを追加する | 完了 | 100% | — | `project-init` スキルがあり、読み方ガイド・一覧から辿れ、質問→計画承認→書き換えの手順が書かれている。`make links` が PASS | `31b4d21`。`make links` PASS（139 files）。スキル 49 件 |
+| SKILLALIGN-1 | スキルをこの環境の function call 名に揃え、DOT を Mermaid 化し、同義ファイルを統合する | 完了 | 100% | PROJECTINIT-1 | スキル本文が web_search / fetch_page / ask_user 等を使い、DOT が Mermaid になり、同義スキルが統合されている。`make links` PASS | `make links` PASS（123 files）。スキル 44 件 |
+| INITFLOW-1 | project-init にユーザー提案の事実確認ループ（web_search depth 可変 + fetch_page）と ask_user ループを入れる | 完了 | 100% | SKILLALIGN-1 | スキルに両ループと Mermaid フローがある。`make links` PASS | `make links` PASS（123 files） |
+| INITFLOW-2 | ループ終了条件・スロット状態・差分再検証・承認と実行の分離を project-init に入れる | 完了 | 100% | INITFLOW-1 | 予算上限、state 6 種、質問と修正の分離、許可リスト実行がスキルに書かれている。`make links` PASS | `make links` PASS |
+| INITFLOW-3 | 検証結果の厳密化・判定分離・実行 3 ゲートと mermaidx によるフローチャート PNG | 完了 | 100% | INITFLOW-2 | 検索は search→公式判定→fetch。必須判定と質問予算は分離。result は verified/unverified/conflict/error。実行は許可リスト・承認計画・ファイル未変化の 3 条件。PNG は mermaidx。`make check` PASS | `make check` PASS |
 
 ---
 

@@ -15,23 +15,22 @@ When you have multiple unrelated failures (different test files, different subsy
 
 ## When to Use
 
-```dot
-digraph when_to_use {
-    "Multiple failures?" [shape=diamond];
-    "Are they independent?" [shape=diamond];
-    "Single agent investigates all" [shape=box];
-    "One agent per problem domain" [shape=box];
-    "Can they work in parallel?" [shape=diamond];
-    "Sequential agents" [shape=box];
-    "Parallel dispatch" [shape=box];
-
-    "Multiple failures?" -> "Are they independent?" [label="yes"];
-    "Are they independent?" -> "Single agent investigates all" [label="no - related"];
-    "Are they independent?" -> "Can they work in parallel?" [label="yes"];
-    "Can they work in parallel?" -> "Parallel dispatch" [label="yes"];
-    "Can they work in parallel?" -> "Sequential agents" [label="no - shared state"];
-}
+```mermaid
+flowchart TD
+  Q1{"Multiple failures?"}
+  Q2{"Are they independent?"}
+  Q3{"Can they work in parallel?"}
+  A1["Single investigation"]
+  A2["Parallel dispatch"]
+  A3["Sequential investigations"]
+  Q1 -->|yes| Q2
+  Q2 -->|no related| A1
+  Q2 -->|yes| Q3
+  Q3 -->|yes| A2
+  Q3 -->|no shared state| A3
 ```
+
+この環境に Task / サブエージェント dispatch は無い。独立した調査は自分で順に `read_file` / `bash` / `web_search` し、結果を表にまとめる。共有状態があるなら一つずつ直す。
 
 **Use when:**
 - 3+ test files failing with different root causes

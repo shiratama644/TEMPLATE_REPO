@@ -12,7 +12,7 @@
 | [02_git-workflow.md](./02_git-workflow.md) | Git 運用、環境復旧、フック | `.git/`、`.agent/hooks/` |
 | [03_doc-style.md](./03_doc-style.md) | 文書の書式と文体 | `docs/**/*.md`、`README.md` |
 | [04_verification.md](./04_verification.md) | 検証・品質保証（`make check` など） | 全般（常時） |
-| [project-template.md](./project-template.md) | テンプレート利用時の追記ルール | `AGENTS.md`、`project-overview` skill |
+| [project-template.md](./project-template.md) | テンプレート利用時の追記項目（手順の正本は `project-init`） | `AGENTS.md`、`project-overview` / `project-init` skill |
 
 ## 共通規約（`common/`、ECC 由来・本リポジトリ向けに調整）
 

@@ -17,6 +17,7 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 |---|---|
 | テンプレートの目的を知りたい | [product.md](./product.md) |
 | 構成と読み込みの流れを知りたい | [architecture.md](./architecture.md) |
+| 新規プロジェクトを実プロジェクトへ合わせたい | [`../../.agent/skills/project-init/SKILL.md`](../../.agent/skills/project-init/SKILL.md) |
 | なぜそうなっているか知りたい | [`../adr/`](../adr/README.md) |
 | 今どの段階か知りたい | [milestones.md](./milestones.md) → `../task-list.md` |
 

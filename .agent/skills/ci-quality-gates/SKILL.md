@@ -33,7 +33,7 @@ description: 分野を問わず、検証を段階的に実行する品質ゲー�
 | `.gitleaks.toml` | 秘密情報検出の許可リスト（最小限） |
 | `.github/workflows/ci.yml` | `check`（make check）と `secrets`（gitleaks）の 2 ジョブ |
 | `.github/workflows/release.yml` | バージョンタグで検証 → GitHub Release |
-| `.github/workflows/dependency-review.yml` | PR の依存関係の差分レビュー |
+| `.github/workflows/dependency-review.yml` | PR の依存関係の差分レビュー（GitHub の Dependency graph が有効なときだけ動く） |
 | `.github/dependabot.yml` | GitHub Actions の版を週次で更新 |
 
 ## 分野固有の検証を追加する手順
@@ -74,6 +74,7 @@ description: 分野を問わず、検証を段階的に実行する品質ゲー�
 
 ## 関連
 
+- [`project-init`](../project-init/SKILL.md): 新規プロジェクトで検証コマンドを §6.1 と `PROJECT_CHECKS` に載せるとき
 - [`testing`](../testing/SKILL.md): 検証の中身を設計する
-- [`verification-loop`](../verification-loop/SKILL.md): 完了前の検証の順序
+- [`verification-before-completion`](../verification-before-completion/SKILL.md): 完了前の検証
 - [`sandbox-constraints`](../sandbox-constraints/SKILL.md): 環境制約での迂回

@@ -1,12 +1,15 @@
 ---
 name: project-overview
-description: このリポジトリ（AIエージェント向け汎用テンプレート）の全体像（目的・構成・ドキュメント・進捗管理）を掴む。新規セッションの最初に読む1スキル。プロジェクト固有の内容は AGENTS.md §6 を参照。Use when starting a new session or needing overall context.
+description: このリポジトリの全体像（目的・構成・ドキュメント・進捗管理）を掴む。テンプレートのままなら新規セッションの最初に読む。実プロジェクトへ合わせる初期設定は project-init。プロジェクト固有の内容は AGENTS.md §6 を参照。Use when starting a new session or needing overall context.
 ---
 
 # Project Overview — 汎用エージェント作業テンプレート
 
 > このリポジトリは、AI Agent に**ソフトウェア開発だけでなく、文書作成・調査・データ整理・設定作業などを規律立てて進めさせる**ためのテンプレートです。
 > GitHub の「Use this template」から新しいリポジトリを作成し、プロジェクトごとに書き換えて使うことを想定しています。
+>
+> **実プロジェクトへ合わせるときは、本ファイルを読む前に [`project-init`](../project-init/SKILL.md) を使う。**
+> 初期設定が終わると、本ファイル自体が「このプロジェクトの全体像」に書き換えられる。
 
 ## 目的
 
@@ -20,7 +23,7 @@ description: このリポジトリ（AIエージェント向け汎用テンプ�
 |---|---|
 | `AGENTS.md` | Agent が必ず守る作業規約。§1〜§5・§7・§8 は汎用、§6 はプロジェクトごとに記入 |
 | `.agent/` | Agent 設定（rules / skills / hooks / agents など） |
-| `docs/` | ドキュメント一式。`task-list.md`（進捗の正本）・`arch/`（仕様）・`planning/`（計画）・`research/`（調査）・`audit/`（監査）・`ops/`（運用）・`examples/`（設定例） |
+| `docs/` | ドキュメント一式。`task-list.md`（進捗の正本）・`arch/`（仕様）・`planning/`（計画）・`research/`（調査）・`audit/`（監査）・`ops/`（運用） |
 | `README.md` | プロジェクトの概要（テンプレート利用時に書き換える） |
 | `LICENSE` | ライセンス |
 
@@ -48,6 +51,7 @@ docs/
 
 ## 関連
 
+- 新規プロジェクトの初期設定: [`project-init`](../project-init/SKILL.md)
 - 開発規約: `AGENTS.md`（§6 はプロジェクト固有）
 - ルール: `.agent/rules/`（トピック別）
 - スキル: `.agent/skills/`（ノウハウ・手順）

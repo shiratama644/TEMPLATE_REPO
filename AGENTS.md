@@ -350,13 +350,13 @@ git reset --hard FETCH_HEAD
 │   ├── 04_verification.md
 │   ├── common/                # ECC 由来の共通規約（10 件、paths でコード系のみ絞るものあり）
 │   └── project-template.md
-├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 48 件
+├── skills/<name>/SKILL.md     # 再利用プロンプト（/nameで呼び出し、自動発火も可能）— 44 件
 │   ├── index.md               # 入口（読み方ガイド・一覧）
-│   ├── 自作: project-overview / tech-stack / sandbox-constraints / verify-doc-integrity / docs-maintenance
+│   ├── 自作: project-overview / project-init / tech-stack / sandbox-constraints / docs-maintenance
 │   ├── 自作(分野非依存): testing / ci-quality-gates / e2e / import-boundaries / determinism / memory-leak / zero-alloc
 │   ├── superpowers（MIT）由来: brainstorming / writing-plans / executing-plans / subagent-driven-development / test-driven-development / systematic-debugging / verification-before-completion / requesting-code-review / receiving-code-review / using-git-worktrees / finishing-a-development-branch / dispatching-parallel-agents / writing-skills / using-superpowers
-│   ├── ECC: verification-loop / search-first / documentation-lookup / deep-research / council / architecture-decision-records / article-writing
-│   ├── mattpocock/skills: grill-me / grilling / handoff / teach / writing-for-agents / to-questionnaire / prototype / research / retro / codebase-design / diagnosing-bugs / improve-codebase-architecture / domain-modeling
+│   ├── ECC: search-first / documentation-lookup / deep-research / council / architecture-decision-records / article-writing
+│   ├── mattpocock/skills: grilling / handoff / teach / writing-for-agents / to-questionnaire / prototype / retro / codebase-design / improve-codebase-architecture / domain-modeling
 │   └── anthropics/skills (Apache-2.0): skill-creator / discernment-nudge
 ├── agents/                    # サブエージェント定義（name, description, tools, model等）
 │   ├── planner.md
@@ -382,7 +382,8 @@ git reset --hard FETCH_HEAD
 │   ├── code-review.md
 │   ├── checkpoint.md
 │   ├── plan.md
-│   └── update-docs.md
+│   ├── update-docs.md
+│   └── project-init.md
 ├── output-styles/             # 出力スタイル（concise, detailed等）
 │   ├── concise.md
 │   └── detailed.md

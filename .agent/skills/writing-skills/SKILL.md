@@ -289,17 +289,15 @@ Use skill name only, with explicit requirement markers:
 
 ## Flowchart Usage
 
-```dot
-digraph when_flowchart {
-    "Need to show information?" [shape=diamond];
-    "Decision where I might go wrong?" [shape=diamond];
-    "Use markdown" [shape=box];
-    "Small inline flowchart" [shape=box];
-
-    "Need to show information?" -> "Decision where I might go wrong?" [label="yes"];
-    "Decision where I might go wrong?" -> "Small inline flowchart" [label="yes"];
-    "Decision where I might go wrong?" -> "Use markdown" [label="no"];
-}
+```mermaid
+flowchart TD
+  Q1{"Need to show information?"}
+  Q2{"Decision where I might go wrong?"}
+  A1["Small inline mermaid flowchart"]
+  A2["Use markdown"]
+  Q1 -->|yes| Q2
+  Q2 -->|yes| A1
+  Q2 -->|no| A2
 ```
 
 **Use flowcharts ONLY for:**
@@ -313,13 +311,13 @@ digraph when_flowchart {
 - Linear instructions → Numbered lists
 - Labels without semantic meaning (step1, helper2)
 
-See `graphviz-conventions.dot` in this directory for graphviz style rules.
+フローチャートは Mermaid（`flowchart TD` / `flowchart LR`）で書く。DOT / graphviz / `render-graphs.js` は使わない。
 
-**Visualizing for your human partner:** Use `render-graphs.js` in this directory to render a skill's flowcharts to SVG:
-```bash
-node ./render-graphs.js ../some-skill           # Each diagram separately
-node ./render-graphs.js ../some-skill --combine # All diagrams in one SVG
-```
+PNG にするときは Python の **mermaidx**（`python3 scripts/render_mermaid.py`）だけを使う。AI 画像生成でフローを描かない。ノード ID は 3 文字以下の英語略号を避け、実在する語（`RESP` / `REQ` など）にする。codespell が略号を別単語の誤字と判定するため。
+
+- 判断は `{"question"}`、処理は `["action"]`、終端は `(["state"])`
+- 枝には `yes` / `no` などの短いラベル
+- コードや線形手順は図にしない（リストかコードブロック）
 
 ## Code Examples
 
@@ -586,7 +584,7 @@ Full pressure-scenario runs are the final gate, but they are slow and expensive 
 
 Micro-tests verify wording; they do not replace pressure scenarios for discipline skills.
 
-**Testing methodology:** See [testing-skills-with-subagents.md](testing-skills-with-subagents.md) for the complete testing methodology:
+**Testing methodology:** サブエージェント eval は使わない。新しいスキルは `write_file` で書き、自分で手順を辿って穴を探す。判断は `ask_user`。
 - How to write pressure scenarios
 - Pressure types (time, sunk cost, authority, exhaustion)
 - Plugging holes systematically
@@ -603,11 +601,11 @@ example-js.js, example-py.py, example-go.go
 **Why bad:** Mediocre quality, maintenance burden
 
 ### ❌ Code in Flowcharts
-```dot
-step1 [label="import fs"];
-step2 [label="read file"];
+```mermaid
+flowchart LR
+  step1["import fs"] --> step2["read file"]
 ```
-**Why bad:** Can't copy-paste, hard to read
+**Why bad:** Can't copy-paste, hard to read. Use a code block. Use `read_file` / `write_file` in prose when naming tools.
 
 ### ❌ Generic Labels
 helper1, helper2, step3, pattern4

@@ -1,30 +1,47 @@
 ---
 name: grilling
-description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.
+description: Use when the user wants to stress-test a plan or design, or uses a grill trigger. Interview until the design tree has no silent assumptions.
 ---
 
-Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
+# Grilling
 
-Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
+計画・判断・アイデアの前提を、設計ツリーとして潰す。事実は自分で取り、決定だけユーザーに聞く。
 
-Format a round like so:
+`grill-me` は本スキルへ統合した。入口は本ファイルだけ。
 
+## 手段
+
+| 対象 | function call |
+| :--- | :--- |
+| ユーザーの決定 | `ask_user`（1 ラウンド最大 4 問、選択肢 2〜4 + 自由記述） |
+| リポジトリの事実 | `read_file` / `bash` |
+| 外部の事実 | `web_search` → `fetch_page` |
+
+サブエージェントは無い。調べものは自分で行う。調べ終わるまで、それに依存する質問は次ラウンドへ回す。
+
+## ラウンド
+
+設計ツリーの **frontier**（前提がもう決まっている決定）だけを聞く。他の未決に依存する問は後回し。
+
+各問は「yes で推奨案を飲む」形にする。`ask_user` の `options` 例:
+
+- `yes` — 推奨案を採用
+- `no` — 別案（`description` か自由記述）
+
+```json
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "<決定の題>: <本文。推奨案を含む>",
+      "allowCustomResponse": true,
+      "options": [
+        { "id": "yes", "label": "推奨どおり", "description": "<推奨案>" },
+        { "id": "no", "label": "別案にする", "description": "自由記述で書く" }
+      ]
+    }
+  ]
+}
 ```
-❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
 
-➡️ <your recommended answer>
-
----
-
-❓ **Q2** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
-
-➡️ <your recommended answer>
-```
-
-Word each question so "yes" accepts your recommended answer.
-
-Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
-
-Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, etc.), dispatch a sub-agent to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
-
-The session is done when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Do not act on it until the user confirms you have reached a shared understanding.
+答えが返ったらツリーを更新し、次の frontier を聞く。frontier が空になったら、共有理解に達したか `ask_user` で確認してから動く。

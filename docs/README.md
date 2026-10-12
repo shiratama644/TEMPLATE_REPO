@@ -38,6 +38,7 @@ docs/
 | 次に何をするか・段階の状況 | [`arch/milestones.md`](./arch/milestones.md) |
 | タスクの詳細計画 | [`planning/README.md`](./planning/README.md) |
 | 作業規約・検証手段 | [`../AGENTS.md`](../AGENTS.md) |
+| 新規プロジェクトの初期設定 | [`../.agent/skills/project-init/SKILL.md`](../.agent/skills/project-init/SKILL.md) |
 | Agent の知識・手順 | [`../.agent/skills/index.md`](../.agent/skills/index.md) |
 
 ## 運用ルール

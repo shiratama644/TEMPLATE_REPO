@@ -21,8 +21,9 @@ git log -5 --oneline
 
 [`../skills/index.md`](../skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。
 - 全スキルを常に読まない（コンテキスト浪費）。
-- 初回/全体把握が必要な時だけ `project-overview/SKILL.md` を読む（公式準拠のディレクトリ形式）。
-- 例: 環境トラブル → `sandbox-constraints/SKILL.md`、ドキュメント編集 → `verify-doc-integrity/SKILL.md`
+- テンプレートのプレースホルダが残っている（`README.md` が `TEMPLATE_REPO`、`AGENTS.md §6.1` が未記入、`project-overview` がテンプレート説明のまま）→ 先に [`project-init/SKILL.md`](../skills/project-init/SKILL.md)。承認前にファイルを書き換えない。
+- 初回/全体把握が必要な時だけ `project-overview/SKILL.md` を読む（公式準拠のディレクトリ形式）。実プロジェクトへ合わせる初期設定は `project-init`。
+- 例: 環境トラブル → `sandbox-constraints/SKILL.md`、ドキュメント編集 → `docs-maintenance/SKILL.md`
 - ルールは `rules/` を参照。`paths` フロントマターで発火条件を絞っているため、該当ファイル編集時のみ自動で読まれる。
 
 ### 3. リポジトリ固有の制約の確認

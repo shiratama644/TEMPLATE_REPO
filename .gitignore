@@ -4,11 +4,11 @@
 !.env.example
 !.env.template
 
-# Logs / temp
+# Logs / temp（リポジトリ直下のみ。.agent/logs/ は実行記録として追跡する）
 *.log
-logs/
-tmp/
-temp/
+/logs/
+/tmp/
+/temp/
 
 # OS
 .DS_Store

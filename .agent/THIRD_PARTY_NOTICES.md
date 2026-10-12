@@ -4,16 +4,16 @@
 
 | 出典 | ライセンス | 取り込み内容 |
 |---|---|---|
-| [affaan-m/ECC](https://github.com/affaan-m/ECC) (Everything Claude Code) | MIT | skill: verification-loop, search-first, documentation-lookup, deep-research, architecture-decision-records, article-writing, council / agent: planner, architect, code-explorer, docs-lookup / command: code-review, checkpoint, plan, update-docs / rule: `rules/common/` の 10 件（coding-style, testing, patterns, performance, code-review, development-workflow, security, agents, git-workflow, hooks。ECC 固有の agent 名・`~/.claude/` 前提・プラグイン前提は本リポジトリの構成に書き換え） |
+| [affaan-m/ECC](https://github.com/affaan-m/ECC) (Everything Claude Code) | MIT | skill: search-first, documentation-lookup, deep-research, architecture-decision-records, article-writing, council（verification-loop は verification-before-completion へ統合） / agent: planner, architect, code-explorer, docs-lookup / command: code-review, checkpoint, plan, update-docs / rule: `rules/common/` の 10 件 |
 | [obra/superpowers](https://github.com/obra/superpowers) | MIT | skill: brainstorming, writing-plans, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, receiving-code-review, using-git-worktrees, finishing-a-development-branch, dispatching-parallel-agents, subagent-driven-development, writing-skills, using-superpowers |
-| [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | skill: grill-me, grilling, handoff, teach, writing-for-agents, to-questionnaire, prototype, research, retro, codebase-design, diagnosing-bugs, improve-codebase-architecture, domain-modeling / hook: block-dangerous-git.sh（git-guardrails-claude-code を sh 版に書き直し） |
+| [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | skill: grilling（grill-me を統合）, handoff, teach, writing-for-agents, to-questionnaire, prototype, retro, codebase-design, improve-codebase-architecture, domain-modeling（research は deep-research へ、diagnosing-bugs は systematic-debugging へ統合） / hook: block-dangerous-git.sh |
 | [anthropics/skills](https://github.com/anthropics/skills) | 各 skill の LICENSE.txt（Apache License 2.0） | skill: skill-creator, discernment-nudge（各ディレクトリに LICENSE.txt を同梱） |
 
-上記以外（`.agent/skills/` の `ci-quality-gates`、`e2e`、`testing`、`docs-maintenance`、`sandbox-constraints`、`verify-doc-integrity` など）は本リポジトリのオリジナルです。
+上記以外（`.agent/skills/` の `ci-quality-gates`、`e2e`、`testing`、`docs-maintenance`、`sandbox-constraints`、`project-init` など）は本リポジトリのオリジナルです。`verify-doc-integrity` は `docs-maintenance` へ統合した。
 
 **取り込まなかったもの**: Anthropic の docx / pdf / pptx / xlsx 等の skill は、Anthropic の独自（proprietary）ライセンスのため再配布していません。`doc-coauthoring` は同梱ライセンスが無いため除外しました。ECC の `.claude/` 固有設定（ecc-tools.json、team/、enterprise/ 等）と、ECC ランタイムに依存する hook・skill（strategic-compact、blueprint、resume-session、save-session 等）も取り込んでいません。
 
-改変内容: `superpowers:` 名前空間の参照除去、`docs/superpowers/{plans,specs}/` → `docs/planning/`、`.superpowers/` → `tmp/superpowers/`、Context7 MCP 非依存の代替手順の追記、他ハーネス向け参照ファイルの削除、`session-start.sh` と `block-dangerous-git.sh` の新規作成（上流の思想に基づく sh 版）。
+改変内容: ツール名をこの環境の function call（`web_search` / `fetch_page` / `ask_user` / `read_file` / `bash` 等）に置換。DOT 図を Mermaid 化。同義スキルの統合。Context7 / exa / Task 前提の削除。
 
 ---
 

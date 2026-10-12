@@ -1,6 +1,6 @@
 ---
 name: docs-maintenance
-description: ドキュメント整理とURL検証のスキル。proposal yml削除、内部リンク整合性、外部URL有効性、ミラー排除、AGENTS.md読込順序の遵守を確実にする。
+description: Use when docs change, before commit, or when cleaning duplicate docs. Check internal links, TOC, secrets, and external URLs.
 ---
 
 # Docs Maintenance — ドキュメント整理とURL検証スキル
@@ -59,10 +59,21 @@ for md in pathlib.Path('docs').rglob('*.md'):
 
 ### 検証方法
 
-```bash
-# fetch_pageで200確認、anchorまで含めて取得できるか確認
-# 例: https://biomejs.dev/linter/rules/no-restricted-imports/ のように anchor 付きの URL も取得できるか確認する
+外部 URL は `fetch_page` で本文が取れるか確認する。
+
+```json
+{
+  "url": "https://biomejs.dev/linter/rules/no-restricted-imports/"
+}
 ```
+
+内部リンクは `bash` で正本チェッカーを使う（自前 grep は使わない）。
+
+```bash
+python3 scripts/check_doc_links.py
+```
+
+`verify-doc-integrity` は本スキルへ統合した。機密の混入は `bash` で `git diff --cached --name-only` を見る。目次は `docs/` の追加・削除と `docs/README.md` を `read_file` で突き合わせる。
 
 - Mirrors `aidoczh/w3cub` は機能するが非公式、primary usageからは排除、参考リンク程度に留める
 - 途中で切れた URL（例: 末尾が欠けた `https://` のみの文字列）は grep の切り出しによる誤検出。抽出方法を直して再検査する
@@ -89,4 +100,4 @@ for md in pathlib.Path('docs').rglob('*.md'):
 - `docs/task-list.md` 進捗正本
 - `docs/arch/README.md` 仕様書一覧
 - `AGENTS.md` 読込順序・5点出力
-- `.agent/skills/verify-doc-integrity/SKILL.md` 機械検証スキル
+- 機械検証は本スキルの「検証方法」。内部リンクは `bash`、外部 URL は `fetch_page`

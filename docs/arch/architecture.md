@@ -47,7 +47,7 @@ TEMPLATE_REPO/
 
 1. **セッション開始・指示受領時**: `git status`・現在のブランチ・直近のコミットを確認する（`settings.json` の `SessionStart` フック `hooks/session-start.sh`、`hooks/pre-task.md`）。
 2. **作業規約の確認**: `AGENTS.md` を読む。プロジェクト固有の検証手段は §6.1 を参照。
-3. **知識の選択**: `.agent/skills/index.md` の「読み方ガイド」から、必要なスキルだけを読む（全件は読まない）。
+3. **知識の選択**: `.agent/skills/index.md` の「読み方ガイド」から、必要なスキルだけを読む（全件は読まない）。テンプレートのプレースホルダが残っている新規リポジトリでは、先に `project-init` を読む（承認前にファイルを書き換えない）。
 4. **編集時**: `PreToolUse` で編集禁止領域を確認し（`pre_edit_guard.sh`）、`PostToolUse` で機密ファイル混入やドキュメント目次の更新漏れを確認する（`post_edit_verify.sh`）。
 5. **完了時**: 検証手段を実行し、証拠を `task-list.md` に記録し、`.agent/logs/` に実行ログを残す（`hooks/log-task.md`）。
 

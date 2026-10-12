@@ -1,4 +1,7 @@
 # 依存関係の変更を PR でレビューする（ecosystem を問わない）。
+# このジョブは GitHub の Dependency graph が有効なときだけ動く。
+# 未有効だと "Dependency review is not supported on this repository" で失敗する。
+# 有効化: リポジトリ Settings → Code security and analysis → Dependency graph。
 name: Dependency Review
 
 on:
