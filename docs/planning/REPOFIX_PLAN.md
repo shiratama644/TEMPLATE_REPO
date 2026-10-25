@@ -157,9 +157,12 @@ ADR 0001 に記録する。要点: GitHub は Mermaid をそのまま描画す�
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| REPOFIX-1 | | | |
-| REPOFIX-2 | | | |
-| REPOFIX-3 | | | |
-| REPOFIX-4 | | | |
-| REPOFIX-5 | | | |
-| REPOFIX-6 | | | |
+| REPOFIX-1 | `2d8d3ea` | mermaidx 0.9.5 で描画 | 図1 153.3 KiB / 図2 81.4 KiB。修正前は図1 が `Parse error on line 2`。差分は 1 行削除のみ |
+| REPOFIX-2 | `087e247` | Unit（fixture）+ E2E（`make check`） | リポジトリ全体 12 ブロック（8 ファイル）OK。宣言重複 + 宣言なしの fixture で exit 1（2 件検出）、正常 fixture で exit 0。自己検査 0 失敗 |
+| REPOFIX-3 | `423cc07` | grep + `make check` | `.png` 0 件。削除 4 ファイル（PNG 2 件、`render_mermaid.py` 218 行、`requirements-diagrams.txt`）。現用文書からの残存参照 0 件。`--no-cone` ならフォント取得が成功することも実測 |
+| REPOFIX-4 | `dddabfb` | Component（フック 16 ケース） | 許可 5（`reset --hard FETCH_HEAD` 含む）/ ブロック 11。連結コマンドは force push 側で exit 2。allow 18 件・deny 10 件 |
+| REPOFIX-5 | `49f7478`（リネーム）<br>`c76a111`（漂移） | Component + `make links` | フック実測: 編集禁止領域 exit 2 / 通常ファイル exit 0 / post-edit-verify exit 0。`settings.json` の 4 パスすべて実在。旧名参照 0 件。`make links` PASS（125 files） |
+| REPOFIX-6 | `194838e` | `git check-ignore` | `.gitignore:14:__pycache__/` に一致。import 後の `git status` は `.gitignore` のみ |
+
+全コミット前に `make check`（pre-commit 全フック）を実行し PASS。記録は `9f51c67`（計画登録）と本計画書の更新コミット。
+実測の詳細は [`.agent/logs/2026-10-25_fix-repo-inconsistencies.md`](../../.agent/logs/2026-10-25_fix-repo-inconsistencies.md)。

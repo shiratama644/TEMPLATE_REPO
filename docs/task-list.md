@@ -26,12 +26,7 @@
 
 | ID | 状態 | 残作業 |
 |---|---|---|
-| REPOFIX-1 | 実装中 | Mermaid 図1 の宣言重複を除去し、mermaidx で描画を確認する |
-| REPOFIX-2 | 未着手 | `scripts/check_mermaid.py` と pre-commit・`make mermaid` を追加する |
-| REPOFIX-3 | 未着手 | PNG 2 件と生成パイプラインを削除し、ADR 0001 を記録する |
-| REPOFIX-4 | 未着手 | `reset --hard FETCH_HEAD` の例外をフックと `settings.json` に実装する |
-| REPOFIX-5 | 未着手 | フック 2 本を kebab-case へリネームし、索引・規約の漂移を直す |
-| REPOFIX-6 | 未着手 | `.gitignore` に Python の生成物を追加する |
+| — | — | なし |
 
 ---
 
@@ -57,12 +52,12 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| REPOFIX-1 | project-init の Mermaid 図1 から `flowchart TD` の重複宣言を除去する | 実装中 | 0% | — | 図1・図2 とも mermaidx 0.9.5 で描画できる。図の意味は不変。`make check` PASS | |
-| REPOFIX-2 | Mermaid 図の宣言を検査するゲートを検証に追加する | 未着手 | 0% | REPOFIX-1 | `scripts/check_mermaid.py`（標準ライブラリのみ）が pre-commit と `make mermaid` から実行され、宣言重複の fixture で exit 1・現 tree で exit 0。`make check` PASS | |
-| REPOFIX-3 | 図の正本を Mermaid ソースに一本化し、PNG と生成パイプラインを外す | 未着手 | 0% | REPOFIX-1 | リポジトリ内に図の PNG が無く、`render_mermaid`・`make diagrams`・`mermaidx` への参照が現用文書から 0 件。ADR 0001 がある。`make check` PASS | |
-| REPOFIX-4 | sandbox 復旧の `git reset --hard FETCH_HEAD` を例外として通す | 未着手 | 0% | — | フックが `FETCH_HEAD` 形式で exit 0、他の `reset --hard`・force push・main push は exit 2。`settings.json` の allow に同形を追加。`make check` PASS | |
-| REPOFIX-5 | フックスクリプト名を kebab-case に統一し、索引・規約の漂移を直す | 未着手 | 0% | — | 旧名への参照が 0 件で、リネーム後のフック 4 本が文書どおりの exit code。存在しない「最終更新」列への指示と計画書命名の矛盾が無い。`make check`・`make links` PASS | |
-| REPOFIX-6 | `.gitignore` に Python の生成物を追加する | 未着手 | 0% | — | `__pycache__/`・`*.pyc` が無視され、Python 実行後の `git status` が clean。`make check` PASS | |
+| REPOFIX-1 | project-init の Mermaid 図1 から `flowchart TD` の重複宣言を除去する | 完了 | 100% | — | 図1・図2 とも mermaidx 0.9.5 で描画できる。図の意味は不変。`make check` PASS | `2d8d3ea`。mermaidx 0.9.5 で図1 153.3 KiB / 図2 81.4 KiB を描画（修正前は図1 が Parse error on line 2）。差分は 1 行削除のみ |
+| REPOFIX-2 | Mermaid 図の宣言を検査するゲートを検証に追加する | 完了 | 100% | REPOFIX-1 | `scripts/check_mermaid.py`（標準ライブラリのみ）が pre-commit と `make mermaid` から実行され、宣言重複の fixture で exit 1・現 tree で exit 0。`make check` PASS | `087e247`。リポジトリ全体 12 ブロック（8 ファイル）OK。宣言重複と宣言なしの fixture で exit 1（2 件検出）、正常 fixture で exit 0。組み込み自己検査 0 失敗。`make check` の「Mermaid 図の宣言: Passed」 |
+| REPOFIX-3 | 図の正本を Mermaid ソースに一本化し、PNG と生成パイプラインを外す | 完了 | 100% | REPOFIX-1 | リポジトリ内に図の PNG が無く、`render_mermaid`・`make diagrams`・`mermaidx` への参照が現用文書から 0 件。ADR 0001 がある。`make check` PASS | `423cc07`。`.png` 0 件、削除 4 ファイル（PNG 2 件 + `render_mermaid.py` 218 行 + `requirements-diagrams.txt`）。[`adr/0001-mermaid-source.md`](./adr/0001-mermaid-source.md) を追加。cone モードの `sparse-checkout` が git 2.39.5 で fatal になることを実測 |
+| REPOFIX-4 | sandbox 復旧の `git reset --hard FETCH_HEAD` を例外として通す | 完了 | 100% | — | フックが `FETCH_HEAD` 形のみ exit 0、他の `reset --hard`・force push・main push は exit 2。`settings.json` の allow に同形を追加。`make check` PASS | `dddabfb`。フック 16 ケース実測（許可 5 / ブロック 11）。連結コマンド `reset --hard FETCH_HEAD && push --force` は exit 2。allow 18 件・deny 10 件で JSON 妥当 |
+| REPOFIX-5 | フックスクリプト名を kebab-case に統一し、索引・規約の漂移を直す | 完了 | 100% | — | 旧名への参照が 0 件で、リネーム後のフック 4 本が文書どおりの exit code。存在しない「最終更新」列への指示と計画書命名の矛盾が無い。`make check`・`make links` PASS | `49f7478`（リネーム + 参照 9 ファイル）・`c76a111`（索引・規約の漂移）。フック実測で編集禁止領域 exit 2 / 通常ファイル exit 0、`settings.json` が指す 4 パスすべて実在、`make links` PASS（125 files） |
+| REPOFIX-6 | `.gitignore` に Python の生成物を追加する | 完了 | 100% | — | `__pycache__/`・`*.pyc` が無視され、Python 実行後の `git status` が clean。`make check` PASS | `194838e`。`git check-ignore -v` が `.gitignore:14:__pycache__/` に一致、import 後の `git status` は `.gitignore` のみ |
 
 ---
 
