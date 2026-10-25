@@ -144,7 +144,6 @@ snapshots: []            # 承認時点の {path, sha256}。実行直前に変�
 
 ```mermaid
 flowchart TD
-flowchart TD
   classDef ok fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
   classDef ng fill:#ffebee,stroke:#c62828,color:#b71c1c
   classDef ask fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
