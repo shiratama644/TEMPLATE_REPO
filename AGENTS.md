@@ -440,7 +440,7 @@ git reset --hard FETCH_HEAD
 
 ### 8.4 記憶の同期（書き込みワークフロー）
 - **タスク完了時**（[`.agent/hooks/log-task.md`](.agent/hooks/log-task.md)）: 必ず `.agent/logs/YYYY-MM-DD_<summary>.md` を 4 セクション（指示内容/実行内容/気づき/次アクション）で作成。
-- **知見のスキル化**: ログの「気づき」が再利用性の高いコードベース知識なら該当 `skills/<name>/SKILL.md` に反映し、`skills/index.md` の「最終更新」を更新する。新スキルは `skills/index.md` の「読み方ガイド」「一覧」両方に追記。frontmatterの `description` も更新。
+- **知見のスキル化**: ログの「気づき」が再利用性の高いコードベース知識なら該当 `skills/<name>/SKILL.md` に反映する。`skills/index.md` の一覧の該当行（できるようになること・分野・出典）が実態とずれたら同じ変更で直す。新スキルは `skills/index.md` の「読み方ガイド」「一覧」両方に追記。frontmatterの `description` も更新。いつ更新したかは Git 履歴が正本なので、索引に日付列は持たない。
 - **ルールの更新**: 汎用的な作業規約が見つかったら `rules/` に追加。`paths` で発火条件を絞る。
 - ログ・スキル・rules・index の変更も commit/push 対象（セッションブランチへ）。
 

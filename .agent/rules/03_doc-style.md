@@ -34,7 +34,7 @@ paths:
 
 | 種類 | 命名規則 | 例 |
 |---|---|---|
-| 計画書 | `kebab-case.md` | `reader-redesign.md` |
+| 計画書 | `{TOPIC}_PLAN.md` | `REPOFIX_PLAN.md` |
 | 仕様書 | `kebab-case.md` | `product.md` |
 | 調査 | `<TOPIC>_RESEARCH.md` | `PRICING_RESEARCH.md` |
 | 監査（差分） | `diff-{context}.md` | `diff-migration.md` |
