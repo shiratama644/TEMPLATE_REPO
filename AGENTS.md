@@ -120,6 +120,7 @@ git reset --hard FETCH_HEAD
 ```
 
 - `git reset --hard FETCH_HEAD` は §4.3 の厳禁ルールの例外で、**サンドボックス再構築後の初回のみ**許可される（未コミット変更は元々存在しない状態のため）。
+- この例外は**ガードレール側にも実装済み**。`block-dangerous-git.sh` は `FETCH_HEAD` 形だけを exit 0 で通し、他の `reset --hard` はブロックする。`.agent/settings.json` も deny に `Bash(git reset --hard)`（完全一致）を残したうえで、allow に `Bash(git reset --hard FETCH_HEAD)` を持つ。
 - 再構築を判定するヒント：`git log --oneline` が起点コミット 1 個しか返ってこない / `git status` が大量の削除を示す / 依存の展開先や生成物（§6.1 で記録したもの）がない。
 - 復旧後は必ず `git log --oneline -5` と §6.1 の検証コマンドで健全性を確認してから作業を再開する。
 
@@ -134,6 +135,7 @@ git reset --hard FETCH_HEAD
 以下の破壊的・履歴改変コマンドは**絶対に実行してはならない**。
 - `git reset --hard` / `git clean -fd`（未コミット作業の消失リスク）
   - ただし §4.1.1 のサンドボックス再構築復旧時の `git reset --hard FETCH_HEAD` のみ例外
+  - この例外は `block-dangerous-git.sh` と `settings.json` にも実装されており、`FETCH_HEAD` 形だけを通す
 - `git rebase` / `git commit --amend`（既存履歴の改変）
 - `git push --force` / `git push --force-with-lease`
 

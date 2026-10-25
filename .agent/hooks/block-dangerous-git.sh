@@ -11,6 +11,11 @@
 #   - git rebase / git commit --amend（deny 設定と合わせる）
 # 通常の `git push origin <作業ブランチ>` は許可する。
 #
+# 例外（AGENTS.md §4.1.1 の sandbox 復旧手順）:
+#   - `git reset --hard FETCH_HEAD` のみ許可。他の `reset --hard` はブロックする。
+#   - settings.json の deny は `Bash(git reset --hard)`（完全一致）なので、
+#     FETCH_HEAD 形は allow の `Bash(git reset --hard FETCH_HEAD)` で通す。
+#
 # 終了コード: 0 = 許可, 2 = ブロック（理由は stderr）
 
 set -u
@@ -38,13 +43,23 @@ case "$CMD" in
     block "force push" ;;
   *"git push"*" main"*|*"git push"*" master"*|*"git push"*":main"*|*"git push"*":master"*)
     block "main/master への push" ;;
-  *"git reset --hard"*) block "reset --hard" ;;
   *"git clean -f"*)     block "clean -f" ;;
   *"git branch -D"*)    block "branch -D" ;;
   *"git checkout ."*)   block "checkout ." ;;
   *"git restore ."*)    block "restore ." ;;
   *"git rebase"*)       block "rebase" ;;
   *"git commit --amend"*) block "commit --amend" ;;
+esac
+
+# reset --hard は AGENTS.md §4.1.1 が許可する `git reset --hard FETCH_HEAD` の 1 形だけ通す。
+# push 系を先に判定しているので、`git reset --hard FETCH_HEAD && git push --force` のような
+# 連結コマンドは上の force push で止まる。
+case "$CMD" in
+  *"git reset --hard"*)
+    case "$CMD" in
+      *"git reset --hard FETCH_HEAD"*) : ;;
+      *) block "reset --hard（FETCH_HEAD 以外は禁止）" ;;
+    esac ;;
 esac
 
 exit 0
