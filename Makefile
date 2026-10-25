@@ -7,7 +7,7 @@
 #   make mermaid   Mermaid 図の宣言だけを検査
 
 .DEFAULT_GOAL := help
-.PHONY: help setup check links mermaid diagrams
+.PHONY: help setup check links mermaid
 
 PRE_COMMIT ?= pre-commit
 
@@ -35,6 +35,3 @@ links: ## Markdown の内部リンクだけを検査
 
 mermaid: ## Mermaid 図の宣言だけを検査
 	python3 scripts/check_mermaid.py
-
-diagrams: ## Mermaid を mermaidx で PNG 化する（AI 画像生成は使わない）
-	python3 scripts/render_mermaid.py

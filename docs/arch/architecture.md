@@ -5,10 +5,20 @@
 ```
 TEMPLATE_REPO/
 ├── AGENTS.md              # 作業規約（§1〜§5・§7・§8は汎用、§6はプロジェクト固有）
+├── CLAUDE.md              # AGENTS.md への symlink
 ├── README.md              # プロジェクトの概要（テンプレート利用時に書き換える）
 ├── LICENSE
+├── Makefile               # 検証の入口（check / links / mermaid / setup）
+├── .pre-commit-config.yaml # commit 時の検査（make check と同じフック）
+├── biome.json             # JSON / JS / TS / CSS の整形と lint
+├── .editorconfig          # エディタ間の基本書式
+├── .gitleaks.toml         # 秘密情報検出の許可リスト
 ├── .gitignore
-├── .agent/                # Agent の設定と知識
+├── scripts/               # 検証スクリプト（標準ライブラリのみ）
+│   ├── check_doc_links.py # Markdown の内部リンクの実在
+│   └── check_mermaid.py   # Mermaid 図の宣言（種類・重複）
+├── .github/               # CI・リリース・依存関係レビュー・dependabot
+├── .agent/                # Agent の設定と知識（.claude はここへの symlink）
 │   ├── README.md          # .agent/ の説明
 │   ├── settings.json      # 共有設定（permissions・hooks・env）
 │   ├── rules/             # トピック別ルール
@@ -22,6 +32,7 @@ TEMPLATE_REPO/
 └── docs/                  # ドキュメント（目次: docs/README.md）
     ├── task-list.md       # 進捗の正本
     ├── arch/              # 仕様（本ディレクトリ）
+    ├── adr/               # 設計判断の記録（1 判断 1 ファイル）
     ├── planning/          # 計画書
     ├── research/          # 調査
     ├── audit/             # 監査（差分・問題点の記録）
@@ -56,3 +67,5 @@ TEMPLATE_REPO/
 - 構成を変えたら、本ファイル・`docs/README.md`・`README.md`・`AGENTS.md §8` を同じ変更で更新する。
 - フックのスクリプトは POSIX `sh` で書き、終了コード（0 = 許可、2 = ブロック）の規約に従う。
 - 環境に依存する設定（OS・ランタイム・外部サービス）はテンプレート本体に入れず、`AGENTS.md §6` に書く。
+- 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない（[`adr/0001-mermaid-source.md`](../adr/0001-mermaid-source.md)）。図の検証は `make mermaid`。
+- `scripts/` の検証スクリプトは標準ライブラリのみで書き、外部の取得や追加のランタイムを必要としない。
