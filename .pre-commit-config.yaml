@@ -66,6 +66,14 @@ repos:
         pass_filenames: false
         files: \.md$
 
+      # Mermaid 図の宣言の不備を検出（scripts/check_mermaid.py）
+      - id: mermaid-syntax
+        name: Mermaid 図の宣言
+        entry: python3 scripts/check_mermaid.py
+        language: system
+        pass_filenames: false
+        files: \.md$
+
       # 秘密情報の混入（gitleaks が入っている場合のみ。無ければスキップし、CI で必ず検査する）
       - id: gitleaks
         name: gitleaks（秘密情報の検出）

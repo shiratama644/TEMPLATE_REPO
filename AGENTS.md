@@ -177,7 +177,7 @@ git reset --hard FETCH_HEAD
 
 ### 6.1 環境・ツールチェーン・検証コマンド
 - （例）使用言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
-- **検証の正本**: `make check`（pre-commit の全フック + `Makefile` の `PROJECT_CHECKS`）。文書の内部リンクだけを見る場合は `make links`。CI（`.github/workflows/ci.yml`）も同じ `make check` を呼ぶ。
+- **検証の正本**: `make check`（pre-commit の全フック + `Makefile` の `PROJECT_CHECKS`）。文書の内部リンクだけを見る場合は `make links`、Mermaid 図の宣言だけを見る場合は `make mermaid`。CI（`.github/workflows/ci.yml`）も同じ `make check` を呼ぶ。
 - **検証コマンド**（§3.1 の正本。プロジェクトに合わせて記入）:
   ```bash
   # 例:

@@ -18,7 +18,7 @@ description: 分野を問わず、検証を段階的に実行する品質ゲー�
 | :--- | :--- | :--- |
 | 1. 衛生 | 空白・改行・壊れたファイル・秘密鍵 | pre-commit-hooks（`check-json`、`detect-private-key` など） |
 | 2. 形式 | 書式と静的な lint | Biome（`biome.json`）、綴り（codespell） |
-| 3. 規約 | コミットメッセージ・文書の整合 | conventional-pre-commit、`make links` |
+| 3. 規約 | コミットメッセージ・文書の整合 | conventional-pre-commit、`make links`、`make mermaid` |
 | 4. 秘密情報 | 機密の混入 | gitleaks（ローカルと CI の両方） |
 | 5. 分野固有 | 型・単体テスト・ビルドなど | `PROJECT_CHECKS` に記録したコマンド |
 | 6. 通し | E2E・統合・ビルド成果物 | CI の専用ジョブ（時間がかかるものは手動実行可） |
@@ -27,7 +27,8 @@ description: 分野を問わず、検証を段階的に実行する品質ゲー�
 
 | ファイル | 役割 |
 | :--- | :--- |
-| `Makefile` | `make setup`（フック導入）・`make check`（全検証）・`make links`（リンクだけ） |
+| `Makefile` | `make setup`（フック導入）・`make check`（全検証）・`make links`（リンクだけ）・`make mermaid`（Mermaid 図だけ） |
+| `scripts/check_doc_links.py` / `scripts/check_mermaid.py` | 内部リンクと Mermaid 図の宣言を検査する（標準ライブラリのみ） |
 | `.pre-commit-config.yaml` | pre-commit のフック一覧（版はタグで固定） |
 | `biome.json` / `.editorconfig` | 書式とエディタの基本設定 |
 | `.gitleaks.toml` | 秘密情報検出の許可リスト（最小限） |

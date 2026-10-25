@@ -4,10 +4,10 @@
 #   make setup   pre-commit フックを導入（初回のみ）
 #   make check   全ファイルの検証（CI と同じ入口）
 #   make links     Markdown の内部リンクだけを検査
-#   make diagrams  Mermaid を mermaidx で PNG 化する
+#   make mermaid   Mermaid 図の宣言だけを検査
 
 .DEFAULT_GOAL := help
-.PHONY: help setup check links diagrams
+.PHONY: help setup check links mermaid diagrams
 
 PRE_COMMIT ?= pre-commit
 
@@ -32,6 +32,9 @@ check: ## 全ファイルの検証（pre-commit の全フック + PROJECT_CHECKS
 
 links: ## Markdown の内部リンクだけを検査
 	python3 scripts/check_doc_links.py
+
+mermaid: ## Mermaid 図の宣言だけを検査
+	python3 scripts/check_mermaid.py
 
 diagrams: ## Mermaid を mermaidx で PNG 化する（AI 画像生成は使わない）
 	python3 scripts/render_mermaid.py
