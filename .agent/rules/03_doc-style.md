@@ -42,7 +42,7 @@ paths:
 | スキル | `kebab-case/SKILL.md` | `project-overview/SKILL.md` |
 | ルール | `NN_kebab-case.md` または `kebab-case.md` | `project-template.md` |
 | フック手順 | `kebab-case.md` | `verify-commit.md` |
-| フックスクリプト | `kebab-case.sh` | `post_edit_verify.sh` |
+| フックスクリプト | `kebab-case.sh` | `post-edit-verify.sh` |
 
 ## 4. リンク規約
 

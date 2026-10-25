@@ -1,5 +1,5 @@
 #!/bin/sh
-# pre_edit_guard.sh — 編集禁止領域への変更をブロックする PreToolUse フック
+# pre-edit-guard.sh — 編集禁止領域への変更をブロックする PreToolUse フック
 #
 # ブロック対象:
 #   .git/ 以下、および生成物ディレクトリ（node_modules/, dist/, build/, coverage/, target/, out/, .venv/, __pycache__/）
@@ -66,7 +66,7 @@ is_protected() {
 
 if is_protected "$TARGET"; then
   {
-    echo "⛔ [pre_edit_guard] 編集禁止領域です: $TARGET"
+    echo "⛔ [pre-edit-guard] 編集禁止領域です: $TARGET"
     echo "   .git/ と生成物ディレクトリ（node_modules/, dist/, build/, coverage/ など）への直接編集は禁止されています。"
     echo "   必要な場合はタスク完了後にビルド成果物として生成してください。"
   } >&2

@@ -1,5 +1,5 @@
 #!/bin/sh
-# post_edit_verify.sh — 編集後の整合性を事後検証する PostToolUse フック
+# post-edit-verify.sh — 編集後の整合性を事後検証する PostToolUse フック
 #
 # 検証内容:
 #   (A) 機密ファイル (.env) が追跡・ステージングされていないか
@@ -12,7 +12,7 @@ cd "$(dirname "$0")/../.." || exit 1
 
 FAIL=0
 
-echo "=== post_edit_verify ==="
+echo "=== post-edit-verify ==="
 
 # (A) 機密ファイルの混入チェック
 SECRET_HITS=$(git diff --cached --name-only 2>/dev/null; git diff --name-only 2>/dev/null; git ls-files --others --exclude-standard 2>/dev/null | head -n 50)

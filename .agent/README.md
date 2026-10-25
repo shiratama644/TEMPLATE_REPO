@@ -21,8 +21,8 @@
 │   ├── index.md
 │   ├── session-start.sh       # SessionStart: 作業状態の注入
 │   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
-│   ├── pre_edit_guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
-│   └── post_edit_verify.sh    # PostToolUse: 事後検証
+│   ├── pre-edit-guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
+│   └── post-edit-verify.sh    # PostToolUse: 事後検証
 ├── commands/                  # スラッシュコマンド（commit, test, code-review, checkpoint, plan, update-docs, project-init）
 ├── output-styles/             # 出力スタイル（concise, detailed）
 ├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）
@@ -50,8 +50,8 @@
 |---|---|---|---|
 | `SessionStart` | `startup\|resume\|clear\|compact` | `hooks/session-start.sh` | 正本の所在・ブランチ・直近コミット・未コミット変更・未完了サマリーを注入 |
 | `PreToolUse` | `Bash` | `hooks/block-dangerous-git.sh` | force push・`reset --hard`・main への push 等をブロック（exit 2） |
-| `PreToolUse` | `Edit\|MultiEdit\|Write` | `hooks/pre_edit_guard.sh` | 編集禁止領域（`.git/`・依存・生成物）をブロック |
-| `PostToolUse` | `Edit\|MultiEdit\|Write` | `hooks/post_edit_verify.sh` | 編集後の事後検証 |
+| `PreToolUse` | `Edit\|MultiEdit\|Write` | `hooks/pre-edit-guard.sh` | 編集禁止領域（`.git/`・依存・生成物）をブロック |
+| `PostToolUse` | `Edit\|MultiEdit\|Write` | `hooks/post-edit-verify.sh` | 編集後の事後検証 |
 
 フックの動作確認例:
 

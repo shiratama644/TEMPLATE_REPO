@@ -5,8 +5,8 @@
 Hooks are registered in `.agent/settings.json` and implemented in `.agent/hooks/`:
 
 - **SessionStart**: runs at startup, resume, clear, and compact (`session-start.sh` injects the working state)
-- **PreToolUse**: runs before a tool call; exit code 2 blocks the call (`block-dangerous-git.sh`, `pre_edit_guard.sh`)
-- **PostToolUse**: runs after a tool call; used for post-edit checks (`post_edit_verify.sh`)
+- **PreToolUse**: runs before a tool call; exit code 2 blocks the call (`block-dangerous-git.sh`, `pre-edit-guard.sh`)
+- **PostToolUse**: runs after a tool call; used for post-edit checks (`post-edit-verify.sh`)
 
 Hooks must not depend on a specific language runtime or package manager. Project-specific checks belong in `AGENTS.md §6.1` and in `make check`.
 

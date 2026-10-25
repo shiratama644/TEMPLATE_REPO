@@ -376,8 +376,8 @@ git reset --hard FETCH_HEAD
 │   ├── sandbox-recovery.md
 │   ├── session-start.sh       # SessionStart: 作業状態の注入
 │   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
-│   ├── pre_edit_guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
-│   └── post_edit_verify.sh    # PostToolUse: 事後検証
+│   ├── pre-edit-guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
+│   └── post-edit-verify.sh    # PostToolUse: 事後検証
 ├── commands/                  # スラッシュコマンド（/name で呼び出し）
 │   ├── commit.md
 │   ├── test.md
@@ -433,8 +433,8 @@ git reset --hard FETCH_HEAD
 - **セッション開始時**: `settings.json` の `SessionStart` フックで [`session-start.sh`](.agent/hooks/session-start.sh) が、正本の所在・ブランチ・直近のコミット・未コミット変更・未完了サマリーをモデルへ注入する。
 - **タスク開始時**（[`.agent/hooks/pre-task.md`](.agent/hooks/pre-task.md)）: 現状把握後、[`.agent/skills/index.md`](.agent/skills/index.md) の「読み方ガイド」で**該当スキルだけ**を読む。全スキルを常に読み込まない（コンテキスト浪費）。
 - **Bash 実行前**: `settings.json` の `PreToolUse` フックで [`block-dangerous-git.sh`](.agent/hooks/block-dangerous-git.sh) が force push・`reset --hard`・`main` への push 等の破壊的 git 操作をブロックする。
-- **編集前**: `settings.json` の `PreToolUse` フックで [`pre_edit_guard.sh`](.agent/hooks/pre_edit_guard.sh) が編集禁止領域をブロック。
-- **編集後**: `settings.json` の `PostToolUse` フックで [`post_edit_verify.sh`](.agent/hooks/post_edit_verify.sh) が事後検証。
+- **編集前**: `settings.json` の `PreToolUse` フックで [`pre-edit-guard.sh`](.agent/hooks/pre-edit-guard.sh) が編集禁止領域をブロック。
+- **編集後**: `settings.json` の `PostToolUse` フックで [`post-edit-verify.sh`](.agent/hooks/post-edit-verify.sh) が事後検証。
 - **トリガー発生時**: [`.agent/hooks/index.md`](.agent/hooks/index.md) の「対応表」で該当フックを特定し実行。
 - 初回/全体把握が必要な時だけ、`project-overview/SKILL.md` を読む。未作成なら作成を検討する。
 

@@ -14,8 +14,8 @@
 | **セッション開始時**（startup / resume / clear / compact） | [`session-start.sh`](./session-start.sh) | スクリプト | `settings.json` → `SessionStart` |
 | **タスク開始時**（ユーザー指示を受けた直後） | [`pre-task.md`](./pre-task.md) | 手順 | 手動（現状把握の手順） |
 | **Bash 実行前**（破壊的 git 操作の直前） | [`block-dangerous-git.sh`](./block-dangerous-git.sh) | スクリプト | `settings.json` → `PreToolUse`（matcher: Bash） |
-| **編集前**（Edit/Write前） | [`pre_edit_guard.sh`](./pre_edit_guard.sh) | スクリプト | `settings.json` → `PreToolUse` |
-| **編集後**（Edit/Write後） | [`post_edit_verify.sh`](./post_edit_verify.sh) | スクリプト | `settings.json` → `PostToolUse` |
+| **編集前**（Edit/Write前） | [`pre-edit-guard.sh`](./pre-edit-guard.sh) | スクリプト | `settings.json` → `PreToolUse` |
+| **編集後**（Edit/Write後） | [`post-edit-verify.sh`](./post-edit-verify.sh) | スクリプト | `settings.json` → `PostToolUse` |
 | **commit直前**（§3.1検証） | [`verify-commit.md`](./verify-commit.md) | 手順 | 手動参照 |
 | **タスク完了時**（完了直後） | [`log-task.md`](./log-task.md) | 手順 | 手動参照 |
 | **Sandbox再構築を検知** | [`sandbox-recovery.md`](./sandbox-recovery.md) | 手順 | 手動参照 |
@@ -25,8 +25,8 @@
 | ファイル | 実行トリガー | 対象 / 内容 |
 | :--- | :--- | :--- |
 | [pre-task.md](./pre-task.md) | タスク開始時 | 現状把握（git status/branch/log）→ `.agent/skills/` から必要スキルをピンポイント読込（未初期化なら `project-init`）→ リポジトリ固有の制約確認 |
-| [pre_edit_guard.sh](./pre_edit_guard.sh) | PreToolUse | 編集禁止領域（.git/, node_modules/, dist/, build/, coverage/ 等の生成物）への変更をブロック（exit 2） |
-| [post_edit_verify.sh](./post_edit_verify.sh) | PostToolUse | 機密ファイル混入・docs/README目次の事後検証 |
+| [pre-edit-guard.sh](./pre-edit-guard.sh) | PreToolUse | 編集禁止領域（.git/, node_modules/, dist/, build/, coverage/ 等の生成物）への変更をブロック（exit 2） |
+| [post-edit-verify.sh](./post-edit-verify.sh) | PostToolUse | 機密ファイル混入・docs/README目次の事後検証 |
 | [verify-commit.md](./verify-commit.md) | commit直前 | プロジェクト検証（typecheck/lint/test/build）+ 意図しない差分の確認 |
 | [log-task.md](./log-task.md) | タスク完了時 | `.agent/logs/YYYY-MM-DD_<summary>.md` 作成（4セクション）→ 重要知見を `.agent/skills/` へ同期 → `skills/index.md` 更新 |
 | [sandbox-recovery.md](./sandbox-recovery.md) | Sandbox再構築検知時 | `git fetch` → `reset --hard FETCH_HEAD`（例外的許可）→ §6.1 の環境セットアップ → 健全性確認 |

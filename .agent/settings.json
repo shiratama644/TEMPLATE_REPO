@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .agent/hooks/pre_edit_guard.sh"
+            "command": "sh .agent/hooks/pre-edit-guard.sh"
           }
         ]
       }
@@ -73,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .agent/hooks/post_edit_verify.sh"
+            "command": "sh .agent/hooks/post-edit-verify.sh"
           }
         ]
       }
