@@ -19,7 +19,8 @@ docs/
 ├── planning/          計画書（タスクごとの範囲と完了条件）
 │   ├── README.md      計画書の一覧と作り方
 │   ├── _TEMPLATE.md   計画書の書式
-│   └── REPOFIX_PLAN.md テンプレートの不整合を直す計画（REPOFIX-1〜6）
+│   ├── REPOFIX_PLAN.md テンプレートの不整合を直す計画（REPOFIX-1〜6）
+│   └── AGENTSYNC_PLAN.md 公式仕様と実証研究へ同期する計画（AGENTSYNC-1〜6）
 ├── research/          調査結果
 │   └── README.md      調査の一覧と書き方
 ├── audit/             差分・問題の監査

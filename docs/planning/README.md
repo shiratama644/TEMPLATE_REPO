@@ -22,7 +22,8 @@
 | 文書 | 対応 ID | 状態 | 役割 |
 |---|---|---|---|
 | [`_TEMPLATE.md`](./_TEMPLATE.md) | — | 現用 | 製品実装など個別タスクの必須形式 |
-| [`REPOFIX_PLAN.md`](./REPOFIX_PLAN.md) | REPOFIX-1〜6 | 現用 | テンプレート内の不整合（文書の約束と実物のずれ）を解消する計画 |
+| [`REPOFIX_PLAN.md`](./REPOFIX_PLAN.md) | REPOFIX-1〜6 | 完了 | テンプレート内の不整合（文書の約束と実物のずれ）を解消する計画 |
+| [`AGENTSYNC_PLAN.md`](./AGENTSYNC_PLAN.md) | AGENTSYNC-1〜6 | 現用 | 公式仕様（Anthropic / Codex / agentskills.io / Hooks）と実証研究に合わせて指示ファイルと Agent 設定を更新する計画 |
 | `INIT_STATE.md` | — | 実行時に作成 | 初期設定の作業記憶（スロット状態・予算）。承認前に書いてよい唯一のファイル |
 | `INIT_PLAN.md` | — | 実行時に作成 | 承認済みの初期設定計画。書式は [`project-init`](../../.agent/skills/project-init/SKILL.md)。テンプレート本体には置かない |
 
