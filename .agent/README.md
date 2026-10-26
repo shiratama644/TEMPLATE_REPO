@@ -15,7 +15,7 @@
 ├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）。入口は rules/index.md
 │   ├── index.md
 │   └── common/                # ECC 由来の共通規約 10 件（一部は paths でコード系に限定）
-├── skills/<name>/SKILL.md     # 再利用プロンプト（44 件。入口は skills/index.md）
+├── skills/<name>/SKILL.md     # 再利用プロンプト（46 件。入口は skills/index.md）
 ├── agents/                    # サブエージェント定義（planner, architect, code-explorer, docs-lookup ほか）
 ├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh)
 │   ├── index.md
