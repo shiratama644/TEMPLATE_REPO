@@ -5,9 +5,10 @@
 #   make check   全ファイルの検証（CI と同じ入口）
 #   make links     Markdown の内部リンクだけを検査
 #   make mermaid   Mermaid 図の宣言だけを検査
+#   make agents    AGENTS.md の予算と品質だけを検査
 
 .DEFAULT_GOAL := help
-.PHONY: help setup check links mermaid
+.PHONY: help setup check links mermaid agents
 
 PRE_COMMIT ?= pre-commit
 
@@ -35,3 +36,6 @@ links: ## Markdown の内部リンクだけを検査
 
 mermaid: ## Mermaid 図の宣言だけを検査
 	python3 scripts/check_mermaid.py
+
+agents: ## AGENTS.md の予算と品質だけを検査（agents-md-lint）
+	$(PRE_COMMIT) run agents-md-lint --all-files

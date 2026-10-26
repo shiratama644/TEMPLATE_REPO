@@ -58,6 +58,23 @@ repos:
         files: \.(json|jsonc|js|jsx|mjs|cjs|ts|tsx|css)$
         exclude: ^\.agent/(skills|workflows)/
 
+      # 指示ファイルの予算と品質（agents-md-lint。Codex の 32 KiB 上限・行数・参照パスの実在など）
+      # 入れ子の AGENTS.md（ディレクトリ単位）にも対応する。版は additional_dependencies で固定する。
+      #
+      # ⚠️ 上流 1.0.1 の bin は symlink 経由で起動すると何も出力せず exit 0 になる。
+      #    cli.js のエントリポイント判定が pathToFileURL(process.argv[1]).href と
+      #    import.meta.url を比較するが、Node は import.meta.url を realpath にする一方
+      #    argv[1] は呼び出しに使った symlink のままなので一致せず、run() が実行されない。
+      #    npm bin は必ず symlink なので npx 経由でも同じ（＝黙って成功する no-op）。
+      #    そのため readlink -f で実体を解決し node で直接起動する。
+      #    上流が修正したら entry を `agents-md-lint --root .` に戻すこと。
+      - id: agents-md-lint
+        name: AGENTS.md の予算と品質
+        entry: sh -c 'exec node "$(readlink -f "$(command -v agents-md-lint)")" --root . "$@"' --
+        language: node
+        additional_dependencies: ["agents-md-lint@1.0.1"]
+        files: (^|/)AGENTS\.md$
+
       # Markdown の内部リンク切れを検出（scripts/check_doc_links.py）
       - id: doc-links
         name: 内部リンクの実在
