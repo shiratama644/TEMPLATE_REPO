@@ -26,7 +26,10 @@
 
 | ID | 状態 | 残作業 |
 |---|---|---|
-| — | — | なし |
+| LANGGATE-1 | 実装中 | 検査スクリプトとゲートの登録（負のテストを含む） |
+| LANGGATE-2 | 未着手 | 上流リポジトリへの issue 起票 |
+| LANGGATE-3 | 未着手 | `log-task.md` と `AGENTS.md §4.4` の矛盾解消 |
+| LANGGATE-4 | 未着手 | コミット `5a10b4d` の誤字の正誤記録 |
 
 ---
 
@@ -73,6 +76,19 @@
 | AGENTSYNC-4 | 新規スキル 2 件を追加する | 完了 | 100% | AGENTSYNC-1 | `agents-md-authoring` と `context-budget` が agentskills.io 仕様に適合し、`skills/index.md` の読み方ガイドと一覧の両方に載る | `c0091e9`。仕様適合 7 項目を実測: name とフォルダ名一致 / description 283・248 字（上限 1024）/ 山括弧なし / 本文 129・131 行（目安 500 未満）/ 参照は 1 レベル / フォルダ内 README なし。スキル 44→**46** 件。段階開示の実測（常時ロードの description 合計 7,059 字 対 本文合計 300,616 字 = **2.3%**）を `context-budget` に記載 |
 | AGENTSYNC-5 | クロスツール標準の事実を明記する | 完了 | 100% | AGENTSYNC-1 | AAIF への移管・24+ ツール・Claude Code v2.1.277・Codex の発見規則と 32 KiB 上限が README と `.agent/README.md` に書かれている | `dbfabf7`。README に「どのツールで読まれるか」を新設（ツール別の読むファイルと注意の表、symlink を置く理由）。`.agent/README.md` 冒頭に指示ファイルはツール非依存の標準・`.agent/` 構成は Claude Code 準拠と明記。スキル内のフォールバック日付の誤記（2025-09-18）を 2026-09-18 に修正 |
 | AGENTSYNC-6 | クレジットと判断を記録する | 完了 | 100% | すべて | `THIRD_PARTY_NOTICES.md` に MIT 出典（Taiizor/agents-md-cookbook）と参考文書があり、ADR-0002 がある。ライセンス表記のない資料の文面を複製していない | `c7de1d0`。ADR-0002（決定・代替案 4 つと Why not・影響・リスク 4 件＋緩和）を `docs/adr/README.md` と `docs/README.md` に登録。`THIRD_PARTY_NOTICES.md` に cookbook（MIT）の tool 行と「参照した公式文書・実証研究」の節（Anthropic / Codex / agentskills.io / ETH Zurich / Augment / GitHub / Chroma）を追加。ライセンス表記のない 3 リポジトリは参照のみと明示 |
+
+### 言語ゲートと AGENTSYNC の残事項 (2026-10-26 計画)
+
+> 計画書: [`planning/LANGGATE_PLAN.md`](./planning/LANGGATE_PLAN.md)。
+> AGENTSYNC の完了報告で残った 3 件と、ユーザー指示の言語検査を 1 つのテーマで片付ける。
+> 方式と限界の判断記録は [`adr/0003-language-gate.md`](./adr/0003-language-gate.md)。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| LANGGATE-1 | 日本語・英語のみの言語ゲートを追加する | ローカル検証済み | 90% | — | `scripts/check_language.py` が自己検査 8 fixture を通し全体で exit 0。**負のテスト**で簡体字ファイル・簡体字コミットメッセージが exit 1、正常系が exit 0。`make lang` と `make check` が PASS。限界が ADR-0003 と docstring に書かれている | 自己検査 fixture 8 件 PASS、リポジトリ全体 **164 ファイルで exit 0（error 0・warn 0）**。負のテスト: 簡体字ファイル・ハングル・キリルで `pre-commit run language --files` が Failed（exit 1、16 件検出）、簡体字コミットメッセージで `--hook-stage commit-msg` が Failed（exit 1）、正常系 2 件が Passed（exit 0）。導入時の全体走査で**実バグを 2 件発見**（フックのコメントのハングル 3 字 → `704c398`、ADR 草稿の簡体字 U+8FDC（「永久」の誤り））。コミット SHA は記録コミットで追記 |
+| LANGGATE-2 | `agents-md-lint` の no-op バグを上流へ報告する | 未着手 | 0% | — | Taiizor/agents-md-cookbook に issue を作成し、番号を ADR-0002 と本行に記録する | — |
+| LANGGATE-3 | 時点記録のブランチ名規制を明文化する | 未着手 | 0% | — | `log-task.md` のテンプレートと `AGENTS.md §4.4` が同じ方針になり、矛盾が消える。過去ログ 3 件は書き換えない | — |
+| LANGGATE-4 | コミット `5a10b4d` の誤字を正誤記録する | 未着手 | 0% | LANGGATE-1 | 履歴を書き換えず（amend は deny）、新規ログに誤字の箇所・正しい語・新ゲートが同じ誤りを止める実測を記録する | — |
 
 ---
 

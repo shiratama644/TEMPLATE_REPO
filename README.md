@@ -12,12 +12,13 @@ GitHub の「Use this template」から新しいリポジトリを作成し、�
 | `AGENTS.md` | Agent が必ず守る作業規約（作業単位・検証・Git 運用・コミュニケーション規約）。§6 にプロジェクト固有のルールを書く。`CLAUDE.md` はこのファイルへの symlink |
 | `.agent/` | Agent の設定と知識。ルール（`rules/`）・スキル（`skills/`）・フック（`hooks/`）・サブエージェント定義（`agents/`）・コマンド（`commands/`）など。`.claude` はこのディレクトリへの symlink。上流由来の資産の出典は `.agent/THIRD_PARTY_NOTICES.md` |
 | `docs/` | ドキュメント一式。`task-list.md`（進捗の正本）・`arch/`（仕様）・`adr/`（個別の設計判断）・`planning/`（計画）・`research/`（調査）・`audit/`（監査）・`ops/`（運用） |
-| `Makefile` | 検証の入口。`make check`（全検証）・`make links`（文書リンク）・`make mermaid`（Mermaid 図）・`make agents`（`AGENTS.md` の予算と品質）・`make setup`（フック導入）・`make help` |
+| `Makefile` | 検証の入口。`make check`（全検証）・`make links`（文書リンク）・`make mermaid`（Mermaid 図）・`make agents`（`AGENTS.md` の予算と品質）・`make lang`（文書の言語）・`make setup`（フック導入）・`make help` |
 | `.pre-commit-config.yaml` | commit 時の検査（衛生・形式・綴り・秘密情報・文書リンク・`AGENTS.md` の予算・コミットメッセージ）。分野を問わない構成 |
 | `biome.json` / `.editorconfig` / `.gitleaks.toml` | 書式・エディタ設定・秘密情報検出の設定（分野を問わない汎用版） |
 | `.github/workflows/` | CI（`ci.yml`：`make check` と gitleaks）、リリース（`release.yml`：タグで検証のうえ GitHub Release）、依存関係レビュー（`dependency-review.yml`） |
 | `scripts/check_doc_links.py` | Markdown の内部リンクを検査する（標準ライブラリのみ） |
 | `scripts/check_mermaid.py` | Mermaid 図の宣言（種類・重複）を検査する（標準ライブラリのみ） |
+| `scripts/check_language.py` | 文書とコミットメッセージの言語を検査する（日本語と英語のみ。標準ライブラリのみ） |
 | `LICENSE` | ライセンス |
 
 ビルド・テストなど**言語固有の設定は含めていません**。CI・Biome・pre-commit は分野を問わない形で置いてあり、`make check` の `PROJECT_CHECKS` に分野固有の検証を足して使います。`.agent/` のフックは `sh` と標準的な Unix コマンドだけで動き、Node.js・pnpm などのランタイムに依存しません。検証手段は `AGENTS.md §6.1` に記録してください。

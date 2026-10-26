@@ -91,6 +91,23 @@ repos:
         pass_filenames: false
         files: \.md$
 
+      # 変更ファイルの言語を検査（scripts/check_language.py）。日本語と英語のみを許可する。
+      # 簡体字などの「日本語に見える他言語」やハングル・キリルの混入を止める。
+      # 派生プロジェクトで他言語のファイルを正当に持つ場合は、スクリプトの IGNORE_PATHS を編集するか
+      # SKIP=language git commit で一時的に外す。
+      - id: language
+        name: ファイルの言語（日本語・英語のみ）
+        entry: python3 scripts/check_language.py
+        language: system
+        always_run: true
+
+      # コミットメッセージの言語も同じ基準で検査する（pre-commit がメッセージファイルのパスを渡す）
+      - id: commit-msg-language
+        name: コミットメッセージの言語（日本語・英語のみ）
+        entry: python3 scripts/check_language.py --commit-msg
+        language: system
+        stages: [commit-msg]
+
       # 秘密情報の混入（gitleaks が入っている場合のみ。無ければスキップし、CI で必ず検査する）
       - id: gitleaks
         name: gitleaks（秘密情報の検出）

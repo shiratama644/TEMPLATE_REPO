@@ -6,9 +6,10 @@
 #   make links     Markdown の内部リンクだけを検査
 #   make mermaid   Mermaid 図の宣言だけを検査
 #   make agents    AGENTS.md の予算と品質だけを検査
+#   make lang      ファイルの言語だけを検査（日本語・英語のみ）
 
 .DEFAULT_GOAL := help
-.PHONY: help setup check links mermaid agents
+.PHONY: help setup check links mermaid agents lang
 
 PRE_COMMIT ?= pre-commit
 
@@ -39,3 +40,6 @@ mermaid: ## Mermaid 図の宣言だけを検査
 
 agents: ## AGENTS.md の予算と品質だけを検査（agents-md-lint）
 	$(PRE_COMMIT) run agents-md-lint --all-files
+
+lang: ## ファイルの言語だけを検査（日本語・英語のみ）
+	python3 scripts/check_language.py

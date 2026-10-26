@@ -101,7 +101,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 > この節だけ**プロジェクトごとに書き換える**。過去に踏んだ地雷・確立した運用ルールの集約場所。計画書と矛盾すれば計画書を優先し、それ以外は本節を厳守する。不要な小節は削除してよい。
 
 ### 6.1 環境・ツールチェーン・検証コマンド（Commands / Setup）
-- **検証の正本**: `make check`（pre-commit の全フック + `Makefile` の `PROJECT_CHECKS`）。`make links` は内部リンクのみ、`make mermaid` は Mermaid 図の宣言のみ、`make agents` は本ファイルの予算と品質のみ。CI（`.github/workflows/ci.yml`）も同じ `make check` を呼ぶ。
+- **検証の正本**: `make check`（pre-commit の全フック + `Makefile` の `PROJECT_CHECKS`）。`make links` は内部リンクのみ、`make mermaid` は Mermaid 図の宣言のみ、`make agents` は本ファイルの予算と品質のみ、`make lang` は文書と言語（日本語・英語のみ）のみ。CI（`.github/workflows/ci.yml`）も同じ `make check` を呼ぶ。
 - 初期セットアップ手順 / 言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
 - **検証コマンド**（§3.1 の正本。例: 型チェック `tsc --noEmit`・Lint `biome check`・テスト `vitest run`・ビルド `npm run build` を実物に置き換えて記入）
 
