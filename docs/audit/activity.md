@@ -32,3 +32,4 @@
 | 2026-10-26 | コミット `5a10b4d` のメッセージの誤字（U+52A8）を正誤記録（LANGGATE-4）。履歴は書き換えない | 実測: `git log -1 --format=%B 5a10b4d` を `--commit-msg` で検査し **exit 1**、「手動」に直すと **exit 0** |
 | 2026-10-26 | `make check` のフック数を実測し、記録の誤記を訂正（今回分 11 → **18**、前タスク分 9 → **17**）。過去ログの誤記は書き換えず新ログ §2.2 に訂正を記録 | `.pre-commit-config.yaml` を `git show <rev>:…` で stage 別に数えて実測。設定総数は 20（pre-commit 18 + commit-msg 2） |
 | 2026-10-26 | AGENTS.md §1.3 に自律的なタスク遂行ルールを追加。既存のスコープ・質問方針・完了条件を整合させ、詳細ルールと入口を更新 | `75bcd91`。`make check` 18 フック PASS、`make links` 137 ファイル OK、`make lang` 167 ファイル OK |
+| 2026-10-26 | 自律ルールを `SessionStart`、タスク開始・検証・ログ手順に接続。実装前ワークフローの完了誤表示を解消 | `92b9b75`。SessionStart JSON とワークフロー mock 5 ケース、`make check` 18 フック PASS |
