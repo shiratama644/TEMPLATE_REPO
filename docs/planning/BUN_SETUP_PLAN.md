@@ -46,3 +46,7 @@ Bun やパッケージレジストリが利用不能、従来の検査と移植�
 - 生成した Vite + React、Next.js の TS/JS 版、Vite/Next monorepo 版を Bun install と build で確認。`full` プリセットの依存も Bun install できた。Python/Go/Rust はファイル生成を確認し、各言語の依存導入・実行は未検証。
 - OS 検出は apt / brew / winget / Termux pkg を mock で検査。OS パッケージ実導入、macOS/Windows/Termux 実機検証は未実施。既存の commit-msg フックを保護し `.githooks` 登録は未実施。
 - CI は固定ブランチに push 後に確認する。実機の未検証項目は BUNSETUP-4 として残す。
+
+### CI 初回の再現性修正（追記）
+
+初回 PR CI は runner に cargo が既に導入済みだったため、OS パッケージ不足時の案内を期待したテストが失敗した。子プロセスの PATH を固定してテストし直し、ローカル 7 ゲート PASS。リモート CI の再実行を確認する。

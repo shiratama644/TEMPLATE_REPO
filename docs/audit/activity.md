@@ -34,3 +34,4 @@
 | 2026-10-26 | AGENTS.md §1.3 に自律的なタスク遂行ルールを追加。既存のスコープ・質問方針・完了条件を整合させ、詳細ルールと入口を更新 | `75bcd91`。`make check` 18 フック PASS、`make links` 137 ファイル OK、`make lang` 167 ファイル OK |
 | 2026-10-26 | 自律ルールを `SessionStart`、タスク開始・検証・ログ手順に接続。実装前ワークフローの完了誤表示を解消 | `92b9b75`。SessionStart JSON とワークフロー mock 5 ケース、`make check` 18 フック PASS |
 | 2026-10-26 | Bun で Python 製検査と pre-commit を置換し、CLI の対話・非対話モード、7 プリセット・17 機能と TS/JS・Python・Go・Rust の生成候補を追加（BUNSETUP-1〜4）。ADR-0004 | `bun run check` 7 ゲート・テスト 12 件 / 59 assertions PASS。Vite/Next TS/JS と両 monorepo の Bun build 成功。OS 実インストールと異なる OS 実機は未検証 |
+| 2026-10-26 | Bun 移行後の PR #5 初回 CI で OS パッケージ案内のテストが失敗。runner に cargo が導入済みである状態を未考慮だった。子プロセスの PATH をテストで固定し分岐を決定的にした | PR #5: frozen install / gitleaks / dependency-review は成功、Bun ゲートは最初失敗。修正後ローカル 7 ゲート・12 テスト PASS、CI 再検証待ち |

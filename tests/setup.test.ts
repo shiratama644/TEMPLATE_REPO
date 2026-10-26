@@ -79,18 +79,27 @@ test("language, name, unknown feature and template mismatch stop before writes",
   }
 })
 test("OS installation is skipped even with --yes, prints guidance", () => {
-  const d = dir(),
-    r = cli(
+  const d = dir()
+  // cargo may already be installed on the runner. Hide host tools so this branch is deterministic.
+  const r = spawnSync(
+    process.execPath,
+    [
+      join(import.meta.dir, "../scripts/setup.ts"),
+      "--dir",
       d,
+      "--name",
+      "test-project",
       "--yes",
       "--apply",
       "--no-install",
+      "--no-os-install",
       "--language",
       "rust",
       "--template",
       "rust-cli",
-      "--no-os-install",
-    )
+    ],
+    { encoding: "utf8", env: { ...process.env, PATH: d } },
+  )
   expect(r.status).toBe(0)
   expect(readFileSync(join(d, "Cargo.toml"), "utf8")).toContain("[package]")
   expect(r.stdout).toContain("OS パッケージは自動導入しません")
