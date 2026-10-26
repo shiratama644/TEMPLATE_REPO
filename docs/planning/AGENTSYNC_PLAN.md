@@ -163,9 +163,27 @@ pre-commit の `language: node` ＋ `additional_dependencies: ["agents-md-lint@1
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| AGENTSYNC-1 | | | |
-| AGENTSYNC-2 | | | |
-| AGENTSYNC-3 | | | |
-| AGENTSYNC-4 | | | |
-| AGENTSYNC-5 | | | |
-| AGENTSYNC-6 | | | |
+| AGENTSYNC-1 | `ed58754` | Component（`agents-md-lint`）+ E2E（`make check` / `make links`）+ 参照の全数照合 | 33,482 B / 461 行 / 17,644 字 → **16,050 B / 170 行 / 8,098 字**。score 43/100 grade F（XP-007 error）→ **92/100 grade A・error 0 件**。`AGENTS.md §N` 参照 24 種類すべて実在、`make links` PASS（131 files）。**残る warn 2 件**: AMC-LENGTH 170 > 150、AGM-003 8,098 > 6,000（理由は下記） |
+| AGENTSYNC-2 | `987c896` | Component（pre-commit 経由）+ **負のテスト** | `make check` の 9 フックに載り PASS、`make agents` PASS。83,603 B のフィクスチャで XP-007 error を報告し **exit 1**、根の `AGENTS.md` で exit 0。**上流 1.0.1 の bin が symlink 経由で no-op**（`cli.js` の `pathToFileURL(argv[1]).href === import.meta.url` が realpath と一致しない）ため、`readlink -f` で実体を解決して `node` で起動する回避策を入れた |
+| AGENTSYNC-3 | `5a10b4d` | Unit（フック 27 ケース）+ JSON 妥当性（python） | 許可 5 / deny 11 / `pre-edit-guard` 禁止 6・許可 4 / `post-edit-verify` 正常系 = **27 ケースすべて期待どおり**。失敗時は `decision:"block"` + reason + exit 0（旧 exit 1 は非ブロッキングで**指摘がモデルに届かなかった**）。allow 18→**39**、deny 10→**17** |
+| AGENTSYNC-4 | `c0091e9` | Component（仕様適合 7 項目）+ E2E（`make links`） | name とフォルダ名一致 / description **283・248 字**（上限 1024）/ 山括弧なし / 本文 **129・131 行**（目安 500 未満）/ 参照 1 レベル / フォルダ内 README なし。スキル 44→**46** 件。段階開示の実測: 常時ロードの description 合計 **7,059 字** 対 本文合計 **300,616 字** = **2.3%** |
+| AGENTSYNC-5 | `dbfabf7` | E2E（`make links`）+ 目視 | README に「どのツールで読まれるか」を新設（AAF 移管・24+ ツール・Codex の連結順と 32 KiB・Claude Code v2.1.277 のフォールバック・symlink を置く理由）。`.agent/README.md` 冒頭に標準の所在。スキル内の日付誤記（2025-09-18）を **2026-09-18** に修正 |
+| AGENTSYNC-6 | `c7de1d0` | E2E（`make links`）+ 目視 | ADR-0002（決定・代替案 4 つと Why not・影響・リスク 4 件＋緩和）を `docs/adr/README.md` と `docs/README.md` に登録。`THIRD_PARTY_NOTICES.md` に cookbook（MIT）の tool 行と「参照した公式文書・実証研究」の節を追加。ライセンス表記のない 3 リポジトリは**参照のみ**と明示 |
+
+### 12.1 soft 目標（150 行 / 6,000 字）に未達の理由
+
+実測は **170 行 / 8,098 字**で、§5 の soft 目標（150 行 / 6,000 字）に届かなかった。判断は次のとおり。
+
+- **hard cap は満たした。** Codex が無言で打ち切る 32,768 B に対し 16,050 B（**51%**）。行数も効果が反転するとされる ~300 行の 57%。実害のある上限はすべて解消している。
+- **これ以上の削減は規約そのものを削る。** 残る 20 行は境界の三段表・7 段階の手順・停止条件のチェックリスト・§6 のプレースホルダで、いずれも実証研究でもっとも効果が高いとされた形式（決定表で遵守率 +25%、番号付き手順で正確さ +25%、名前を挙げたコマンドは 1.6 倍使われる）。削ると「行数」のために「効く規約」を失う。
+- **字数上限は CJK に構造的に不利。** Windsurf の 6,000 字は、日本語では同じ情報量の英語の約 2 倍の制約になる。6,000 字に収めるには §6 のプレースホルダか §8 の段階開示の説明を削る必要があり、テンプレートの価値を毀損する。
+- **緩和策は用意した。** Codex も Windsurf もディレクトリ単位の入れ子 `AGENTS.md` を読むので、超過分は分割で解消できる。手順は `.agent/skills/agents-md-authoring/SKILL.md` §1・§7 に書いた。テンプレート本体は分割しない（1 ファイルで完結する方が派生先で扱いやすい）。
+
+### 12.2 計画からの変更
+
+| 項目 | 計画 | 実際 |
+|---|---|---|
+| §7 の移設先 | `rules/05_communication.md` | 変更なし。加えて AGENTS.md 側の §7 は小節見出しではなく**表の行**で §7.1〜§7.7 を保持した（参照は `AGENTS.md §7.x` の形で残り、grep で解決できる） |
+| §8 の見出し | `### 8.3 index.md 起点の…` | `### 8.3 入口起点の…` に変更。裸の `index.md` は AMC-PATH が error にするため、参照パスはすべてリポジトリ根からのフルパスに統一した |
+| ゲートの entry | `agents-md-lint --root .` | 上流の symlink no-op 不具合のため `readlink -f` + `node` の回避策に変更（ADR-0002・Alternative 3 で検討した上流 Action 案も同じ理由で不採用） |
+| スキルの実測値 | — | `context-budget` に載せる数値は、新規 2 件を含む最終状態（46 件）で測り直した |

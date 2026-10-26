@@ -17,3 +17,11 @@
 | 2026-10-25 | sandbox 復旧の `git reset --hard FETCH_HEAD` をフックと `settings.json` で例外として通す（REPOFIX-4） | `dddabfb`。フック 16 ケース実測 |
 | 2026-10-25 | フック 2 本を kebab-case へリネームし、索引・規約の漂移（存在しない「最終更新」列、計画書の命名）を修正（REPOFIX-5） | `49f7478`、`c76a111`。`make links` PASS（125 files） |
 | 2026-10-25 | `.gitignore` に Python の生成物を追加（REPOFIX-6） | `194838e` |
+| 2026-10-26 | サンドボックス再構築を検知し §4.1.1 の手順で復旧（6 ファイルのハッシュ一致を確認のうえ `git reset --hard FETCH_HEAD`、venv 再構築） | 復旧後 HEAD `49927ab` = origin、`make check` PASS |
+| 2026-10-26 | AGENTSYNC の計画書とタスク行を登録（AGENTSYNC-1〜6） | `45ec169`。出発点の実測 33,482 B / 461 行、linter score 43/100 grade F |
+| 2026-10-26 | AGENTS.md を段階開示で予算内に収め、§7 の詳細を `rules/05_communication.md` へ移設（AGENTSYNC-1） | `ed58754`。16,050 B / 170 行 / 8,098 字、score 92/100 grade A、節番号 24 種類の実在を照合 |
+| 2026-10-26 | `agents-md-lint@1.0.1`（MIT）をゲートに追加。**上流 bin の symlink no-op 不具合を発見し回避**（AGENTSYNC-2） | `987c896`。負のテストで exit 1、適合ファイルで exit 0。ADR-0002 |
+| 2026-10-26 | フックを公式の JSON 形式に移し、allow 18→39 / deny 10→17 件へ拡充（AGENTSYNC-3） | `5a10b4d`。27 ケース実測 OK、JSON 妥当性を python で検証 |
+| 2026-10-26 | 新規スキル `agents-md-authoring`・`context-budget` を追加（AGENTSYNC-4） | `c0091e9`。仕様適合 7 項目を実測、スキル 46 件 |
+| 2026-10-26 | AGENTS.md がクロスツール公開標準であることを README 等に明記（AGENTSYNC-5） | `dbfabf7` |
+| 2026-10-26 | ADR-0002 と出典クレジットを記録（AGENTSYNC-6） | `c7de1d0`。`THIRD_PARTY_NOTICES.md` に MIT 出典と参照文書 |

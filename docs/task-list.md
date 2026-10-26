@@ -26,12 +26,7 @@
 
 | ID | 状態 | 残作業 |
 |---|---|---|
-| AGENTSYNC-1 | 実装中 | AGENTS.md を段階開示で 150 行 / 6,000 字 / 32 KiB 以内に収め、§7 の詳細を `rules/05_communication.md` へ移す |
-| AGENTSYNC-2 | 未着手 | `agents-md-lint@1.0.1` を pre-commit と `make agents` に組込む |
-| AGENTSYNC-3 | 未着手 | フックを公式の JSON 形式に移し、`settings.json` の allow を拡充する |
-| AGENTSYNC-4 | 未着手 | 新規スキル `agents-md-authoring` と `context-budget` を追加する |
-| AGENTSYNC-5 | 未着手 | AGENTS.md がクロスツール公開標準である事実を README 等に明記する |
-| AGENTSYNC-6 | 未着手 | MIT 出典のクレジットと ADR-0002 を記録する |
+| — | — | なし |
 
 ---
 
@@ -72,12 +67,12 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| AGENTSYNC-1 | AGENTS.md を段階開示で予算内に収める | 実装中 | 0% | — | `AGENTS.md` が 150 行以下・6,000 字以下・32,768 B 以下で、`agents-md-lint` が exit 0。参照済み節番号がすべて実在し `make links` PASS | |
-| AGENTSYNC-2 | `agents-md-lint` を検証ゲートに追加する | 未着手 | 0% | AGENTSYNC-1 | pre-commit（`language: node`、版固定 1.0.1）と `make agents` から実行でき、`make check` に載って PASS | |
-| AGENTSYNC-3 | フックと settings を公式仕様へ現代化する | 未着手 | 0% | — | PostToolUse は JSON `decision:"block"`、PreToolUse は `hookSpecificOutput.permissionDecision:"deny"` を返し、判定マトリクス 16 ケースが変わらない。終了コード規約が公式と一致 | |
-| AGENTSYNC-4 | 新規スキル 2 件を追加する | 未着手 | 0% | AGENTSYNC-1 | `agents-md-authoring` と `context-budget` が agentskills.io 仕様に適合し、`skills/index.md` の読み方ガイドと一覧の両方に載る | |
-| AGENTSYNC-5 | クロスツール標準の事実を明記する | 未着手 | 0% | AGENTSYNC-1 | AAIF への移管・24+ ツール・Claude Code v2.1.277・Codex の発見規則と 32 KiB 上限が README と `.agent/README.md` に書かれている | |
-| AGENTSYNC-6 | クレジットと判断を記録する | 未着手 | 0% | すべて | `THIRD_PARTY_NOTICES.md` に MIT 出典（Taiizor/agents-md-cookbook）と参考文書があり、ADR-0002 がある。ライセンス表記のない資料の文面を複製していない | |
+| AGENTSYNC-1 | AGENTS.md を段階開示で予算内に収める | 完了 | 100% | — | `AGENTS.md` が **32,768 B 以下**（Codex の hard cap）で `agents-md-lint` が exit 0、heavy 上限 300 行を大きく下回る。参照済み節番号がすべて実在し `make links` PASS。soft 目標（150 行 / 6,000 字）の扱いは計画書 §5・§12 を参照 | `ed58754`。33,482 B / 461 行 / 17,644 字 → **16,050 B / 170 行 / 8,098 字**。linter は score 43/100 grade F（XP-007 error）→ **92/100 grade A（error 0 件）**。残る warn 2 件（AMC-LENGTH 170>150、AGM-003 8,098>6,000）は理由を計画書 §5 に記録。§6.1（62 件参照）ほか節番号 24 種類すべての実在を照合、`make links` PASS（131 files） |
+| AGENTSYNC-2 | `agents-md-lint` を検証ゲートに追加する | 完了 | 100% | AGENTSYNC-1 | pre-commit（`language: node`、版固定 1.0.1）と `make agents` から実行でき、`make check` に載って PASS。**負のテストで実際に止まる**こと | `987c896`。`make check` の 9 フックに載り PASS、`make agents` PASS。83,603 B のフィクスチャで XP-007 error を報告し exit 1、根の `AGENTS.md` で exit 0。**上流 1.0.1 の bin が symlink 経由で no-op になる不具合を発見**（`cli.js` の `pathToFileURL(argv[1]).href === import.meta.url` 判定が realpath と一致しない）。回避策は `readlink -f` で実体を解決して `node` で起動（ADR-0002） |
+| AGENTSYNC-3 | フックと settings を公式仕様へ現代化する | 完了 | 100% | — | PostToolUse は JSON `decision:"block"`、PreToolUse は `hookSpecificOutput.permissionDecision:"deny"` を返し、判定マトリクス 16 ケースが変わらない。終了コード規約が公式と一致 | `5a10b4d`。フック 27 ケース実測（許可 5 / deny 11 / pre-edit-guard 禁止 6・許可 4 / post-edit-verify 正常系）すべて OK、JSON の妥当性は python で検証。失敗時は `decision:"block"` + reason を返し exit 0（旧 exit 1 は非ブロッキングで**指摘がモデルに届かなかった**）。allow 18→**39** 件（`make *`・`python3 scripts/*` ほか）、deny 10→**17** 件（`git clean -f*`・`branch -D`・`checkout .`・`restore .`・main/master への push） |
+| AGENTSYNC-4 | 新規スキル 2 件を追加する | 完了 | 100% | AGENTSYNC-1 | `agents-md-authoring` と `context-budget` が agentskills.io 仕様に適合し、`skills/index.md` の読み方ガイドと一覧の両方に載る | `c0091e9`。仕様適合 7 項目を実測: name とフォルダ名一致 / description 283・248 字（上限 1024）/ 山括弧なし / 本文 129・131 行（目安 500 未満）/ 参照は 1 レベル / フォルダ内 README なし。スキル 44→**46** 件。段階開示の実測（常時ロードの description 合計 7,059 字 対 本文合計 300,616 字 = **2.3%**）を `context-budget` に記載 |
+| AGENTSYNC-5 | クロスツール標準の事実を明記する | 完了 | 100% | AGENTSYNC-1 | AAIF への移管・24+ ツール・Claude Code v2.1.277・Codex の発見規則と 32 KiB 上限が README と `.agent/README.md` に書かれている | `dbfabf7`。README に「どのツールで読まれるか」を新設（ツール別の読むファイルと注意の表、symlink を置く理由）。`.agent/README.md` 冒頭に指示ファイルはツール非依存の標準・`.agent/` 構成は Claude Code 準拠と明記。スキル内のフォールバック日付の誤記（2025-09-18）を 2026-09-18 に修正 |
+| AGENTSYNC-6 | クレジットと判断を記録する | 完了 | 100% | すべて | `THIRD_PARTY_NOTICES.md` に MIT 出典（Taiizor/agents-md-cookbook）と参考文書があり、ADR-0002 がある。ライセンス表記のない資料の文面を複製していない | `c7de1d0`。ADR-0002（決定・代替案 4 つと Why not・影響・リスク 4 件＋緩和）を `docs/adr/README.md` と `docs/README.md` に登録。`THIRD_PARTY_NOTICES.md` に cookbook（MIT）の tool 行と「参照した公式文書・実証研究」の節（Anthropic / Codex / agentskills.io / ETH Zurich / Augment / GitHub / Chroma）を追加。ライセンス表記のない 3 リポジトリは参照のみと明示 |
 
 ---
 
