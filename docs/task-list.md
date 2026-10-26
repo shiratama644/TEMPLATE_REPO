@@ -27,7 +27,6 @@
 | ID | 状態 | 残作業 |
 |---|---|---|
 | LANGGATE-2 | 保留 | 所有者による上流（Taiizor/agents-md-cookbook）への issue 投稿。文面は [`audit/issues-lint.md`](./audit/issues-lint.md) §6 に用意済み（この環境の GitHub 接続では第三者リポジトリに起票できない） |
-| BUNSETUP-2 | ローカル検証済み | CI の Bun ゲート確認とコミット・固定ブランチへの push |
 | BUNSETUP-4 | 実環境検証待ち | macOS / Windows / Termux の実機検証と、利用者が明示的に承認した OS パッケージ導入（このサンドボックスでは行わない） |
 
 ---
@@ -97,7 +96,7 @@
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
 | BUNSETUP-1 | Python の 3 検査を TypeScript に移植 | 完了 | 100% | — | 自己検査・負の fixture と全体走査が旧版の結果と一致し、Python 実行を現用導線から除く | 旧版と新言語検査の 181 ファイル走査が exit 0 で一致。リンク 142 ファイル、Mermaid 12 ブロック、言語 183 ファイル PASS。`bun run check` 7 ゲート PASS |
-| BUNSETUP-2 | 依存・フック・CI を Bun に統一 | ローカル検証済み | 90% | BUNSETUP-1 | `bun install --frozen-lockfile`・`bun run check` と CI が PASS。既存 hook を上書きしない | Bun 1.4.4 の frozen install と 7 ゲート PASS。既存 trailer hook を検出し登録拒否（exit 1）、`core.hooksPath` 不変。CI 実行待ち |
+| BUNSETUP-2 | 依存・フック・CI を Bun に統一 | 完了 | 100% | BUNSETUP-1 | `bun install --frozen-lockfile`・`bun run check` と CI が PASS。既存 hook を上書きしない | `502540c`。Bun 1.4.4 の frozen install と 7 ゲート PASS。PR #5 の CI 3 件（Bun / gitleaks / dependency-review）PASS。既存 trailer hook を検出し登録拒否（exit 1）、`core.hooksPath` 不変 |
 | BUNSETUP-3 | 対話式・非対話式 setup CLI と広いテンプレート選択 | 完了 | 100% | BUNSETUP-2 | 7 プリセット・17 機能・Web/TS/JS/Python/Go/Rust を選択でき、dry-run・適用・再実行・既存ファイル保護のテストが通る | Bun テスト 12 件・59 assertions PASS。疑似端末の対話適用、`--yes --apply` の直接 Bun install、Vite・Next の TS/JS および Vite/Next monorepo の Bun build PASS。Python/Go/Rust の依存・実機ビルドは別途検証が必要 |
 | BUNSETUP-4 | OS 別の導入判断と文書整理の案内 | 実環境検証待ち | 80% | BUNSETUP-3 | apt/brew/winget/pkg の検出と個別承認。非対話時は OS パッケージを自動導入しない。文書削除は提案だけ | apt / brew / winget / Termux pkg の検出と `--yes` 非導入のテスト PASS。文書案内を CLI 出力で確認。実機 OS パッケージ導入は安全上未実施 |
 
