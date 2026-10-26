@@ -65,7 +65,7 @@ TEMPLATE_REPO/
 ## 4. 変更の原則
 
 - 構成を変えたら、本ファイル・`docs/README.md`・`README.md`・`AGENTS.md §8` を同じ変更で更新する。
-- フックのスクリプトは POSIX `sh` で書き、終了コード（0 = 許可、2 = ブロック）の規約に従う。
+- フックのスクリプトは POSIX `sh` で書き、判定は JSON を stdout へ出して `exit 0` で返す（PreToolUse は `hookSpecificOutput.permissionDecision`、PostToolUse は top-level `decision`）。exit code の意味は公式リファレンスに従い、`.agent/hooks/index.md` に規約を記録する。
 - 環境に依存する設定（OS・ランタイム・外部サービス）はテンプレート本体に入れず、`AGENTS.md §6` に書く。
 - 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない（[`adr/0001-mermaid-source.md`](../adr/0001-mermaid-source.md)）。図の検証は `make mermaid`。
 - `scripts/` の検証スクリプトは標準ライブラリのみで書き、外部の取得や追加のランタイムを必要としない。

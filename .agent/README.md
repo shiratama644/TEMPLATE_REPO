@@ -64,7 +64,7 @@
 | イベント | matcher | スクリプト | 役割 |
 |---|---|---|---|
 | `SessionStart` | `startup\|resume\|clear\|compact` | `hooks/session-start.sh` | 正本の所在・ブランチ・直近コミット・未コミット変更・未完了サマリーを注入 |
-| `PreToolUse` | `Bash` | `hooks/block-dangerous-git.sh` | force push・`reset --hard`・main への push 等をブロック（exit 2） |
+| `PreToolUse` | `Bash` | `hooks/block-dangerous-git.sh` | force push・`reset --hard`・main への push 等をブロック（`permissionDecision: deny` の JSON） |
 | `PreToolUse` | `Edit\|MultiEdit\|Write` | `hooks/pre-edit-guard.sh` | 編集禁止領域（`.git/`・依存・生成物）をブロック |
 | `PostToolUse` | `Edit\|MultiEdit\|Write` | `hooks/post-edit-verify.sh` | 編集後の事後検証 |
 
