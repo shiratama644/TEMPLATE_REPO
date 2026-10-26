@@ -36,3 +36,4 @@
 | 2026-10-26 | Bun で Python 製検査と pre-commit を置換し、CLI の対話・非対話モード、7 プリセット・17 機能と TS/JS・Python・Go・Rust の生成候補を追加（BUNSETUP-1〜4）。ADR-0004 | `bun run check` 7 ゲート・テスト 12 件 / 59 assertions PASS。Vite/Next TS/JS と両 monorepo の Bun build 成功。OS 実インストールと異なる OS 実機は未検証 |
 | 2026-10-26 | Bun 移行後の PR #5 初回 CI で OS パッケージ案内のテストが失敗。runner に cargo が導入済みである状態を未考慮だった。子プロセスの PATH をテストで固定し分岐を決定的にした | PR #5: frozen install / gitleaks / dependency-review は成功、Bun ゲートは最初失敗。修正後ローカル 7 ゲート・12 テスト PASS、CI 再検証待ち |
 | 2026-10-26 | Bun 移行の PR #5 を再検証し、BUNSETUP-2 を完了。OS 実機と導入は BUNSETUP-4 に残す | `502540c`。PR #5 の Bun 7 ゲート・gitleaks・dependency-review 3 件 PASS。12 テスト / 59 assertions PASS |
+| 2026-10-26 | BUNAUDIT-1: Bun セットアップと生成物を監査。無効な構成・Git メタデータ/バックアップのパス保護、機能の互換、生成した library / native 依存、文書検査、フックの導入を修正。未知の全バグがないことは保証しない | 回帰テスト 30 件 / 220 assertions PASS。Web 6 通り build、library/full の publint・size、Python FastAPI venv と import、Playwright HTTP スモークを実測。OS パッケージ導入と非 Linux 実機は未検証。CI は push 後に確認 |

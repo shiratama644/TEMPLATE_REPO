@@ -38,3 +38,9 @@ node_modules/
 .bun/
 .setup-backup/
 .setup-pkg-*.tmp
+
+# Generated language runtimes and build outputs
+.venv/
+target/
+.next/
+.turbo/

@@ -18,8 +18,8 @@ export function checkBlock(body: string[]): string[] {
     return [`図の宣言が先頭にありません（${diagrams[0][0] + 1} 行目）`]
   return []
 }
-export function blocks(text: string): Array<[number, string[]]> {
-  const result: Array<[number, string[]]> = []
+export function blocks(text: string): Array<[number, string[], boolean]> {
+  const result: Array<[number, string[], boolean]> = []
   let start = 0
   let body: string[] | null = null
   for (const [index, line] of text.split("\n").entries()) {
@@ -29,11 +29,11 @@ export function blocks(text: string): Array<[number, string[]]> {
         body = []
       }
     } else if (/^```[ \t]*$/.test(line)) {
-      result.push([start, body])
+      result.push([start, body, true])
       body = null
     } else body.push(line)
   }
-  if (body !== null) result.push([start, body])
+  if (body !== null) result.push([start, body, false])
   return result
 }
 export function checkMermaid(base = root): number {
@@ -56,8 +56,12 @@ export function checkMermaid(base = root): number {
     if (!path.endsWith(".md")) continue
     const found = blocks(readFileSync(path, "utf8"))
     if (found.length) scanned++
-    for (const [line, body] of found) {
+    for (const [line, body, closed] of found) {
       count++
+      if (!closed) {
+        console.error(`${display(path, base)}:${line}: Mermaid ブロックが閉じられていません`)
+        errors++
+      }
       for (const issue of checkBlock(body)) {
         console.error(`${display(path, base)}:${line}: ${issue}`)
         errors++

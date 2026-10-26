@@ -118,7 +118,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 
 ### 6.1 環境・ツールチェーン・検証コマンド（Commands / Setup）
 - **検証の正本**: `bun run check`（TypeScript の文書・言語・指示品質・Biome・型・テスト）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang`。CI も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check` を実行する。
-- **セットアップ**: Bun が前提。対話式・非対話式の `bun run setup [引数]`（`--yes --apply` で非対話適用、`--dry-run` は不変更）。OS パッケージは対話式でコマンドごとに承認を要し、文書削除は候補の案内のみ。生成先 Python / Go / Rust の依存は各言語標準ツールで扱う。
+- **セットアップ**: Bun が前提。対話式・非対話式の `bun run setup [引数]`（`--yes --apply` で非対話適用、`--dry-run` は不変更）。OS パッケージは対話式でコマンドごとに承認を要し、文書削除は候補の案内のみ。生成先 Python FastAPI は `.venv` の pip、Rust Axum は `cargo fetch`、Go は標準ライブラリで扱い、`--no-install` は依存導入をスキップする。
 - 初期セットアップ手順 / 言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
 - **検証コマンド**（§3.1 の正本。例: 型チェック `tsc --noEmit`・Lint `biome check`・テスト `vitest run`・ビルド `npm run build` を実物に置き換えて記入）
 

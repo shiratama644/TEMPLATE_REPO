@@ -28,6 +28,7 @@
 |---|---|---|
 | LANGGATE-2 | 保留 | 所有者による上流（Taiizor/agents-md-cookbook）への issue 投稿。文面は [`audit/issues-lint.md`](./audit/issues-lint.md) §6 に用意済み（この環境の GitHub 接続では第三者リポジトリに起票できない） |
 | BUNSETUP-4 | 実環境検証待ち | macOS / Windows / Termux の実機検証と、利用者が明示的に承認した OS パッケージ導入（このサンドボックスでは行わない） |
+| BUNAUDIT-1 | ローカル検証済み | 修正後の全ゲートと PR の CI 検証。実機で未検証の経路は残す |
 
 ---
 
@@ -99,6 +100,14 @@
 | BUNSETUP-2 | 依存・フック・CI を Bun に統一 | 完了 | 100% | BUNSETUP-1 | `bun install --frozen-lockfile`・`bun run check` と CI が PASS。既存 hook を上書きしない | `502540c`。Bun 1.4.4 の frozen install と 7 ゲート PASS。PR #5 の CI 3 件（Bun / gitleaks / dependency-review）PASS。既存 trailer hook を検出し登録拒否（exit 1）、`core.hooksPath` 不変 |
 | BUNSETUP-3 | 対話式・非対話式 setup CLI と広いテンプレート選択 | 完了 | 100% | BUNSETUP-2 | 7 プリセット・17 機能・Web/TS/JS/Python/Go/Rust を選択でき、dry-run・適用・再実行・既存ファイル保護のテストが通る | Bun テスト 12 件・59 assertions PASS。疑似端末の対話適用、`--yes --apply` の直接 Bun install、Vite・Next の TS/JS および Vite/Next monorepo の Bun build PASS。Python/Go/Rust の依存・実機ビルドは別途検証が必要 |
 | BUNSETUP-4 | OS 別の導入判断と文書整理の案内 | 実環境検証待ち | 80% | BUNSETUP-3 | apt/brew/winget/pkg の検出と個別承認。非対話時は OS パッケージを自動導入しない。文書削除は提案だけ | apt / brew / winget / Termux pkg の検出と `--yes` 非導入のテスト PASS。文書案内を CLI 出力で確認。実機 OS パッケージ導入は安全上未実施 |
+
+### Bun セットアップの不具合監査 (2026-10-26 計画)
+
+> 計画書: [`planning/BUN_AUDIT_PLAN.md`](./planning/BUN_AUDIT_PLAN.md)。再現できたバグを修正し、有限の検証で断言できない OS 別の残余リスクを分離する。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| BUNAUDIT-1 | Bun 版 CLI・生成物・検査の不具合を監査・修正する | ローカル検証済み | 90% | BUNSETUP-1〜3 | 入力・symlink・バックアップ・生成物・検査の負のテスト、実行可能な生成先の実ビルド、Bun 全ゲートと CI が PASS。未実機確認は BUNSETUP-4 として残す | 回帰テストと生成先 Web / library / Python の実測は Agent ログに記録。PR CI と最終 SHA の記録待ち |
 
 ---
 

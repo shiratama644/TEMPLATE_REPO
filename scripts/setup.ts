@@ -6,14 +6,17 @@ import {
   existsSync,
   lstatSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs"
-import { basename, dirname, isAbsolute, join, resolve } from "node:path"
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 import { createInterface } from "node:readline/promises"
 import {
+  compatibleFeatures,
   type Feature,
   featureNames,
   featureScaffold,
@@ -73,7 +76,7 @@ function option(args: string[]): Options {
       if (!v || v.startsWith("--")) throw new Error(`${a} に値が必要です`)
       if (a === "--features")
         o.features = (
-          v === "all" ? [...featureNames] : v === "none" ? [] : v.split(",")
+          v === "all" ? [...featureNames] : v === "none" ? [] : v.split(",").map((f) => f.trim())
         ) as Feature[]
       else (o as unknown as Record<string, string>)[keys[a]] = v
     } else if (a === "--help" || a === "-h") o.help = true
@@ -88,25 +91,38 @@ function option(args: string[]): Options {
   return o
 }
 function assertChoices(o: Options): void {
-  if (o.preset && !(o.preset in presets)) throw new Error(`不明なプリセット: ${o.preset}`)
-  if (o.language && !(o.language in templates)) throw new Error(`不明な言語: ${o.language}`)
-  if (o.template && !Object.values(templates).flat().includes(o.template))
+  if (o.preset !== undefined && (typeof o.preset !== "string" || !(o.preset in presets)))
+    throw new Error(`不明なプリセット: ${o.preset}`)
+  if (o.language !== undefined && (typeof o.language !== "string" || !(o.language in templates)))
+    throw new Error(`不明な言語: ${o.language}`)
+  if (o.template !== undefined && !Object.values(templates).flat().includes(o.template))
     throw new Error(`不明なテンプレート: ${o.template}`)
+  if (o.features !== undefined) {
+    if (!Array.isArray(o.features) || o.features.some((f) => typeof f !== "string"))
+      throw new Error("機能は文字列の配列で指定してください")
+    const unknown = o.features.filter((f) => !featureNames.includes(f))
+    if (unknown.length) throw new Error(`不明な機能: ${unknown.join(", ")}`)
+  }
   if (
-    o.features &&
-    (!Array.isArray(o.features) || o.features.some((f) => !featureNames.includes(f)))
+    o.name !== undefined &&
+    (typeof o.name !== "string" ||
+      o.name.length > 64 ||
+      !/^[a-z](?:[a-z0-9]|-(?=[a-z0-9]))*$/.test(o.name))
   )
-    throw new Error(`不明な機能: ${o.features.filter((f) => !featureNames.includes(f)).join(", ")}`)
-  if (o.name && (typeof o.name !== "string" || !/^[a-z][a-z0-9-]{0,63}$/.test(o.name)))
     throw new Error("プロジェクト名は英小文字で始まる kebab-case（最大 64 文字）にしてください")
+  if (o.description !== undefined && typeof o.description !== "string")
+    throw new Error("説明は文字列で指定してください")
   if (o.template && o.language && !templates[o.language].includes(o.template))
     throw new Error(`${o.template} は ${o.language} に対応しません`)
 }
 function safe(root: string, p: string): string {
-  if (isAbsolute(p) || p.split(/[\\/]/).includes("..") || !p || p.startsWith(".git/"))
+  const segments = p.split(/[\\/]/)
+  if (isAbsolute(p) || segments.includes("..") || segments.includes(".git") || !p)
     throw new Error(`不正な生成パス: ${p}`)
   const full = resolve(root, p)
-  if (!full.startsWith(root + "/") && full !== root) throw new Error(`対象外のパス: ${p}`)
+  const rel = relative(root, full)
+  if (!rel || rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel))
+    throw new Error(`対象外のパス: ${p}`)
   for (let dir = dirname(full); dir !== root; dir = dirname(dir))
     if (existsSync(dir) && lstatSync(dir).isSymbolicLink())
       throw new Error(`シンボリックリンク経由の書き込みはしません: ${p}`)
@@ -124,7 +140,12 @@ export function detectPackageManager(
   if (os === "win32")
     return {
       name: "winget",
-      packages: { python3: "Python.Python.3.12", go: "GoLang.Go", cargo: "Rustlang.Rustup" },
+      packages: {
+        python3: "Python.Python.3.12",
+        python: "Python.Python.3.12",
+        go: "GoLang.Go",
+        cargo: "Rustlang.Rustup",
+      },
     }
   if (os === "linux" && isDebian)
     return { name: "apt", packages: { python3: "python3", go: "golang-go", cargo: "cargo" } }
@@ -136,9 +157,29 @@ function osCommand(m: string, p: string): string[] {
   if (m === "pkg") return ["pkg", "install", "-y", p]
   return ["winget", "install", "--id", p, "--exact"]
 }
-const available = (bin: string) =>
-  spawnSync(process.platform === "win32" ? "where" : "which", [bin], { stdio: "ignore" }).status ===
-  0
+const runtimeBinary = (bin: string) =>
+  process.platform === "win32" && bin === "python3" ? "python" : bin
+const available = (bin: string) => Bun.which(runtimeBinary(bin)) !== null
+export function nativeInstallSteps(
+  template: Template,
+  dir: string,
+  os = process.platform,
+): string[][] {
+  if (template === "python-fastapi")
+    return [
+      [os === "win32" ? "python" : "python3", "-m", "venv", ".venv"],
+      [
+        join(dir, ".venv", os === "win32" ? "Scripts/python.exe" : "bin/python"),
+        "-m",
+        "pip",
+        "install",
+        "-e",
+        ".",
+      ],
+    ]
+  if (template === "rust-axum") return [["cargo", "fetch"]]
+  return []
+}
 const readJson = (path: string) => JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
 const json = (value: unknown) => JSON.stringify(value, null, 2) + "\n"
 export async function run(args: string[]): Promise<number> {
@@ -154,14 +195,21 @@ export async function run(args: string[]): Promise<number> {
     return 0
   }
   o.dir = resolve(o.dir)
-  if (!existsSync(o.dir)) throw new Error(`対象ディレクトリが存在しません: ${o.dir}`)
+  if (!existsSync(o.dir) || !statSync(o.dir).isDirectory())
+    throw new Error(`対象ディレクトリが存在しません: ${o.dir}`)
   if (o.config) {
     const config = readJson(resolve(o.config))
-    // Only documented configuration keys may be loaded.
-    for (const k of ["name", "description", "language", "template", "preset", "features"] as const)
+    if (!config || typeof config !== "object" || Array.isArray(config))
+      throw new Error("設定ファイルは JSON オブジェクトで指定してください")
+    const keys = ["name", "description", "language", "template", "preset", "features"] as const
+    for (const key of Object.keys(config))
+      if (!keys.includes(key as (typeof keys)[number]))
+        throw new Error(`設定ファイルに不明な項目があります: ${key}`)
+    for (const k of keys)
       if (config[k] !== undefined && o[k] === undefined)
         (o as unknown as Record<string, unknown>)[k] = config[k]
   }
+  assertChoices(o) // Validate JSON and CLI values before indexing presets / templates.
   const tty = Boolean(process.stdin.isTTY && process.stdout.isTTY)
   if (!tty && !o.yes && !o.dryRun)
     throw new Error("非対話式には --yes を指定してください（書き込みには --apply も必要）")
@@ -212,9 +260,23 @@ export async function run(args: string[]): Promise<number> {
               ? [...featureNames]
               : (input.split(",").map((s) => s.trim()) as Feature[])
     }
+    const explicitFeatures = o.features !== undefined
     o.features ??= preset.features
     assertChoices(o)
+    const allowed = compatibleFeatures(o.template)
+    const incompatible = o.features.filter((f) => !allowed.includes(f))
+    if (incompatible.length) {
+      if (explicitFeatures)
+        throw new Error(`${o.template} では使用できない機能: ${incompatible.join(", ")}`)
+      console.log(`対象言語・テンプレートに非対応の機能を除外: ${incompatible.join(", ")}`)
+      o.features = o.features.filter((f) => allowed.includes(f))
+    }
     const base = scaffold(o.template, o.name)
+    const publishable =
+      ["plain-ts", "plain-js"].includes(o.template) &&
+      (o.preset === "library" || o.features.includes("publint"))
+    if (publishable && o.template === "plain-ts" && base.scripts)
+      base.scripts.build = `${base.scripts.build} && bun x tsc --declaration --emitDeclarationOnly --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler src/index.ts`
     const extra = featureScaffold(o.features, o.name, o.template)
     if (
       o.features.includes("termux") &&
@@ -254,9 +316,22 @@ export async function run(args: string[]): Promise<number> {
       ...existing,
       name: o.name,
       description: o.description || existing.description || "",
-      private: true,
+      private: o.preset === "library" ? false : (existing.private ?? true),
+      version: existing.version ?? "0.1.0",
       type: "module",
       packageManager: "bun@1.4.4",
+      ...(publishable
+        ? {
+            main: existing.main ?? "./dist/index.js",
+            ...(o.template === "plain-ts" ? { types: existing.types ?? "./dist/index.d.ts" } : {}),
+            exports:
+              existing.exports ??
+              (o.template === "plain-ts"
+                ? { ".": { types: "./dist/index.d.ts", import: "./dist/index.js" } }
+                : { ".": "./dist/index.js" }),
+            files: existing.files ?? ["dist"],
+          }
+        : {}),
       ...(o.template === "monorepo" || o.template === "next-monorepo"
         ? { workspaces: ["apps/*", "packages/*"] }
         : {}),
@@ -267,13 +342,19 @@ export async function run(args: string[]): Promise<number> {
         ...base.dev,
         ...extra.dev,
       },
+      ...extra.package,
     }
     const pkgPath = safe(o.dir, "package.json")
-    if (existsSync(pkgPath) && lstatSync(pkgPath).isSymbolicLink())
+    if (lstatSync(pkgPath, { throwIfNoEntry: false })?.isSymbolicLink())
       throw new Error("package.json が symlink です。安全のため中止します")
     const create = Object.entries(generated).filter(([p]) => !existsSync(safe(o.dir, p)))
     const retained = Object.keys(generated).filter((p) => existsSync(safe(o.dir, p)))
     const pkgChanged = !existsSync(pkgPath) || readFileSync(pkgPath, "utf8") !== json(pkg)
+    const configDest = o.saveConfig ? safe(o.dir, o.saveConfig) : undefined
+    if (configDest && existsSync(configDest))
+      throw new Error(`既存の設定ファイルを上書きできません: ${o.saveConfig}`)
+    // Check the backup path before writing any generated file.
+    if (pkgChanged && existsSync(pkgPath)) safe(o.dir, ".setup-backup/check")
     console.log(`\nセットアップ計画: ${o.name} / ${o.language} / ${o.template} / ${o.preset}`)
     console.log(`機能: ${o.features.join(", ") || "なし"}`)
     console.log(
@@ -298,7 +379,12 @@ export async function run(args: string[]): Promise<number> {
       console.log("中止しました")
       return 0
     }
-    const backup = join(o.dir, ".setup-backup", new Date().toISOString().replace(/[:.]/g, "-"))
+    const backupRoot = safe(o.dir, ".setup-backup")
+    let backup: string | undefined
+    if (pkgChanged && existsSync(pkgPath)) {
+      mkdirSync(backupRoot, { recursive: true })
+      backup = mkdtempSync(join(backupRoot, "manifest-"))
+    }
     const created: string[] = []
     const changed: string[] = []
     try {
@@ -310,7 +396,7 @@ export async function run(args: string[]): Promise<number> {
       }
       if (pkgChanged) {
         if (existsSync(pkgPath)) {
-          mkdirSync(backup, { recursive: true })
+          if (!backup) throw new Error("バックアップの作成に失敗しました")
           copyFileSync(pkgPath, join(backup, "package.json"))
           changed.push(pkgPath)
         }
@@ -319,12 +405,10 @@ export async function run(args: string[]): Promise<number> {
         renameSync(tmp, pkgPath)
         if (!changed.length) created.push(pkgPath)
       }
-      if (o.saveConfig) {
-        const dest = safe(o.dir, o.saveConfig)
-        if (existsSync(dest))
-          throw new Error(`既存の設定ファイルを上書きできません: ${o.saveConfig}`)
+      if (configDest) {
+        mkdirSync(dirname(configDest), { recursive: true })
         writeFileSync(
-          dest,
+          configDest,
           json({
             name: o.name,
             description: o.description,
@@ -335,11 +419,11 @@ export async function run(args: string[]): Promise<number> {
           }),
           { flag: "wx" },
         )
-        created.push(dest)
+        created.push(configDest)
       }
     } catch (e) {
       for (const path of created) rmSync(path, { force: true })
-      for (const path of changed) copyFileSync(join(backup, basename(path)), path)
+      for (const path of changed) if (backup) copyFileSync(join(backup, basename(path)), path)
       throw e
     }
     console.log(
@@ -357,25 +441,48 @@ export async function run(args: string[]): Promise<number> {
           "bun install に失敗。生成ファイルは残しています。設定を確認して再実行してください",
         )
     }
+    let missingNativeTool = false
     for (const bin of base.requires || []) {
       if (available(bin)) continue
       const m = detectPackageManager(),
         p = m?.packages[bin]
       if (!m || !p) {
         console.log(`${bin} が必要です。OS に応じて手動で導入してください`)
+        missingNativeTool = true
         continue
       }
       const command = osCommand(m.name, p)
       console.log(`必要な OS パッケージ: ${command.join(" ")}`)
       if (!tty || o.yes || o.noOsInstall) {
         console.log("OS パッケージは自動導入しません")
+        missingNativeTool = true
         continue
       }
-      if ((await ask(`${bin} を今インストールしますか？コマンドを確認し yes と入力: `)) !== "yes")
+      if ((await ask(`${bin} を今インストールしますか？コマンドを確認し yes と入力: `)) !== "yes") {
+        missingNativeTool = true
         continue
+      }
       const installed = spawnSync(command[0], command.slice(1), { stdio: "inherit", shell: false })
-      if (installed.status !== 0)
+      if (installed.status !== 0) {
         console.error(`${bin} のインストールに失敗しました。手動で確認してください`)
+        missingNativeTool = true
+      } else missingNativeTool ||= !available(bin)
+    }
+    if (!o.noInstall && !missingNativeTool) {
+      const steps = nativeInstallSteps(o.template, o.dir)
+      if (
+        steps.length &&
+        lstatSync(join(o.dir, ".venv"), { throwIfNoEntry: false })?.isSymbolicLink()
+      )
+        throw new Error(".venv が symlink です。安全のため依存導入を中止します")
+      for (const [command, ...args] of steps) {
+        console.log(`言語別の依存を導入: ${command} ${args.join(" ")}`)
+        const result = spawnSync(command, args, { cwd: o.dir, stdio: "inherit", shell: false })
+        if (result.status !== 0)
+          throw new Error(`依存導入に失敗しました: ${command}。生成ファイルは保持します`)
+      }
+    } else if (missingNativeTool) {
+      console.log("言語別の依存導入は保留しました。必要な実行ツールを用意してください")
     }
     console.log(
       "セットアップ処理が終わりました。案内した文書・スキル候補を確認してください（自動削除はしません）。",

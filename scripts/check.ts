@@ -11,7 +11,10 @@ const commands: Array<[string, () => number]> = [
   ["AGENTS.md", checkAgents],
   ["Biome", () => spawnSync("bun", ["x", "biome", "check", "."], { stdio: "inherit" }).status ?? 1],
   ["型検査", () => spawnSync("bun", ["run", "typecheck"], { stdio: "inherit" }).status ?? 1],
-  ["テスト", () => spawnSync("bun", ["test"], { stdio: "inherit" }).status ?? 1],
+  [
+    "テスト",
+    () => spawnSync("bun", ["test", "tests/setup.test.ts"], { stdio: "inherit" }).status ?? 1,
+  ],
 ]
 for (const [name, run] of commands) {
   console.log(`== ${name}`)

@@ -51,7 +51,9 @@ bun run check                                 # CI と同じ入口（型・単�
 | Go | CLI / HTTP |
 | Rust | CLI / Axum |
 
-セットアップと品質ツールは Bun で管理します。Python / Go / Rust の**生成先アプリ本体**はそれぞれの標準の言語ツールを使います（Bun で Python パッケージ等を管理することはできません）。Bun 自体が入っていない場合は事前に導入してください。OS の自動検出は apt、Homebrew、winget、Termux pkg に対応し、それ以外は導入方法の確認を案内します。
+セットアップと品質ツールは Bun で管理します。Python / Go / Rust の**生成先アプリ本体**はそれぞれの標準の言語ツールを使います（Bun で Python パッケージ等を管理することはできません）。Python FastAPI は生成先の `.venv` に pip で依存を導入し、Rust Axum は `cargo fetch` を実行します。Go テンプレートは現時点で標準ライブラリのみです。`--no-install` は Bun と言語別の依存導入を両方スキップします。Bun 自体が入っていない場合は事前に導入してください。OS の自動検出は apt、Homebrew、winget、Termux pkg に対応し、それ以外は導入方法の確認を案内します。
+
+選択した言語やテンプレートに使えない機能は、明示指定時はエラーで停止し、プリセット由来なら除外した機能を表示します。`library` プリセットは型宣言・publint・size-limit を使える生成物を作りますが、公開やリリースは自動では行いません。Husky を選択した場合も Git フックは自動登録せず、生成先で既存フックを確認してから `bun run husky:install` を明示実行します（既存フックがあれば停止）。Vitest と Playwright の初期テストは生成物の動作確認用のスモークテストです。本格的なブラウザ操作やアプリ固有のテストは派生プロジェクト側で追加してください。
 
 Git フックを導入する場合は `bun run hooks:install`（既存の commit-msg / pre-commit フックがある場合は上書きせず停止）。`make setup` も同じ操作です。こちらの作業環境には既存の commit-msg フックがあるため、導入は行っていません。
 
