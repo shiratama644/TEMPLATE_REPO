@@ -42,7 +42,22 @@
 | `agents/*.md` | ✓ | サブエージェント定義 | [Subagents](https://code.claude.com/docs/en/sub-agents.md) |
 | `output-styles/*.md` | ✓ | 出力スタイル | [Output styles](https://code.claude.com/docs/en/output-styles.md) |
 | `workflows/*.js` | ✓ | 動的ワークフロー | [Workflows](https://code.claude.com/docs/en/workflows.md) |
-| `logs/` | ✓ | タスク実行ログ（テンプレート独自） | — |
+| `hooks/*.sh` `hooks/*.md` | ✓ | 実行スクリプト（settings.json に登録）と定型手順 | [Hooks](https://code.claude.com/docs/en/hooks) |
+| `agent-memory/` |  | サブエージェント永続メモリ（自動生成・gitignore） | [Memory](https://code.claude.com/docs/en/memory) |
+| `THIRD_PARTY_NOTICES.md` | ✓ | 取り込んだ上流 OSS のライセンス表示 | — |
+| `logs/` | ✓ | タスク実行ログ（**テンプレート独自**） | — |
+
+### 公式 `.claude/` 構成との対応
+
+`settings.json`・`rules/`・`skills/`・`commands/`・`agents/`・`output-styles/`・`workflows/`・`agent-memory/` は公式と**同型**（ディレクトリ名・ファイル名・frontmatter の必須キーとも）。テンプレート独自は次の 2 つだけ。
+
+| 公式 `.claude/` | 本テンプレート | 備考 |
+|---|---|---|
+| — | `hooks/` | 手順 `.md` ＋ 実行 `.sh`。登録は公式どおり `settings.json` の `hooks` 経由 |
+| — | `logs/` | 4 セクション（指示内容/実行内容/気づき/次アクション）の実行ログ。**追加のみ** |
+| `CLAUDE.md` | `CLAUDE.md` → `AGENTS.md`（symlink） | 正本は `AGENTS.md`。どちらの名前でも同じ内容が読まれる |
+
+`rules/`・`skills/`・`hooks/` の各ディレクトリ直下には **`index.md`**（入口）を置く。`logs/` は日付名で並ぶため不要。
 
 ## フック（settings.json に登録済み）
 
