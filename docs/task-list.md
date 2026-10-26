@@ -28,7 +28,7 @@
 |---|---|---|
 | LANGGATE-1 | 実装中 | 検査スクリプトとゲートの登録（負のテストを含む） |
 | LANGGATE-2 | 未着手 | 上流リポジトリへの issue 起票 |
-| LANGGATE-3 | 未着手 | `log-task.md` と `AGENTS.md §4.4` の矛盾解消 |
+| LANGGATE-3 | ローカル検証済み | 記録コミット（証拠欄への SHA 追記） |
 | LANGGATE-4 | 未着手 | コミット `5a10b4d` の誤字の正誤記録 |
 
 ---
@@ -87,7 +87,7 @@
 |---|---|---|---:|---|---|---|
 | LANGGATE-1 | 日本語・英語のみの言語ゲートを追加する | ローカル検証済み | 90% | — | `scripts/check_language.py` が自己検査 8 fixture を通し全体で exit 0。**負のテスト**で簡体字ファイル・簡体字コミットメッセージが exit 1、正常系が exit 0。`make lang` と `make check` が PASS。限界が ADR-0003 と docstring に書かれている | 自己検査 fixture 8 件 PASS、リポジトリ全体 **164 ファイルで exit 0（error 0・warn 0）**。負のテスト: 簡体字ファイル・ハングル・キリルで `pre-commit run language --files` が Failed（exit 1、16 件検出）、簡体字コミットメッセージで `--hook-stage commit-msg` が Failed（exit 1）、正常系 2 件が Passed（exit 0）。導入時の全体走査で**実バグを 2 件発見**（フックのコメントのハングル 3 字 → `704c398`、ADR 草稿の簡体字 U+8FDC（「永久」の誤り））。コミット SHA は記録コミットで追記 |
 | LANGGATE-2 | `agents-md-lint` の no-op バグを上流へ報告する | 未着手 | 0% | — | Taiizor/agents-md-cookbook に issue を作成し、番号を ADR-0002 と本行に記録する | — |
-| LANGGATE-3 | 時点記録のブランチ名規制を明文化する | 未着手 | 0% | — | `log-task.md` のテンプレートと `AGENTS.md §4.4` が同じ方針になり、矛盾が消える。過去ログ 3 件は書き換えない | — |
+| LANGGATE-3 | 時点記録のブランチ名規制を明文化する | ローカル検証済み | 90% | — | `log-task.md` のテンプレートと `AGENTS.md §4.4` が同じ方針になり、矛盾が消える。過去ログ 3 件は書き換えない | テンプレートを `Date / Commit / PR` に変更し、`Branch:` を持たない理由と「現用ブランチは `git branch --show-current` で読む」を明記。`AGENTS.md §4.4` にも同じ方針（時点記録も SHA と PR 番号で書く・既存ログのブランチ名は歴史的例外）を追記。過去ログ 3 件（`2026-10-12`・`2026-10-25`・`2026-10-26_sync-agent-standards`）は無変更。コミット SHA は記録コミットで追記 |
 | LANGGATE-4 | コミット `5a10b4d` の誤字を正誤記録する | 未着手 | 0% | LANGGATE-1 | 履歴を書き換えず（amend は deny）、新規ログに誤字の箇所・正しい語・新ゲートが同じ誤りを止める実測を記録する | — |
 
 ---
