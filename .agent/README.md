@@ -80,7 +80,7 @@ sh .agent/hooks/session-start.sh | head -c 200                                  
 ## 運用ルール
 
 - **settings.json** はチーム共有。個人の上書きは `settings.local.json` へ。
-- **rules/** はトピック別に分割。`paths` フロントマターで発火条件を絞る。
+- **rules/** はトピック別に分割。`paths` フロントマターで発火条件を絞る。入口は [`rules/index.md`](./rules/index.md)。自律的なタスク遂行の詳細は [`rules/06_autonomy.md`](./rules/06_autonomy.md)（`AGENTS.md §1.3` に対応）。
 - **skills/** は `<name>/SKILL.md` 形式。frontmatter に `name`, `description` 必須。`description` は自動発火の判断材料なので具体的に書く。
 - **agents/** は `name`, `description`, `tools`, `model` 等の frontmatter + システムプロンプト本文。
 - **hooks/** は手順(.md)と実行スクリプト(.sh)の両方を置く。実行登録は `settings.json` の `hooks` で行う。
