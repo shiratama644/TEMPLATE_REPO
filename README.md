@@ -24,6 +24,18 @@ GitHub の「Use this template」から新しいリポジトリを作成し、�
 
 `make check` には **Node.js** が必要です（Biome と `agents-md-lint` の 2 フックが使うため）。バージョンは `.pre-commit-config.yaml` の `additional_dependencies` で固定しており、pre-commit が専用の環境を用意します。Node を使わないプロジェクトでは `SKIP=biome,agents-md-lint git commit` で一時的に外せます。
 
+## どのツールで読まれるか
+
+`AGENTS.md` は OpenAI が始め、2025-12 に Linux Foundation の **Agentic AI Foundation**（MCP・Goose と並ぶ）へ移管された公開標準です。Codex / Claude Code / Cursor / GitHub Copilot coding agent / OpenCode / Antigravity / Grok CLI / Kimi CLI など 24 以上のツールが原生で読み、60,000 以上のリポジトリで使われていると報告されています。
+
+| ツール | 読むファイル | 注意 |
+| :--- | :--- | :--- |
+| Codex | `AGENTS.md` | git root から作業ディレクトリまで各ディレクトリの `AGENTS.md` を root→下の順に連結し、**近いものが勝つ**（1 ディレクトリ 1 ファイル）。既定 **32,768 bytes** で打ち切る |
+| Claude Code | `CLAUDE.md`、無ければ `AGENTS.md` | v2.1.277（2026-09-18）以降フォールバックする。`.claude/` と `CLAUDE.md` を第一に探す |
+| Cursor / Copilot coding agent / OpenCode ほか | `AGENTS.md` | ツール固有ファイル（`.cursorrules` 等）へ複製せず、symlink か参照で正本を 1 つに保つ |
+
+このテンプレートが `CLAUDE.md` → `AGENTS.md`、`.claude/` → `.agent/` の **symlink** を置くのはそのためです。内容を複製すると必ずずれます。予算（bytes・行数・字数）と段階開示の詳しい考え方は [`agents-md-authoring`](.agent/skills/agents-md-authoring/SKILL.md) と [`context-budget`](.agent/skills/context-budget/SKILL.md) にあります。
+
 ## 使い方
 
 ### Agent に任せる（推奨）

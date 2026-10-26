@@ -38,7 +38,7 @@ python3 -c "print(len(open('AGENTS.md',encoding='utf-8').read()))"   # 字数
 | ツール | 読むファイル | 規則 |
 | :--- | :--- | :--- |
 | Codex | `AGENTS.md` | git root から cwd まで各ディレクトリで `AGENTS.override.md` → `AGENTS.md` の順。**1 ディレクトリ 1 ファイル**、root→下へ連結し**近いものが勝つ** |
-| Claude Code | `CLAUDE.md`、無ければ `AGENTS.md` | v2.1.277（2025-09-18）以降フォールバックする。`.claude/` と `CLAUDE.md` を第一に探すので symlink を残すのが安全 |
+| Claude Code | `CLAUDE.md`、無ければ `AGENTS.md` | v2.1.277（2026-09-18）以降フォールバックする。`.claude/` と `CLAUDE.md` を第一に探すので symlink を残すのが安全 |
 | Cursor / Copilot coding agent / OpenCode / Antigravity / Grok CLI / Kimi CLI ほか | `AGENTS.md` | 原生対応。24+ ツール、60,000 以上のリポジトリが採用 |
 
 `AGENTS.md` は OpenAI が始め、2025-12 に **Linux Foundation の Agentic AI Foundation**（MCP・Goose と並ぶ）へ移管された公開標準。特定ツール固有の書式に寄せないこと。
