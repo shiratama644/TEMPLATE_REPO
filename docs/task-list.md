@@ -28,7 +28,6 @@
 |---|---|---|
 | LANGGATE-2 | 保留 | 所有者による上流（Taiizor/agents-md-cookbook）への issue 投稿。文面は [`audit/issues-lint.md`](./audit/issues-lint.md) §6 に用意済み（この環境の GitHub 接続では第三者リポジトリに起票できない） |
 | BUNSETUP-4 | 実環境検証待ち | macOS / Windows / Termux の実機検証と、利用者が明示的に承認した OS パッケージ導入（このサンドボックスでは行わない） |
-| BUNAUDIT-1 | ローカル検証済み | 修正後の全ゲートと PR の CI 検証。実機で未検証の経路は残す |
 
 ---
 
@@ -107,7 +106,7 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| BUNAUDIT-1 | Bun 版 CLI・生成物・検査の不具合を監査・修正する | ローカル検証済み | 90% | BUNSETUP-1〜3 | 入力・symlink・バックアップ・生成物・検査の負のテスト、実行可能な生成先の実ビルド、Bun 全ゲートと CI が PASS。未実機確認は BUNSETUP-4 として残す | 回帰テストと生成先 Web / library / Python の実測は Agent ログに記録。PR CI と最終 SHA の記録待ち |
+| BUNAUDIT-1 | Bun 版 CLI・生成物・検査の不具合を監査・修正する | 完了 | 100% | BUNSETUP-1〜3 | 入力・symlink・バックアップ・生成物・検査の負のテスト、実行可能な生成先の実ビルド、Bun 全ゲートと CI が PASS。未実機確認は BUNSETUP-4 として残す | `88ee38e`。Bun 7 ゲート・30 テスト / 220 assertions PASS。Web 6 build、library/full publint・size、Python FastAPI venv / import と Playwright HTTP スモークを実測。PR #5 の Bun・gitleaks・dependency-review 3 件 PASS。OS 実機と Docker、Go/Rust の実ビルドは未検証 |
 
 ---
 

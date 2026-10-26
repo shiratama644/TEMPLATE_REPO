@@ -28,7 +28,7 @@ Bun 移行後のセットアップ・生成物・検査に残る再現可能な�
 - [x] 不正な構成値やパス、バックアップの競合、非対応機能の指定が安全に失敗し、回帰テストで保護される。
 - [x] 生成した Web、library、Python の利用可能な経路を実行で確認。未検証の OS / Go / Rust 経路を明記。
 - [x] `bun run check` の7ゲートと frozen install が PASS。既存 Git フックの安全な拒否を確認。
-- [ ] PR の Bun・gitleaks・依存レビューのチェックを確認し、`docs/task-list.md` に証拠を記録。
+- [x] PR の Bun・gitleaks・依存レビューのチェックを確認し、`docs/task-list.md` に証拠を記録。
 
 ## 6. テスト方法
 
@@ -66,3 +66,5 @@ Bun 移行後のセットアップ・生成物・検査に残る再現可能な�
 ## 12. 実績と証拠
 
 回帰テストとローカル E2E の結果は当日の Agent ログに記録。CI は push 後に本節へ追記する。
+
+PR #5 は `88ee38e` に対して Bun 全ゲート・gitleaks・dependency-review 3 件 PASS。BUNSETUP-4 の OS 実機検証は保留したまま。
