@@ -26,10 +26,7 @@
 
 | ID | 状態 | 残作業 |
 |---|---|---|
-| LANGGATE-1 | 実装中 | 検査スクリプトとゲートの登録（負のテストを含む） |
-| LANGGATE-2 | 保留 | 所有者による上流への issue 投稿（文面は `audit/issues-lint.md` §6 に用意済み） |
-| LANGGATE-3 | ローカル検証済み | 記録コミット（証拠欄への SHA 追記） |
-| LANGGATE-4 | 未着手 | コミット `5a10b4d` の誤字の正誤記録 |
+| LANGGATE-2 | 保留 | 所有者による上流（Taiizor/agents-md-cookbook）への issue 投稿。文面は [`audit/issues-lint.md`](./audit/issues-lint.md) §6 に用意済み（この環境の GitHub 接続では第三者リポジトリに起票できない） |
 
 ---
 
@@ -85,10 +82,10 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| LANGGATE-1 | 日本語・英語のみの言語ゲートを追加する | ローカル検証済み | 90% | — | `scripts/check_language.py` が自己検査 8 fixture を通し全体で exit 0。**負のテスト**で簡体字ファイル・簡体字コミットメッセージが exit 1、正常系が exit 0。`make lang` と `make check` が PASS。限界が ADR-0003 と docstring に書かれている | 自己検査 fixture 8 件 PASS、リポジトリ全体 **164 ファイルで exit 0（error 0・warn 0）**。負のテスト: 簡体字ファイル・ハングル・キリルで `pre-commit run language --files` が Failed（exit 1、16 件検出）、簡体字コミットメッセージで `--hook-stage commit-msg` が Failed（exit 1）、正常系 2 件が Passed（exit 0）。導入時の全体走査で**実バグを 2 件発見**（フックのコメントのハングル 3 字 → `704c398`、ADR 草稿の簡体字 U+8FDC（「永久」の誤り））。コミット SHA は記録コミットで追記 |
+| LANGGATE-1 | 日本語・英語のみの言語ゲートを追加する | 完了 | 100% | — | `scripts/check_language.py` が自己検査 8 fixture を通し全体で exit 0。**負のテスト**で簡体字ファイル・簡体字コミットメッセージが exit 1、正常系が exit 0。`make lang` と `make check` が PASS。限界が ADR-0003 と docstring に書かれている | `e026a8a`。自己検査 fixture 8 件 PASS、リポジトリ全体 **164 ファイルで exit 0（error 0・warn 0）**。負のテスト: 簡体字ファイル・ハングル・キリルで `pre-commit run language --files` が Failed（exit 1、16 件検出）、簡体字コミットメッセージで `--hook-stage commit-msg` が Failed（exit 1）、正常系 2 件が Passed（exit 0）。導入時の全体走査で**実バグを 2 件発見**（フックのコメントのハングル 3 字 → `704c398`、ADR 草稿の簡体字 U+8FDC（「永久」の誤り）。`make check` は 11 フックすべて Passed |
 | LANGGATE-2 | `agents-md-lint` の no-op バグを上流へ報告する | 保留 | 90% | — | Taiizor/agents-md-cookbook に issue を作成し、番号を ADR-0002 と本行に記録する | **外部判断待ち**。`gh issue create --repo Taiizor/agents-md-cookbook` は `GraphQL: Resource not accessible by integration (createIssue)` で拒否された（この環境の GitHub 接続は `shiratama644/TEMPLATE_REPO` に限定。`gh api /user` = `shiratama644`）。上流は issues 有効・未解決 0 件・重複なし（全 13 件 closed、dependabot と feature）を確認。投稿用の英語文面（再現表 6 行・原因のコード引用・修正案 4 つ・回帰テスト提案）を `docs/audit/issues-lint.md` §6 に保全し、所有者がそのまま投稿できる状態にした |
-| LANGGATE-3 | 時点記録のブランチ名規制を明文化する | ローカル検証済み | 90% | — | `log-task.md` のテンプレートと `AGENTS.md §4.4` が同じ方針になり、矛盾が消える。過去ログ 3 件は書き換えない | テンプレートを `Date / Commit / PR` に変更し、`Branch:` を持たない理由と「現用ブランチは `git branch --show-current` で読む」を明記。`AGENTS.md §4.4` にも同じ方針（時点記録も SHA と PR 番号で書く・既存ログのブランチ名は歴史的例外）を追記。過去ログ 3 件（`2026-10-12`・`2026-10-25`・`2026-10-26_sync-agent-standards`）は無変更。コミット SHA は記録コミットで追記 |
-| LANGGATE-4 | コミット `5a10b4d` の誤字を正誤記録する | 未着手 | 0% | LANGGATE-1 | 履歴を書き換えず（amend は deny）、新規ログに誤字の箇所・正しい語・新ゲートが同じ誤りを止める実測を記録する | — |
+| LANGGATE-3 | 時点記録のブランチ名規制を明文化する | 完了 | 100% | — | `log-task.md` のテンプレートと `AGENTS.md §4.4` が同じ方針になり、矛盾が消える。過去ログ 3 件は書き換えない | テンプレートを `Date / Commit / PR` に変更し、`Branch:` を持たない理由と「現用ブランチは `git branch --show-current` で読む」を明記。`AGENTS.md §4.4` にも同じ方針（時点記録も SHA と PR 番号で書く・既存ログのブランチ名は歴史的例外）を追記。過去ログ 3 件（`2026-10-12`・`2026-10-25`・`2026-10-26_sync-agent-standards`）は無変更（`git diff --stat` が空）。`dc0ebaa` |
+| LANGGATE-4 | コミット `5a10b4d` の誤字を正誤記録する | 完了 | 100% | LANGGATE-1 | 履歴を書き換えず（amend は deny）、新規ログに誤字の箇所・正しい語・新ゲートが同じ誤りを止める実測を記録する | 新規ログ `.agent/logs/2026-10-26_language-gate.md` §2.1 に正誤を記録。誤字は 26 行目「フックの手 U+52A8 実行」で、正は「手動」。**同じメッセージの 37 行目は正しく「手動」**で、1 つのメッセージ内で揺れていた。実測: `git log -1 --format=%B 5a10b4d` を `--commit-msg` で検査し **exit 1**（U+52A8 を 26 行目で検出）、`pre-commit run commit-msg-language --hook-stage commit-msg` も **Failed**、「手動」に直した同じメッセージは **exit 0**。履歴（`5a10b4d`）は無変更 |
 
 ---
 

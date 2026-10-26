@@ -191,7 +191,7 @@
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| LANGGATE-1 | | | |
-| LANGGATE-2 | | | |
-| LANGGATE-3 | | | |
-| LANGGATE-4 | | | |
+| LANGGATE-1 | `704c398`（混入修正）、`e026a8a`（本体） | Unit: 自己検査 fixture 8 件 PASS / Component: 負のテスト 4 種 / E2E: `make check`・CI | 全体 **164 ファイルで error 0・warn 0**。負のテスト: 簡体字+ハングル+キリルのファイルで Failed（exit 1、16 件検出）、簡体字コミットメッセージで Failed（exit 1）、正常なファイルとメッセージで Passed（exit 0）。`make check` 11 フック Passed、`make links` OK、AGENTS.md 171 行 / 16,459 B。**導入時の走査で実混入を 3 件発見**（フックのコメントのハングル 3 字、ADR 草稿の U+8FDC、audit 文書の U+5F52） |
+| LANGGATE-2 | `ae24f15` | 実測（再現表 6 行） | **保留（外部判断待ち）**。`gh issue create` は `Resource not accessible by integration` で拒否。上流は issues 有効・未解決 0 件・重複なし。投稿用文面を `docs/audit/issues-lint.md` §6 に保全。正常ファイルでも symlink 経由は出力 0 バイト（realpath 経由は 612 バイト）＝ `run()` が一度も呼ばれていないことを確認 |
+| LANGGATE-3 | `dc0ebaa` | `make check`・`make links`・`git diff --stat` | テンプレートを `Date / Commit / PR` に変更し `Branch:` を廃止、`AGENTS.md §4.4` に同じ方針を追記。過去ログ 3 件は無変更（差分 0）。新ログ `.agent/logs/2026-10-26_language-gate.md` が新形式の最初の例 |
+| LANGGATE-4 | 記録は本コミット | 実測（exit コード） | 履歴（`5a10b4d`）は無変更。`git log -1 --format=%B 5a10b4d` を `--commit-msg` で検査し **exit 1**、`pre-commit run commit-msg-language --hook-stage commit-msg` も **Failed**、「手動」に直すと **exit 0**。正誤は新ログ §2.1 に記録 |

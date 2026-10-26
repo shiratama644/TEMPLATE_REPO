@@ -21,7 +21,7 @@
 - 参照パスは**リポジトリ根からのフルパス**で書く（裸のファイル名は AMC-PATH が error にする）
 - 見出しには英語キーワードを併記する（AGM-002 の推奨セクション検査が英語で照合するため。クロスツールでも見つけやすくなる）
 
-さらに、**上流 1.0.1 の bin が symlink 経由で起動すると no-op になる不具合**を実測で確認したため、`entry` は `readlink -f` で実体を解決して `node` で直接起動する形にした（詳細は `.pre-commit-config.yaml` の注記と `.agent/skills/agents-md-authoring/SKILL.md` §7）。
+さらに、**上流 1.0.1 の bin が symlink 経由で起動すると no-op になる不具合**を実測で確認したため、`entry` は `readlink -f` で実体を解決して `node` で直接起動する形にした（詳細は `.pre-commit-config.yaml` の注記と `.agent/skills/agents-md-authoring/SKILL.md` §7）。上流への報告は、この環境の GitHub 接続に第三者リポジトリへの起票権限がなく実行できなかったため、投稿用の英語文面と再現データ（exit と出力バイト数の実測表 6 行、原因のコード引用、修正案 4 つ）を [`../audit/issues-lint.md`](../audit/issues-lint.md) に保全した（task-list `LANGGATE-2` は保留）。
 
 ## Alternatives Considered
 
