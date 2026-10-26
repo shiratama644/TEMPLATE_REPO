@@ -5,7 +5,7 @@
 >
 > **指示ファイルの正本 `AGENTS.md` はツール非依存の公開標準**（Linux Foundation の Agentic AI Foundation が管理。Codex / Claude Code / Cursor / Copilot coding agent ほか 24+ ツールが読む）。`.agent/` の構成は Claude Code 準拠だが、`AGENTS.md` 側は特定ツールの書式に寄せない。どちらが何を読むかは `AGENTS.md §8.2` とリポジトリ直下 `README.md` の「どのツールで読まれるか」を参照。
 >
-> **本ディレクトリは Node.js・pnpm 等の特定のランタイムに依存しない。** フックは `sh` と標準的な Unix コマンド（`git`・`sed`・`awk`）だけで動く。
+> `.agent/hooks/` の Claude Code フックは `sh` と標準的な Unix コマンドで動く。検証・セットアップ・Git フックは Bun を前提とする（`bun run check` / `bun run setup`）。
 
 ## ディレクトリ構成
 

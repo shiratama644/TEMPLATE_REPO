@@ -8,7 +8,7 @@
 | [obra/superpowers](https://github.com/obra/superpowers) | MIT | skill: brainstorming, writing-plans, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, receiving-code-review, using-git-worktrees, finishing-a-development-branch, dispatching-parallel-agents, subagent-driven-development, writing-skills, using-superpowers |
 | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | skill: grilling（grill-me を統合）, handoff, teach, writing-for-agents, to-questionnaire, prototype, retro, codebase-design, improve-codebase-architecture, domain-modeling（research は deep-research へ、diagnosing-bugs は systematic-debugging へ統合） / hook: block-dangerous-git.sh |
 | [anthropics/skills](https://github.com/anthropics/skills) | 各 skill の LICENSE.txt（Apache License 2.0） | skill: skill-creator, discernment-nudge（各ディレクトリに LICENSE.txt を同梱） |
-| [Taiizor/agents-md-cookbook](https://github.com/Taiizor/agents-md-cookbook) | MIT | tool: `agents-md-lint@1.0.1`（`.pre-commit-config.yaml` で版固定し `make agents` / `make check` から実行）。**文面は複製していない**。指示ファイルの予算（Codex 32,768 bytes / Windsurf 6,000 字 / 行数 150・300）と、下記の実証研究の整理を参照した。ライセンス全文は npm パッケージと上流リポジトリに同梱 |
+| [Taiizor/agents-md-cookbook](https://github.com/Taiizor/agents-md-cookbook) | MIT | tool: `agents-md-lint@1.0.1`（`package.json` / `bun.lock` で版固定し `bun run agents` / `bun run check` から実行）。**文面は複製していない**。指示ファイルの予算（Codex 32,768 bytes / Windsurf 6,000 字 / 行数 150・300）と、下記の実証研究の整理を参照した。ライセンス全文は npm パッケージと上流リポジトリに同梱 |
 
 上記以外（`.agent/skills/` の `ci-quality-gates`、`e2e`、`testing`、`docs-maintenance`、`sandbox-constraints`、`project-init` など）は本リポジトリのオリジナルです。`verify-doc-integrity` は `docs-maintenance` へ統合した。
 

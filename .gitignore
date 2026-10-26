@@ -32,3 +32,9 @@ Thumbs.db
 # Agent auto memory (if not committed)
 .agent/agent-memory/
 .claude/projects/
+
+# Bun / setup
+node_modules/
+.bun/
+.setup-backup/
+.setup-pkg-*.tmp

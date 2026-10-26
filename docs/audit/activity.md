@@ -33,3 +33,4 @@
 | 2026-10-26 | `make check` のフック数を実測し、記録の誤記を訂正（今回分 11 → **18**、前タスク分 9 → **17**）。過去ログの誤記は書き換えず新ログ §2.2 に訂正を記録 | `.pre-commit-config.yaml` を `git show <rev>:…` で stage 別に数えて実測。設定総数は 20（pre-commit 18 + commit-msg 2） |
 | 2026-10-26 | AGENTS.md §1.3 に自律的なタスク遂行ルールを追加。既存のスコープ・質問方針・完了条件を整合させ、詳細ルールと入口を更新 | `75bcd91`。`make check` 18 フック PASS、`make links` 137 ファイル OK、`make lang` 167 ファイル OK |
 | 2026-10-26 | 自律ルールを `SessionStart`、タスク開始・検証・ログ手順に接続。実装前ワークフローの完了誤表示を解消 | `92b9b75`。SessionStart JSON とワークフロー mock 5 ケース、`make check` 18 フック PASS |
+| 2026-10-26 | Bun で Python 製検査と pre-commit を置換し、CLI の対話・非対話モード、7 プリセット・17 機能と TS/JS・Python・Go・Rust の生成候補を追加（BUNSETUP-1〜4）。ADR-0004 | `bun run check` 7 ゲート・テスト 12 件 / 59 assertions PASS。Vite/Next TS/JS と両 monorepo の Bun build 成功。OS 実インストールと異なる OS 実機は未検証 |

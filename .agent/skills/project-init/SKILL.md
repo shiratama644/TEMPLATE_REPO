@@ -9,6 +9,8 @@ description: テンプレートから作った新規リポジトリの初回、A
 > 流れは **事実確認 → 要件確定 → 計画承認 → 実行 → 検証**。混ぜない。
 > 製品機能は実装しない。
 
+**Bun CLI 入口**: 人間が初期設定するなら `bun run setup --help`、対話式 `bun run setup`、自動化は `bun run setup --yes --apply ...`。CLI は OS 導入を毎回確認し、文書は削除せず整理候補を案内する。Agent と進める場合は以下の計画承認ワークフローを使う。
+
 ## いつ使うか
 
 - GitHub の「Use this template」直後の最初のセッション
@@ -41,7 +43,7 @@ description: テンプレートから作った新規リポジトリの初回、A
 | 他人が持つ情報 | [`to-questionnaire`](../to-questionnaire/SKILL.md) | 本人が答えられないスロットだけ |
 | 計画の穴 | [`grilling`](../grilling/SKILL.md) | ユーザー希望時、または未決の分岐が残るとき |
 | 技術・検証の記録 | [`tech-stack`](../tech-stack/SKILL.md) | §6.1 の書式 |
-| 品質ゲート | [`ci-quality-gates`](../ci-quality-gates/SKILL.md) | `PROJECT_CHECKS` を足すとき |
+| 品質ゲート | [`ci-quality-gates`](../ci-quality-gates/SKILL.md) | Bun の検証を調整するとき |
 | 文書の整合 | [`docs-maintenance`](../docs-maintenance/SKILL.md) | 実行後。内部リンクは `bash`、外部 URL は `fetch_page` |
 | 書き換え対象 | [`project-overview`](../project-overview/SKILL.md) | **読む対象ではなく、書き換える対象** |
 
@@ -447,7 +449,7 @@ flowchart TD
 | 7 | `docs/arch/architecture.md` / `milestones.md` | 最小限 |
 | 8 | `docs/task-list.md` | 承認した最初のタスク |
 | 9 | `docs/README.md` | 目次 |
-| 10 | `Makefile` の `PROJECT_CHECKS` | §6.1 に書いたときだけ |
+| 10 | `package.json` の検証・セットアップ設定 | §6.1 に書いたときだけ |
 | 11 | `.agent/skills/` の削除 | 計画で承認されたものだけ。`index.md` も同じ変更 |
 
 `docs/examples/` のような存在しないパスを新たに書かない。

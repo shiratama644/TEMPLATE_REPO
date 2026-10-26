@@ -11,3 +11,4 @@
 | [0001](./0001-mermaid-source.md) | 図の正本は Markdown 内の Mermaid ソースにする | accepted |
 | [0002](./0002-agents-md-lint.md) | 指示ファイルの予算検査に `agents-md-lint`（npm）を採用する | accepted |
 | [0003](./0003-language-gate.md) | 文書とコミットメッセージは日本語と英語のみを許可する | accepted |
+| [0004](./0004-bun-setup.md) | Bun を検証とセットアップの入口にする | accepted |

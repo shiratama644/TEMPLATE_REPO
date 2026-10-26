@@ -21,7 +21,7 @@ description: AGENTS.md や CLAUDE.md などの指示ファイルを書いたり�
 ```bash
 make agents                       # ゲート（agents-md-lint）。error は失敗、warn は表示のみ
 wc -c -l AGENTS.md                # bytes と行数
-python3 -c "print(len(open('AGENTS.md',encoding='utf-8').read()))"   # 字数
+bun -e 'const t=await Bun.file("AGENTS.md").text(); console.log([...t].length)' # 字数
 ```
 
 | 指標 | 上限 | 超えると何が起きるか | 根拠 |
@@ -96,14 +96,14 @@ python3 -c "print(len(open('AGENTS.md',encoding='utf-8').read()))"   # 字数
 ## 7. ゲートの運用と既知の落とし穴
 
 ```bash
-make agents                                   # pre-commit 経由（版を固定）
+bun run agents                               # Bun 管理の版を使用
 make check                                    # 全ゲート（CI と同じ入口）
 SKIP=agents-md-lint git commit                # Node が無い環境で一時的に外す
 ```
 
 - 既定では **error のみで失敗**する（warn では失敗しない）。`--strict` は付けない。理由は日本語文書に対する英語キーワード照合の限界と、Windsurf 固有の字数上限を常に満たせるとは限らないため
 - 参照パスは**リポジトリ根からのフルパス**で書く。裸のファイル名（`index.md`、`SKILL.md`）は AMC-PATH が「実在しない」と error にする
-- **上流 `agents-md-lint@1.0.1` の bin は symlink 経由だと no-op になる**。`cli.js` のエントリポイント判定が `pathToFileURL(process.argv[1]).href === import.meta.url` で、Node は `import.meta.url` を realpath に解決する一方 `argv[1]` は symlink のままなので一致せず、本体が一度も実行されない。npm bin は必ず symlink なので `npx` 経由でも同じ（**無出力・exit 0 で黙って成功する**）。`.pre-commit-config.yaml` は `readlink -f` で実体を解決して `node` で直接起動する形で回避している。上流が修正したら `entry: agents-md-lint --root .` に戻す
+- **上流 `agents-md-lint@1.0.1` の bin は symlink 経由だと no-op になる**。`cli.js` のエントリポイント判定が `pathToFileURL(process.argv[1]).href === import.meta.url` で、Node は `import.meta.url` を realpath に解決する一方 `argv[1]` は symlink のままなので一致せず、本体が一度も実行されない。npm bin は必ず symlink なので `npx` 経由でも同じ（**無出力・exit 0 で黙って成功する**）。`scripts/check_agents.ts` が Bun から実体の CLI ファイルを直接起動して回避する。上流が修正されたら、直接起動の必要性を再評価する
 - **ゲートを入れたら必ず負のテストをする**。上限を超えたフィクスチャで実際に失敗することを確認しないと、「緑に見えるのに何も守らない」状態に気づけない
 
 ## 8. レビューのチェックリスト

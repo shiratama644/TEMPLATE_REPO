@@ -127,8 +127,8 @@ Skip any step = lying, not verifying
 
 | 段階 | function call | 内容 |
 | :--- | :--- | :--- |
-| 文書リンク | `bash` `python3 scripts/check_doc_links.py` または `make links` | 内部リンク |
-| 全検証 | `bash` `make check` | pre-commit + PROJECT_CHECKS |
+| 文書リンク | `bash` `bun run links` または `make links` | 内部リンク |
+| 全検証 | `bash` `make check` | Bun の全ゲート |
 | 差分 | `bash` `git diff --stat` | 意図しない変更 |
 | 個別の型・テスト・ビルド | `bash` に §6.1 のコマンド | watch モードは使わない |
 

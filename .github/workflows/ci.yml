@@ -1,38 +1,25 @@
-# CI（分野を問わない汎用セット）
-# 入口は `make check`（ローカルの pre-commit 全フックと同じ検証）。
-# 分野固有の検証は AGENTS.md §6.1 に記録し、Makefile の PROJECT_CHECKS に追加する。
 name: CI
-
 on:
   push:
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   check:
-    name: make check（pre-commit 全フック）
+    name: bun run check（全ゲート）
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          python-version: "3.12"
-      - uses: actions/setup-node@v7
-        with:
-          node-version: lts/*
-      - name: pre-commit を導入
-        run: python -m pip install --upgrade pre-commit
-      - name: 検証を実行
-        run: make check
-
+          bun-version: 1.4.4
+      - run: bun install --frozen-lockfile
+      - run: bun run check
   secrets:
     name: 秘密情報の検出（gitleaks）
     runs-on: ubuntu-latest

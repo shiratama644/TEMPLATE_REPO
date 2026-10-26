@@ -51,7 +51,7 @@
 | 指示ファイル（`AGENTS.md` / `CLAUDE.md`）を書く・見直す・予算内に収める | [`agents-md-authoring`](./agents-md-authoring/SKILL.md) |
 | セッションが長くなりコンテキストが重い / 規約が効かなくなった / 何度も読み直している | [`context-budget`](./context-budget/SKILL.md) |
 | 意味のあるテスト・カバレッジ・モック戦略 | [`testing`](./testing/SKILL.md) |
-| CI・pre-commit の品質ゲート、段階的な検証の組み立て | [`ci-quality-gates`](./ci-quality-gates/SKILL.md) |
+| CI・Bun の品質ゲート、段階的な検証の組み立て | [`ci-quality-gates`](./ci-quality-gates/SKILL.md) |
 | 利用者の操作経路を通しで検証する（E2E） | [`e2e`](./e2e/SKILL.md) |
 | レイヤー境界・依存方向・循環参照の防止 | [`import-boundaries`](./import-boundaries/SKILL.md) |
 | 同じ入力で同じ結果を守る（決定論）・禁止 API の検出 | [`determinism`](./determinism/SKILL.md) |

@@ -27,6 +27,8 @@
 | ID | 状態 | 残作業 |
 |---|---|---|
 | LANGGATE-2 | 保留 | 所有者による上流（Taiizor/agents-md-cookbook）への issue 投稿。文面は [`audit/issues-lint.md`](./audit/issues-lint.md) §6 に用意済み（この環境の GitHub 接続では第三者リポジトリに起票できない） |
+| BUNSETUP-2 | ローカル検証済み | CI の Bun ゲート確認とコミット・固定ブランチへの push |
+| BUNSETUP-4 | 実環境検証待ち | macOS / Windows / Termux の実機検証と、利用者が明示的に承認した OS パッケージ導入（このサンドボックスでは行わない） |
 
 ---
 
@@ -86,6 +88,18 @@
 | LANGGATE-2 | `agents-md-lint` の no-op バグを上流へ報告する | 保留 | 90% | — | Taiizor/agents-md-cookbook に issue を作成し、番号を ADR-0002 と本行に記録する | **外部判断待ち**。`gh issue create --repo Taiizor/agents-md-cookbook` は `GraphQL: Resource not accessible by integration (createIssue)` で拒否された（この環境の GitHub 接続は `shiratama644/TEMPLATE_REPO` に限定。`gh api /user` = `shiratama644`）。上流は issues 有効・未解決 0 件・重複なし（全 13 件 closed、dependabot と feature）を確認。投稿用の英語文面（再現表 6 行・原因のコード引用・修正案 4 つ・回帰テスト提案）を `docs/audit/issues-lint.md` §6 に保全し、所有者がそのまま投稿できる状態にした |
 | LANGGATE-3 | 時点記録のブランチ名規制を明文化する | 完了 | 100% | — | `log-task.md` のテンプレートと `AGENTS.md §4.4` が同じ方針になり、矛盾が消える。過去ログ 3 件は書き換えない | テンプレートを `Date / Commit / PR` に変更し、`Branch:` を持たない理由と「現用ブランチは `git branch --show-current` で読む」を明記。`AGENTS.md §4.4` にも同じ方針（時点記録も SHA と PR 番号で書く・既存ログのブランチ名は歴史的例外）を追記。過去ログ 3 件（`2026-10-12`・`2026-10-25`・`2026-10-26_sync-agent-standards`）は無変更（`git diff --stat` が空）。`dc0ebaa` |
 | LANGGATE-4 | コミット `5a10b4d` の誤字を正誤記録する | 完了 | 100% | LANGGATE-1 | 履歴を書き換えず（amend は deny）、新規ログに誤字の箇所・正しい語・新ゲートが同じ誤りを止める実測を記録する | 新規ログ `.agent/logs/2026-10-26_language-gate.md` §2.1 に正誤を記録。誤字は 26 行目「フックの手 U+52A8 実行」で、正は「手動」。**同じメッセージの 37 行目は正しく「手動」**で、1 つのメッセージ内で揺れていた。実測: `git log -1 --format=%B 5a10b4d` を `--commit-msg` で検査し **exit 1**（U+52A8 を 26 行目で検出）、`pre-commit run commit-msg-language --hook-stage commit-msg` も **Failed**、「手動」に直した同じメッセージは **exit 0**。履歴（`5a10b4d`）は無変更 |
+
+### Bun 版セットアップと検証基盤 (2026-10-26 計画)
+
+> 計画書: [`planning/BUN_SETUP_PLAN.md`](./planning/BUN_SETUP_PLAN.md)。設計判断は [`adr/0004-bun-setup.md`](./adr/0004-bun-setup.md)。
+> `full` ブランチは読み取り専用の参考。Python 製検査から Bun/TypeScript に移し、対話式・非対話式 CLI を追加する。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| BUNSETUP-1 | Python の 3 検査を TypeScript に移植 | 完了 | 100% | — | 自己検査・負の fixture と全体走査が旧版の結果と一致し、Python 実行を現用導線から除く | 旧版と新言語検査の 181 ファイル走査が exit 0 で一致。リンク 142 ファイル、Mermaid 12 ブロック、言語 183 ファイル PASS。`bun run check` 7 ゲート PASS |
+| BUNSETUP-2 | 依存・フック・CI を Bun に統一 | ローカル検証済み | 90% | BUNSETUP-1 | `bun install --frozen-lockfile`・`bun run check` と CI が PASS。既存 hook を上書きしない | Bun 1.4.4 の frozen install と 7 ゲート PASS。既存 trailer hook を検出し登録拒否（exit 1）、`core.hooksPath` 不変。CI 実行待ち |
+| BUNSETUP-3 | 対話式・非対話式 setup CLI と広いテンプレート選択 | 完了 | 100% | BUNSETUP-2 | 7 プリセット・17 機能・Web/TS/JS/Python/Go/Rust を選択でき、dry-run・適用・再実行・既存ファイル保護のテストが通る | Bun テスト 12 件・59 assertions PASS。疑似端末の対話適用、`--yes --apply` の直接 Bun install、Vite・Next の TS/JS および Vite/Next monorepo の Bun build PASS。Python/Go/Rust の依存・実機ビルドは別途検証が必要 |
+| BUNSETUP-4 | OS 別の導入判断と文書整理の案内 | 実環境検証待ち | 80% | BUNSETUP-3 | apt/brew/winget/pkg の検出と個別承認。非対話時は OS パッケージを自動導入しない。文書削除は提案だけ | apt / brew / winget / Termux pkg の検出と `--yes` 非導入のテスト PASS。文書案内を CLI 出力で確認。実機 OS パッケージ導入は安全上未実施 |
 
 ---
 

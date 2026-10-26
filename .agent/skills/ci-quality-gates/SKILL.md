@@ -1,81 +1,61 @@
 ---
 name: ci-quality-gates
-description: 分野を問わず、検証を段階的に実行する品質ゲートを、手元（make check）・pre-commit・CI で同じ入口に揃えるスキル。pre-commit の導入、CI ワークフローの追加、手動実行、分野固有の検証の追加方法、失敗時の対処を扱う。
+description: Bun の検証を手元・Git フック・CI の同じ入口に揃え、TypeScript の検査と安全なセットアップを維持するための手順。
 ---
 
-# CI Quality Gates — 品質ゲートを一つの入口にまとめるスキル
+# CI Quality Gates — Bun の共通入口
 
 ## 原則
 
-- **手元・pre-commit・CI は同じ入口で検証する。** 本リポジトリでは `make check`（pre-commit の全フック + `PROJECT_CHECKS`）。CI だけにあるチェックを作らない。
-- 検証は**速い順に段階化**する。失敗を早く、安く見つける。
-- 検証の手段は AGENTS.md §6.1 に記録したものだけを使う。記録のないコマンドを推測で走らせない。
-- SKIP や無効化を恒常化しない。一時的に外す場合は理由を残し、同じ変更の中で戻す。
+- **検証の正本は `bun run check`**（`make check` は互換入口）。CI も同じコマンドを使う。
+- `bun install --frozen-lockfile` で `bun.lock` の版を固定し、Biome・TypeScript・iconv-lite・agents-md-lint を Bun で管理する。
+- プロジェクト固有の検証を増やす際は `AGENTS.md §6.1` に記録し、`scripts/check.ts` のゲートへ追加してから CI を確認する。
+- **負のテスト**で違反時に止まり、正常系で通ることを確かめる。失敗を SKIP で恒常的に回避しない。
 
-## 段階（速い順）
+## 検証の順序
 
-| 段階 | 目的 | 例 |
-| :--- | :--- | :--- |
-| 1. 衛生 | 空白・改行・壊れたファイル・秘密鍵 | pre-commit-hooks（`check-json`、`detect-private-key` など） |
-| 2. 形式 | 書式と静的な lint | Biome（`biome.json`）、綴り（codespell） |
-| 3. 規約 | コミットメッセージ・文書の整合 | conventional-pre-commit、`make links`、`make mermaid` |
-| 4. 秘密情報 | 機密の混入 | gitleaks（ローカルと CI の両方） |
-| 5. 分野固有 | 型・単体テスト・ビルドなど | `PROJECT_CHECKS` に記録したコマンド |
-| 6. 通し | E2E・統合・ビルド成果物 | CI の専用ジョブ（時間がかかるものは手動実行可） |
+| 段階 | コマンド / 対象 |
+| :--- | :--- |
+| 文書 | `bun run links`、`bun run mermaid` |
+| 言語 | `bun run lang`（日本語・英語、コミットメッセージは `.githooks/commit-msg`） |
+| 指示 | `bun run agents`（上流 CLI の symlink no-op を避け、実体を起動） |
+| コード | `bun x biome check .`、`bun run typecheck` |
+| 回帰 | `bun test`（異常 fixture と CLI の非破壊性を含む） |
+| 秘密情報 | CI の gitleaks ジョブ（ローカルでは秘密情報を commit しない） |
 
-## 本リポジトリの構成
+## 構成
 
 | ファイル | 役割 |
 | :--- | :--- |
-| `Makefile` | `make setup`（フック導入）・`make check`（全検証）・`make links`（リンクだけ）・`make mermaid`（Mermaid 図だけ） |
-| `scripts/check_doc_links.py` / `scripts/check_mermaid.py` | 内部リンクと Mermaid 図の宣言を検査する（標準ライブラリのみ） |
-| `.pre-commit-config.yaml` | pre-commit のフック一覧（版はタグで固定） |
-| `biome.json` / `.editorconfig` | 書式とエディタの基本設定 |
-| `.gitleaks.toml` | 秘密情報検出の許可リスト（最小限） |
-| `.github/workflows/ci.yml` | `check`（make check）と `secrets`（gitleaks）の 2 ジョブ |
-| `.github/workflows/release.yml` | バージョンタグで検証 → GitHub Release |
-| `.github/workflows/dependency-review.yml` | PR の依存関係の差分レビュー（GitHub の Dependency graph が有効なときだけ動く） |
-| `.github/dependabot.yml` | GitHub Actions の版を週次で更新 |
+| `scripts/check.ts` | すべての検査の入口。失敗時は exit 1 |
+| `scripts/check_*.ts` | 文書・言語・品質の検査（Bun / TypeScript） |
+| `package.json` / `bun.lock` | ランタイム・依存・検証コマンドの正本 |
+| `.githooks/` | `pre-commit` で `bun run check`、`commit-msg` で言語と Conventional Commits |
+| `.github/workflows/ci.yml` | Bun の check + gitleaks |
+| `.github/workflows/release.yml` | Bun の check 後にタグ付きリリース |
+| `.github/workflows/dependency-review.yml` | Dependency graph が有効なときの PR 差分検査 |
 
-## 分野固有の検証を追加する手順
+`bun run hooks:install` は Git の `core.hooksPath` を設定する。**既存の commit-msg / pre-commit フックがある場合は停止**し、手動で統合する。この作業環境の trailer フックは上書きしない。
 
-1. 検証コマンドを決め、AGENTS.md §6.1 に記録する。
-2. `Makefile` の `PROJECT_CHECKS` に追加する（例: `PROJECT_CHECKS = ./scripts/test.sh`）。CI は `make check` を呼ぶので自動的に含まれる。
-3. 必要な実行環境（言語のランタイムなど）を `ci.yml` の setup ステップに追加する。
-4. 手元で `make check` が通ることを確認してから push する。
+## 派生プロジェクトに固有の検証を追加する
 
-分野ごとの例（記録してから使う。テンプレートには入れていない）:
+1. `AGENTS.md §6.1` に実在するコマンドを記録する。
+2. `package.json` の script を定義し、`scripts/check.ts` に追加する。
+3. 成功・失敗 fixture を `tests/` に追加して `bun run check` で確認する。
+4. CI 上でも `bun install --frozen-lockfile` → `bun run check` を確かめる。OS 固有の検証が実行不能なら理由を報告する。
 
-| 分野 | 追加例 |
+## よくある失敗
+
+| 症状 | 対処 |
 | :--- | :--- |
-| Python | `pytest`、`ruff check`、`mypy` |
-| Go | `go vet ./...`、`go test ./...` |
-| Node.js / TypeScript | `tsc --noEmit`、`vitest run`（記録したスクリプト名を使う） |
-| 文書 | `make links`、用語集との照合 |
-
-## 手動実行
-
-- `ci.yml` は `push` / `pull_request` のほか、必要なら `workflow_dispatch` で手動実行できる（`on:` に追加する）。
-- 通し検証（時間のかかるもの）は、通常の push では走らせず手動で実行する設計にしてよい。その場合も、どの条件で走るかを AGENTS.md §6.1 に書く。
-
-## Sandbox での代替検証（AGENTS.md §3.1 準拠）
-
-- 外部ネットワークに届かない、またはツールを導入できない場合は、実行できなかった検証を**報告**する。省いたまま「通った」と書かない。
-- 実行できる部分（リンク検査、衛生チェックなど）は手元で実行し、残りは CI で確認するよう依頼する。
-
-## よくある失敗と対処
-
-| 症状 | 原因と対処 |
-| :--- | :--- |
-| pre-commit が「files were modified」で失敗する | フックが整形した。差分を確認し、`git add` してから再実行する |
-| Biome フックが失敗する | Node.js が無い。Node を導入する。やむを得ず外す場合のみ `SKIP=biome` を一時的に使い、理由を残す |
-| gitleaks がスキップされる | ローカルに未導入。CI の `secrets` ジョブで必ず検査される |
-| CI と手元で結果が違う | 版（pre-commit・Biome・Python など）が揃っていない。`.pre-commit-config.yaml` の `rev` と `additional_dependencies` を確認する |
-| `make check` が「PROJECT_CHECKS は未設定」と出る | 分野固有の検証がまだ無い。AGENTS.md §6.1 に記録してから追加する |
+| Bun がない | CLI の前提として Bun を導入。検証できない場合は未実施と報告 |
+| `bun install --frozen-lockfile` が失敗 | `package.json` と `bun.lock` を揃え、意図した依存変更だけを commit |
+| Biome が失敗 | ソースの差分を確認し `bun run format` で修正して再検証 |
+| 既存の Git フックがある | `hooks:install` が止まるのが正しい。既存の処理を壊さず手動で統合 |
+| gitleaks が手元にない | CI の secrets ジョブを確認。未実施を PASS と書かない |
 
 ## 関連
 
-- [`project-init`](../project-init/SKILL.md): 新規プロジェクトで検証コマンドを §6.1 と `PROJECT_CHECKS` に載せるとき
-- [`testing`](../testing/SKILL.md): 検証の中身を設計する
-- [`verification-before-completion`](../verification-before-completion/SKILL.md): 完了前の検証
-- [`sandbox-constraints`](../sandbox-constraints/SKILL.md): 環境制約での迂回
+- [`project-init`](../project-init/SKILL.md): 対話式 CLI または Agent の計画承認。
+- [`verification-before-completion`](../verification-before-completion/SKILL.md): 完了前の検証。
+- [`sandbox-constraints`](../sandbox-constraints/SKILL.md): 実行不能な検証の扱い。

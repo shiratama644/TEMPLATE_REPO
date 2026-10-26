@@ -47,22 +47,19 @@ description: コンテキストウィンドンを予算として扱うスキル�
 ## 3. 段階開示の費用対効果（このリポジトリの実測）
 
 ```bash
-# スキルの常時ロード分（description の合計）と本文の合計を測る
-python3 - <<'PY'
-import re
-from pathlib import Path
-D = re.compile(r"^description:\s*(.*)$", re.M)
-desc = body = 0; n = 0
-for p in sorted(Path(".agent/skills").glob("*/SKILL.md")):
-    t = p.read_text(encoding="utf-8")
-    m = re.match(r"^---\n(.*?)\n---\n", t, re.S)
-    if not m: continue
-    n += 1
-    d = D.search(m.group(1))
-    desc += len(d.group(1).strip()) if d else 0
-    body += len(t[m.end():])
-print(n, "skills:", desc, "chars always-loaded /", body, "chars on-demand")
-PY
+# スキルの常時ロード分（description）とオンデマンド本文の文字数
+bun -e '
+let desc = 0, body = 0, count = 0;
+for await (const path of new Bun.Glob("*/SKILL.md").scan(".agent/skills")) {
+  const text = await Bun.file(`.agent/skills/${path}`).text();
+  const front = text.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!front) continue;
+  count++;
+  desc += [...(front[1].match(/^description:\s*(.*)$/m)?.[1]?.trim() ?? "")].length;
+  body += [...text.slice(front[0].length)].length;
+}
+console.log(count, "skills:", desc, "chars always-loaded /", body, "chars on-demand");
+'
 ```
 
 実測値（2026-10-26 時点、スキル 46 件）:

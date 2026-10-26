@@ -9,14 +9,17 @@ TEMPLATE_REPO/
 ├── README.md              # プロジェクトの概要（テンプレート利用時に書き換える）
 ├── LICENSE
 ├── Makefile               # 検証の入口（check / links / mermaid / setup）
-├── .pre-commit-config.yaml # commit 時の検査（make check と同じフック）
+├── package.json / bun.lock # Bun の依存・検証・setup の入口
+├── .githooks/             # Bun 検証と commit-msg フック
 ├── biome.json             # JSON / JS / TS / CSS の整形と lint
 ├── .editorconfig          # エディタ間の基本書式
 ├── .gitleaks.toml         # 秘密情報検出の許可リスト
 ├── .gitignore
-├── scripts/               # 検証スクリプト（標準ライブラリのみ）
-│   ├── check_doc_links.py # Markdown の内部リンクの実在
-│   └── check_mermaid.py   # Mermaid 図の宣言（種類・重複）
+├── scripts/               # Bun の TypeScript CLI と検査
+│   ├── setup.ts / setup_manifest.ts # 初期設定と選択肢
+│   ├── check_doc_links.ts # Markdown の内部リンク
+│   ├── check_mermaid.ts   # Mermaid 図の宣言
+│   └── check_language.ts  # 日本語・英語ゲート
 ├── .github/               # CI・リリース・依存関係レビュー・dependabot
 ├── .agent/                # Agent の設定と知識（.claude はここへの symlink）
 │   ├── README.md          # .agent/ の説明
@@ -68,4 +71,4 @@ TEMPLATE_REPO/
 - フックのスクリプトは POSIX `sh` で書き、判定は JSON を stdout へ出して `exit 0` で返す（PreToolUse は `hookSpecificOutput.permissionDecision`、PostToolUse は top-level `decision`）。exit code の意味は公式リファレンスに従い、`.agent/hooks/index.md` に規約を記録する。
 - 環境に依存する設定（OS・ランタイム・外部サービス）はテンプレート本体に入れず、`AGENTS.md §6` に書く。
 - 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない（[`adr/0001-mermaid-source.md`](../adr/0001-mermaid-source.md)）。図の検証は `make mermaid`。
-- `scripts/` の検証スクリプトは標準ライブラリのみで書き、外部の取得や追加のランタイムを必要としない。
+- `scripts/` の検証スクリプトは TypeScript / Bun を前提とする。日本語判定には Bun 管理の `iconv-lite` を用いる。
