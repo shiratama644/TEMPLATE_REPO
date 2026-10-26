@@ -16,6 +16,7 @@ docs/
 ├── adr/               個別の ADR（1 判断 1 ファイル。今後の新規判断はここに書く）
 │   ├── README.md      書き方と番号規則
 │   └── 0001-mermaid-source.md  図の正本は Mermaid ソース（PNG を置かない）
+│   └── 0002-agents-md-lint.md  指示ファイルの予算検査に npm の linter を採用
 ├── planning/          計画書（タスクごとの範囲と完了条件）
 │   ├── README.md      計画書の一覧と作り方
 │   ├── _TEMPLATE.md   計画書の書式

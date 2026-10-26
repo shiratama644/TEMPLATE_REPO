@@ -9,3 +9,4 @@
 | 番号 | タイトル | 状態 |
 |---|---|---|
 | [0001](./0001-mermaid-source.md) | 図の正本は Markdown 内の Mermaid ソースにする | accepted |
+| [0002](./0002-agents-md-lint.md) | 指示ファイルの予算検査に `agents-md-lint`（npm）を採用する | accepted |
