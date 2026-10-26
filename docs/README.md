@@ -28,7 +28,8 @@ docs/
 │   └── README.md      調査の一覧と書き方
 ├── audit/             差分・問題の監査
 │   ├── index.md       説明
-│   └── activity.md    作業の時系列の記録（追加のみ）
+│   ├── activity.md    作業の時系列の記録（追加のみ）
+│   └── issues-lint.md 発見した問題（agents-md-lint の no-op 不具合と上流報告の文面）
 └── ops/               運用手順
     └── index.md       説明
 ```
