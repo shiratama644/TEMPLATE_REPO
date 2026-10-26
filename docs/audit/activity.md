@@ -26,7 +26,8 @@
 | 2026-10-26 | AGENTS.md がクロスツール公開標準であることを README 等に明記（AGENTSYNC-5） | `dbfabf7` |
 | 2026-10-26 | ADR-0002 と出典クレジットを記録（AGENTSYNC-6） | `c7de1d0`。`THIRD_PARTY_NOTICES.md` に MIT 出典と参照文書 |
 | 2026-10-26 | 開発中の言語検査が全体走査で実混入を発見。フックのコメントのハングル 3 字（U+C218 U+C900 U+C758）を日本語に戻した | `704c398`。AGENTSYNC-3 由来で目視レビューを通過していた |
-| 2026-10-26 | 日本語と英語のみを許可する言語ゲートを追加（LANGGATE-1）。ADR-0003 | `e026a8a`。全体 164 ファイルで error 0・warn 0、負のテスト 4 種で exit 1/0 を実測、`make check` 11 フック Passed |
+| 2026-10-26 | 日本語と英語のみを許可する言語ゲートを追加（LANGGATE-1）。ADR-0003 | `e026a8a`。全体 164 ファイルで error 0・warn 0、負のテスト 4 種で exit 1/0 を実測、`make check` 18 フック Passed |
 | 2026-10-26 | 時点記録にブランチ名を残さない方針を明文化し、`log-task.md` と `AGENTS.md §4.4` の矛盾を解消（LANGGATE-3） | `dc0ebaa`。テンプレートを `Date / Commit / PR` へ。過去ログ 3 件は無変更 |
 | 2026-10-26 | 上流への issue 起票が権限で拒否されたため、投稿用の英語文面を audit に保全（LANGGATE-2 は保留） | `ae24f15`。`docs/audit/issues-lint.md` §6。再現表 6 行・修正案 4 つ |
 | 2026-10-26 | コミット `5a10b4d` のメッセージの誤字（U+52A8）を正誤記録（LANGGATE-4）。履歴は書き換えない | 実測: `git log -1 --format=%B 5a10b4d` を `--commit-msg` で検査し **exit 1**、「手動」に直すと **exit 0** |
+| 2026-10-26 | `make check` のフック数を実測し、記録の誤記を訂正（今回分 11 → **18**、前タスク分 9 → **17**）。過去ログの誤記は書き換えず新ログ §2.2 に訂正を記録 | `.pre-commit-config.yaml` を `git show <rev>:…` で stage 別に数えて実測。設定総数は 20（pre-commit 18 + commit-msg 2） |

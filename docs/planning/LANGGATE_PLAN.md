@@ -95,7 +95,7 @@
 |---|---|---|
 | Unit | する | スクリプト内蔵の自己検査 fixture 8 件（日本語+英語 / 記号・絵文字 / CP932 の異体字 / 簡体字 1 字 / 簡体字の文 / ハングル / キリル / 表外漢字は warn） |
 | Component | する | `pre-commit run language --files <違反ファイル>` が Failed・exit 1、既存ファイルで Passed。`--hook-stage commit-msg` で違反メッセージが Failed |
-| E2E | する | `make check`（全 11 フック）・`make links`・CI（push 後 `gh pr checks`） |
+| E2E | する | `make check`（全 18 フック）・`make links`・CI（push 後 `gh pr checks`） |
 | 実環境 | しない | 実機・本番 build の概念がない（文書とスクリプトのみの変更） |
 
 行わないテスト: 他言語の大規模コーパスによる再現率・適合率の評価（§10.3 の限界は文書で明示する）。
@@ -191,7 +191,7 @@
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| LANGGATE-1 | `704c398`（混入修正）、`e026a8a`（本体） | Unit: 自己検査 fixture 8 件 PASS / Component: 負のテスト 4 種 / E2E: `make check`・CI | 全体 **164 ファイルで error 0・warn 0**。負のテスト: 簡体字+ハングル+キリルのファイルで Failed（exit 1、16 件検出）、簡体字コミットメッセージで Failed（exit 1）、正常なファイルとメッセージで Passed（exit 0）。`make check` 11 フック Passed、`make links` OK、AGENTS.md 171 行 / 16,459 B。**導入時の走査で実混入を 3 件発見**（フックのコメントのハングル 3 字、ADR 草稿の U+8FDC、audit 文書の U+5F52） |
+| LANGGATE-1 | `704c398`（混入修正）、`e026a8a`（本体） | Unit: 自己検査 fixture 8 件 PASS / Component: 負のテスト 4 種 / E2E: `make check`・CI | 全体 **164 ファイルで error 0・warn 0**。負のテスト: 簡体字+ハングル+キリルのファイルで Failed（exit 1、16 件検出）、簡体字コミットメッセージで Failed（exit 1）、正常なファイルとメッセージで Passed（exit 0）。`make check` **18 フック** Passed、`make links` OK（136 ファイル）、AGENTS.md 171 行 / 16,459 B。**導入時の走査で実混入を 5 件発見**（フックのコメントのハングル 3 字、ADR 草稿の U+8FDC、task-list 証拠欄の U+8FDC、audit 文書の U+5F52、新ログ草稿の U+8BA2）。フック数の初版記録（11）は誤りで、実測 18 に訂正済み（新ログ §2.2） |
 | LANGGATE-2 | `ae24f15` | 実測（再現表 6 行） | **保留（外部判断待ち）**。`gh issue create` は `Resource not accessible by integration` で拒否。上流は issues 有効・未解決 0 件・重複なし。投稿用文面を `docs/audit/issues-lint.md` §6 に保全。正常ファイルでも symlink 経由は出力 0 バイト（realpath 経由は 612 バイト）＝ `run()` が一度も呼ばれていないことを確認 |
 | LANGGATE-3 | `dc0ebaa` | `make check`・`make links`・`git diff --stat` | テンプレートを `Date / Commit / PR` に変更し `Branch:` を廃止、`AGENTS.md §4.4` に同じ方針を追記。過去ログ 3 件は無変更（差分 0）。新ログ `.agent/logs/2026-10-26_language-gate.md` が新形式の最初の例 |
 | LANGGATE-4 | 記録は本コミット | 実測（exit コード） | 履歴（`5a10b4d`）は無変更。`git log -1 --format=%B 5a10b4d` を `--commit-msg` で検査し **exit 1**、`pre-commit run commit-msg-language --hook-stage commit-msg` も **Failed**、「手動」に直すと **exit 0**。正誤は新ログ §2.1 に記録 |
