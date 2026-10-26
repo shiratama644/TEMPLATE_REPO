@@ -11,7 +11,7 @@
 
 | トリガー（いつ） | フック | 形式 | 登録先 |
 | :--- | :--- | :--- | :--- |
-| **セッション開始時**（startup / resume / clear / compact） | [`session-start.sh`](./session-start.sh) | スクリプト | `settings.json` → `SessionStart` |
+| **セッション開始時**（startup / resume / clear / compact） | [`session-start.sh`](./session-start.sh) | スクリプト（自律ルールも注入） | `settings.json` → `SessionStart` |
 | **タスク開始時**（ユーザー指示を受けた直後） | [`pre-task.md`](./pre-task.md) | 手順 | 手動（現状把握の手順） |
 | **Bash 実行前**（破壊的 git 操作の直前） | [`block-dangerous-git.sh`](./block-dangerous-git.sh) | スクリプト | `settings.json` → `PreToolUse`（matcher: Bash） |
 | **編集前**（Edit/Write前） | [`pre-edit-guard.sh`](./pre-edit-guard.sh) | スクリプト | `settings.json` → `PreToolUse` |
@@ -24,11 +24,11 @@
 
 | ファイル | 実行トリガー | 対象 / 内容 |
 | :--- | :--- | :--- |
-| [pre-task.md](./pre-task.md) | タスク開始時 | 現状把握（git status/branch/log）→ `.agent/skills/` から必要スキルをピンポイント読込（未初期化なら `project-init`）→ リポジトリ固有の制約確認 |
+| [pre-task.md](./pre-task.md) | タスク開始時 | 現状把握 → 目的・完了条件・不足作業・事前確認が必要な境界を特定 → 必要スキルをピンポイント読込 |
 | [pre-edit-guard.sh](./pre-edit-guard.sh) | PreToolUse | 編集禁止領域（.git/, node_modules/, dist/, build/, coverage/ 等の生成物）への変更をブロック（`permissionDecision: deny` の JSON） |
 | [post-edit-verify.sh](./post-edit-verify.sh) | PostToolUse | 機密ファイル混入（`decision: block` の JSON でモデルに返す）・docs/README 目次の事後検証（警告のみ） |
-| [verify-commit.md](./verify-commit.md) | commit直前 | プロジェクト検証（typecheck/lint/test/build）+ 意図しない差分の確認 |
-| [log-task.md](./log-task.md) | タスク完了時 | `.agent/logs/YYYY-MM-DD_<summary>.md` 作成（4セクション）→ 重要知見を `.agent/skills/` へ同期 → `skills/index.md` 更新 |
+| [verify-commit.md](./verify-commit.md) | commit直前 | プロジェクト検証 + 目的達成・追加の必要作業・未実施検証の確認 |
+| [log-task.md](./log-task.md) | タスク完了時 | 4 セクションのログ（自分で判断した追加作業・未解決・未実施検証を含む）→ 再利用可能な知見をスキルへ同期 |
 | [sandbox-recovery.md](./sandbox-recovery.md) | Sandbox再構築検知時 | `git fetch` → `reset --hard FETCH_HEAD`（例外的許可）→ §6.1 の環境セットアップ → 健全性確認 |
 
 ## 運用ルール

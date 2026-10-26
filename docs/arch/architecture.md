@@ -56,11 +56,11 @@ TEMPLATE_REPO/
 
 ## 3. Agent が情報を読み込む流れ
 
-1. **セッション開始・指示受領時**: `git status`・現在のブランチ・直近のコミットを確認する（`settings.json` の `SessionStart` フック `hooks/session-start.sh`、`hooks/pre-task.md`）。
+1. **セッション開始・指示受領時**: `SessionStart` フックから `AGENTS.md §1.3` の自律ルールと作業状態を受け取り、`hooks/pre-task.md` で目的・不足作業・事前確認が必要な境界を特定する。現在のブランチ・直近のコミット・未コミット差分も確認する。
 2. **作業規約の確認**: `AGENTS.md` を読む。プロジェクト固有の検証手段は §6.1 を参照。
 3. **知識の選択**: `.agent/skills/index.md` の「読み方ガイド」から、必要なスキルだけを読む（全件は読まない）。テンプレートのプレースホルダが残っている新規リポジトリでは、先に `project-init` を読む（承認前にファイルを書き換えない）。
 4. **編集時**: `PreToolUse` で編集禁止領域を確認し（`pre-edit-guard.sh`）、`PostToolUse` で機密ファイル混入やドキュメント目次の更新漏れを確認する（`post-edit-verify.sh`）。
-5. **完了時**: 検証手段を実行し、証拠を `task-list.md` に記録し、`.agent/logs/` に実行ログを残す（`hooks/log-task.md`）。
+5. **完了時**: `hooks/verify-commit.md` に従い、目的の完了条件と検証結果を確認する。証拠を `task-list.md` に記録し、追加で判断した作業・未解決・未実施検証を `.agent/logs/` と報告に残す（`hooks/log-task.md`）。
 
 ## 4. 変更の原則
 
