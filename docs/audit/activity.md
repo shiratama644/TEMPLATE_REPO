@@ -39,3 +39,4 @@
 | 2026-10-26 | BUNAUDIT-1: Bun セットアップと生成物を監査。無効な構成・Git メタデータ/バックアップのパス保護、機能の互換、生成した library / native 依存、文書検査、フックの導入を修正。未知の全バグがないことは保証しない | 回帰テスト 30 件 / 220 assertions PASS。Web 6 通り build、library/full の publint・size、Python FastAPI venv と import、Playwright HTTP スモークを実測。OS パッケージ導入と非 Linux 実機は未検証。CI は push 後に確認 |
 | 2026-10-26 | BUNAUDIT-1 の PR #5 の CI を確認し、ローカル監査を完了。実機未検証項目は BUNSETUP-4 に分離 | `88ee38e`。Bun 全ゲート・gitleaks・dependency-review 3 件 PASS。ローカル 30 テスト / 220 assertions PASS |
 | 2026-10-27 | SETUPCONF-1: 計画提示後に対話式 `y/N` で承認する経路を追加。旧基点に戻ったサンドボックスは退避・リモート照合後に復旧 | `77844c5`。Bun 7 ゲート・31 テスト / 237 assertions PASS。疑似端末で適用・拒否・空入力・dry-run を確認。PR #5 の CI は push 後に確認 |
+| 2026-10-27 | SETUPCONF-1: PR #5 の CI を確認し、対話式承認の変更を完了。OS 実機検証は BUNSETUP-4 に残す | `b9e4a59`。Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS、ローカル 31 テスト / 237 assertions PASS |

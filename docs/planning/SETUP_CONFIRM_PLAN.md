@@ -75,4 +75,4 @@ CLI に TTY を渡さない通常の `spawnSync` は対話経路を通らない�
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| SETUPCONF-1 | `77844c5` | `bun run check` 7 ゲート・31 テスト / 237 assertions PASS | CI は push 後に確認 |
+| SETUPCONF-1 | `77844c5` / `b9e4a59` | `bun run check` 7 ゲート・31 テスト / 237 assertions PASS | PR #5 の Bun・gitleaks・dependency-review は `b9e4a59` で PASS |

@@ -23,3 +23,5 @@
 
 - PR #5 の Bun / gitleaks / dependency-review の CI 結果を push 後に確認し、進捗文書に実測を記録する。
 - OS パッケージの実導入、および macOS / Windows / Termux の実機検証は BUNSETUP-4 として保留。疑似端末テストは Linux の `script(1)` で確認した。
+
+追記（push 後）: `b9e4a59` の PR #5 で Bun 全ゲート・gitleaks・dependency-review の 3 チェックが PASS。残りは BUNSETUP-4 の実機検証。
