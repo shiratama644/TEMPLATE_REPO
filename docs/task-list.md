@@ -108,6 +108,14 @@
 |---|---|---|---:|---|---|---|
 | BUNAUDIT-1 | Bun 版 CLI・生成物・検査の不具合を監査・修正する | 完了 | 100% | BUNSETUP-1〜3 | 入力・symlink・バックアップ・生成物・検査の負のテスト、実行可能な生成先の実ビルド、Bun 全ゲートと CI が PASS。未実機確認は BUNSETUP-4 として残す | `88ee38e`。Bun 7 ゲート・30 テスト / 220 assertions PASS。Web 6 build、library/full publint・size、Python FastAPI venv / import と Playwright HTTP スモークを実測。PR #5 の Bun・gitleaks・dependency-review 3 件 PASS。OS 実機と Docker、Go/Rust の実ビルドは未検証 |
 
+### 対話式セットアップの計画承認 (2026-10-27 計画)
+
+> 計画書: [`planning/SETUP_CONFIRM_PLAN.md`](./planning/SETUP_CONFIRM_PLAN.md)。対話式 `bun run setup` は計画表示後に確認し、OS 導入の別承認を保つ。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| SETUPCONF-1 | 計画提示後の `y/N` 承認を対話式に追加 | ローカル検証済み | 90% | BUNSETUP-3、BUNAUDIT-1 | `y` で適用、`N` / Enter / `--dry-run` は不変更。非対話式・OS 導入の安全境界と文書を維持し、全ゲート PASS | 疑似端末による回帰テストと `bun run check` 7 ゲート・31 テスト / 237 assertions PASS。CI は push 後に確認 |
+
 ---
 
 ## タスク追加の手順

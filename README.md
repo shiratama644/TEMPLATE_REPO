@@ -35,14 +35,14 @@ Agent の作業規約・記憶・進捗を備えた **Bun ベースのプロジ�
 bun install --frozen-lockfile
 bun run setup --help
 bun run setup --list-presets
-bun run setup                                 # 対話式。最後に適用を確認
+bun run setup                                 # 対話式。計画を表示し [y/N] で適用を確認
 bun run setup --preset vite-app --name my-app --dry-run
 bun run setup --yes --apply --preset next-app --name my-app
 bun run setup --yes --apply --language go --template go-http --name my-api --no-install
 bun run check                                 # CI と同じ入口（型・単体テスト含む）
 ```
 
-`--yes` のみではファイルを変更しません。非対話式の適用には **`--yes --apply` の両方**が必要です。`--dry-run` は常に読み取り専用です。既存の生成対象ファイルは保持し、変更する `package.json` は `.setup-backup/` に退避します。OS パッケージは対話式で**コマンドごとに yes と入力したときだけ**実行し、非対話式では手順の表示のみです。**文書やスキルの削除は自動では行わず、候補だけ案内します**。
+対話式では計画の提示後に `[y/N]` を尋ね、`y` / `yes` を入力したときだけ適用します。`N` または Enter のみなら変更しません。`--apply` は対話式では不要で、指定しても確認を省略しません。`--yes` のみではファイルを変更しません。非対話式の適用には **`--yes --apply` の両方**が必要です。`--dry-run` は常に読み取り専用です。既存の生成対象ファイルは保持し、変更する `package.json` は `.setup-backup/` に退避します。OS パッケージは対話式で**コマンドごとに yes と入力したときだけ**実行し、非対話式では手順の表示のみです。**文書やスキルの削除は自動では行わず、候補だけ案内します**。
 
 | 言語 | テンプレート |
 | :--- | :--- |

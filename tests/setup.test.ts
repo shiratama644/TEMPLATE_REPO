@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import { spawnSync } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -40,6 +40,7 @@ test("non-interactive without --yes does not write", () => {
 test("dry-run and --yes without --apply never write", () => {
   const d = dir()
   expect(cli(d, "--yes", "--dry-run", "--preset", "next-app").status).toBe(0)
+  expect(cli(d, "--yes", "--apply", "--dry-run", "--preset", "next-app").status).toBe(0)
   expect(cli(d, "--yes", "--preset", "next-app").status).toBe(0)
   expect(readdirSync(d)).toEqual([])
 })
@@ -498,4 +499,88 @@ test("selected quality tools include runnable scaffolds and scoped configuration
     expect(readFileSync(join(web, "playwright.config.ts"), "utf8")).toContain("webServer")
     expect(readFileSync(join(web, "tests/e2e.ts"), "utf8")).toContain("response.ok()")
   }
+})
+
+async function interactiveCli(d: string, answer: string | null, ...flags: string[]) {
+  const args = [
+    process.execPath,
+    join(import.meta.dir, "../scripts/setup.ts"),
+    "--dir",
+    d,
+    "--name",
+    "test-project",
+    "--description",
+    "interactive test",
+    "--preset",
+    "minimal",
+    "--language",
+    "typescript",
+    "--template",
+    "plain-ts",
+    "--features",
+    "none",
+    "--no-install",
+    ...flags,
+  ]
+  const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`
+  return await new Promise<{ status: number | null; output: string }>((resolve, reject) => {
+    const child = spawn("script", ["-q", "-e", "-c", args.map(quote).join(" "), "/dev/null"])
+    let output = "",
+      sent = false
+    const timer = setTimeout(() => {
+      child.stdin.end()
+      child.kill()
+      reject(new Error(`対話式 CLI が終了しません: ${output}`))
+    }, 10_000)
+    child.stdout.on("data", (chunk: Buffer) => {
+      output += chunk.toString()
+      if (!sent && output.includes("[y/N]:")) {
+        sent = true
+        child.stdin.write(`${answer ?? ""}\n`)
+      }
+    })
+    child.stderr.on("data", (chunk: Buffer) => {
+      output += chunk.toString()
+    })
+    child.on("error", (error) => {
+      clearTimeout(timer)
+      reject(error)
+    })
+    child.on("close", (status) => {
+      clearTimeout(timer)
+      if (answer !== null && !sent) reject(new Error(`確認プロンプトが表示されません: ${output}`))
+      else resolve({ status, output })
+    })
+  })
+}
+
+test("interactive plan accepts y without --apply and rejects N or empty input", async () => {
+  const cancelled = dir()
+  const no = await interactiveCli(cancelled, "N", "--save-config", "choices.json")
+  expect(no.status).toBe(0)
+  expect(no.output).toContain("この計画を適用しますか？ [y/N]:")
+  expect(no.output).toContain("中止しました")
+  expect(readdirSync(cancelled)).toEqual([])
+
+  const empty = dir()
+  expect((await interactiveCli(empty, "")).status).toBe(0)
+  expect(readdirSync(empty)).toEqual([])
+
+  const legacy = dir()
+  expect((await interactiveCli(legacy, "N", "--apply")).status).toBe(0)
+  expect(readdirSync(legacy)).toEqual([])
+
+  const approved = dir()
+  const yes = await interactiveCli(approved, "y", "--save-config", "choices.json")
+  expect(yes.status).toBe(0)
+  expect(existsSync(join(approved, "package.json"))).toBe(true)
+  expect(existsSync(join(approved, "src/index.ts"))).toBe(true)
+  expect(existsSync(join(approved, "choices.json"))).toBe(true)
+
+  const dryRun = dir()
+  const preview = await interactiveCli(dryRun, null, "--apply", "--dry-run")
+  expect(preview.status).toBe(0)
+  expect(preview.output).toContain("セットアップ計画")
+  expect(preview.output).not.toContain("[y/N]:")
+  expect(readdirSync(dryRun)).toEqual([])
 })

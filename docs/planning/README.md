@@ -27,6 +27,7 @@
 | [`LANGGATE_PLAN.md`](./LANGGATE_PLAN.md) | LANGGATE-1〜4 | LANGGATE-2 のみ保留 | 日本語と英語のみを許可する検査の追加と、AGENTSYNC の残事項（上流報告・ブランチ名規約の矛盾・コミットメッセージの誤字記録）を片付ける計画 |
 | [`BUN_SETUP_PLAN.md`](./BUN_SETUP_PLAN.md) | BUNSETUP-1〜4 | 1〜3 完了、4 実機検証待ち | Bun 版の対話/非対話 setup と検査の移行 |
 | [`BUN_AUDIT_PLAN.md`](./BUN_AUDIT_PLAN.md) | BUNAUDIT-1 | 完了（実機は別タスク） | Bun CLI・生成物・検査のバグ監査と安全境界 |
+| [`SETUP_CONFIRM_PLAN.md`](./SETUP_CONFIRM_PLAN.md) | SETUPCONF-1 | ローカル検証済み | 対話式 CLI の計画承認と非対話式の安全境界 |
 | `INIT_STATE.md` | — | 実行時に作成 | 初期設定の作業記憶（スロット状態・予算）。承認前に書いてよい唯一のファイル |
 | `INIT_PLAN.md` | — | 実行時に作成 | 承認済みの初期設定計画。書式は [`project-init`](../../.agent/skills/project-init/SKILL.md)。テンプレート本体には置かない |
 

@@ -46,7 +46,7 @@ type Options = {
   config?: string
   saveConfig?: string
 }
-const usage = `bun run setup [options]\n\n  --preset <id>       ${Object.keys(presets).join(" | ")}\n  --language <id>     ${Object.keys(templates).join(" | ")}\n  --template <id>     ${Object.values(templates).flat().join(" | ")}\n  --name <name>       Project name (lowercase kebab-case)\n  --description <s>   Project description\n  --features <ids>    Comma-separated feature IDs, or none / all\n  --config <file>     Load JSON configuration\n  --save-config <f>  Save choices (requires --apply)\n  --dir <path>        Target directory (default: current directory)\n  --dry-run           Show plan; never write files or install anything\n  --apply             Explicitly authorize new files and package.json changes\n  --yes               Non-interactive; requires --apply to make changes\n  --no-install        Skip bun install\n  --no-os-install     Show OS package instructions only\n  --list-presets      Show presets and features\n  --help              Show this help\n\nOS packages always require a separate, per-package confirmation in an interactive terminal.\nNon-interactive mode only prints OS installation instructions; --yes never authorizes sudo.\n`
+const usage = `bun run setup [options]\n\n  --preset <id>       ${Object.keys(presets).join(" | ")}\n  --language <id>     ${Object.keys(templates).join(" | ")}\n  --template <id>     ${Object.values(templates).flat().join(" | ")}\n  --name <name>       Project name (lowercase kebab-case)\n  --description <s>   Project description\n  --features <ids>    Comma-separated feature IDs, or none / all\n  --config <file>     Load JSON configuration\n  --save-config <f>  Save choices when the plan is approved\n  --dir <path>        Target directory (default: current directory)\n  --dry-run           Show plan; never write files or install anything\n  --apply             With --yes, authorize writing without a prompt (not needed interactively)\n  --yes               Skip interactive questions; requires --apply to make changes\n  --no-install        Skip bun install\n  --no-os-install     Show OS package instructions only\n  --list-presets      Show presets and features\n  --help              Show this help\n\nOS packages always require a separate, per-package confirmation in an interactive terminal.\nNon-interactive mode only prints OS installation instructions; --yes never authorizes sudo.\n`
 function option(args: string[]): Options {
   const o: Options = {
     dir: process.cwd(),
@@ -371,12 +371,18 @@ export async function run(args: string[]): Promise<number> {
       "README.md のテンプレート説明",
     ]
     console.log("完了後に手動で確認・修正する候補（自動削除なし）:\n- " + suggestions.join("\n- "))
-    if (o.dryRun || !o.apply) {
-      console.log("変更なし。適用するには --apply（非対話式は --yes --apply）")
+    if (o.dryRun) {
+      console.log("dry-run: 変更・インストールは行いません")
       return 0
     }
-    if (tty && !o.yes && (await ask("上記のファイル変更を適用しますか？ [yes/No]: ")) !== "yes") {
-      console.log("中止しました")
+    if (tty && !o.yes) {
+      const answer = (await ask("この計画を適用しますか？ [y/N]: ")).toLowerCase()
+      if (answer !== "y" && answer !== "yes") {
+        console.log("中止しました。変更・インストールは行いません")
+        return 0
+      }
+    } else if (!o.apply) {
+      console.log("変更なし。非対話式の適用には --yes --apply を指定してください")
       return 0
     }
     const backupRoot = safe(o.dir, ".setup-backup")
