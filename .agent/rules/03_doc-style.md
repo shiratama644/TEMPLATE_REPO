@@ -12,6 +12,10 @@ paths:
 ## 1. 言語と表記
 
 - 本文は**日本語**。コード識別子・技術固有名詞は英語のまま。
+- 使える言語は**日本語と英語のみ**（コミットメッセージも同じ）。簡体字・ハングル・キリルなどは
+  `bun run lang`（`scripts/check_language.ts`）が error で止める。日本語の表外漢字は warn として報告される。
+  判定方式と限界は [`../../docs/adr/0003-language-gate.md`](../../docs/adr/0003-language-gate.md)。
+- **違反例を文書に書くときはコードポイントで書く**（`U+52A8` のように）。字面で書くとその文書自身がゲートに止まる。
 - 「〜です/ます」調。計画書の完了条件などは断定形「〜する」。
 - 絵文字は既存ファイルのパターンに従う。新規の飾り絵文字は増やさない（可読性優先）。
 
@@ -34,7 +38,7 @@ paths:
 
 | 種類 | 命名規則 | 例 |
 |---|---|---|
-| 計画書 | `kebab-case.md` | `reader-redesign.md` |
+| 計画書 | `{TOPIC}_PLAN.md` | `REPOFIX_PLAN.md` |
 | 仕様書 | `kebab-case.md` | `product.md` |
 | 調査 | `<TOPIC>_RESEARCH.md` | `PRICING_RESEARCH.md` |
 | 監査（差分） | `diff-{context}.md` | `diff-migration.md` |
@@ -42,7 +46,7 @@ paths:
 | スキル | `kebab-case/SKILL.md` | `project-overview/SKILL.md` |
 | ルール | `NN_kebab-case.md` または `kebab-case.md` | `project-template.md` |
 | フック手順 | `kebab-case.md` | `verify-commit.md` |
-| フックスクリプト | `kebab-case.sh` | `post_edit_verify.sh` |
+| フックスクリプト | `kebab-case.sh` | `post-edit-verify.sh` |
 
 ## 4. リンク規約
 

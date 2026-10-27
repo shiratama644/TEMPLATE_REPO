@@ -12,20 +12,51 @@
       "Bash(git log*)",
       "Bash(git diff*)",
       "Bash(git fetch*)",
+      "Bash(git show*)",
+      "Bash(git rev-parse*)",
+      "Bash(git ls-files*)",
+      "Bash(git check-ignore*)",
+      "Bash(git hash-object*)",
+      "Bash(git mv*)",
+      "Bash(git reset --hard FETCH_HEAD)",
       "Bash(git add*)",
       "Bash(git commit*)",
       "Bash(git push origin*)",
       "Bash(gh *)",
+      "Bash(make *)",
+      "Bash(bun scripts/*)",
+      "Bash(bun run *)",
+      "Bash(bun install*)",
+      "Bash(sh .agent/hooks/*)",
+      "Bash(chmod +x .agent/hooks/*)",
       "Bash(ls *)",
       "Bash(cat *)",
-      "Bash(mkdir *)"
+      "Bash(mkdir *)",
+      "Bash(grep *)",
+      "Bash(wc *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(diff *)",
+      "Bash(pwd)",
+      "Bash(which *)",
+      "TodoWrite",
+      "WebSearch"
     ],
     "deny": [
       "Bash(rm -rf *)",
       "Bash(git reset --hard)",
-      "Bash(git clean -fd)",
+      "Bash(git clean -f*)",
       "Bash(git rebase)",
+      "Bash(git branch -D*)",
+      "Bash(git checkout .*)",
+      "Bash(git restore .*)",
       "Bash(git push --force*)",
+      "Bash(git push origin main*)",
+      "Bash(git push origin master*)",
+      "Bash(git push origin HEAD:main*)",
+      "Bash(git push origin HEAD:master*)",
       "Bash(git commit --amend)",
       "Read(./.env)",
       "Read(./.env.*)",
@@ -61,7 +92,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .agent/hooks/pre_edit_guard.sh"
+            "command": "sh .agent/hooks/pre-edit-guard.sh"
           }
         ]
       }
@@ -72,7 +103,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .agent/hooks/post_edit_verify.sh"
+            "command": "sh .agent/hooks/post-edit-verify.sh"
           }
         ]
       }

@@ -14,15 +14,26 @@ docs/
 │   ├── architecture.md ディレクトリ構成・読み込みの流れ
 │   └── milestones.md  段階と完了条件
 ├── adr/               個別の ADR（1 判断 1 ファイル。今後の新規判断はここに書く）
-│   └── README.md      書き方と番号規則
+│   ├── README.md      書き方と番号規則
+│   ├── 0001-mermaid-source.md  図の正本は Mermaid ソース（PNG を置かない）
+│   ├── 0002-agents-md-lint.md  指示ファイルの予算検査に npm の linter を採用
+│   ├── 0003-language-gate.md   文書とコミットメッセージは日本語と英語のみ
+│   └── 0004-bun-setup.md      Bun の検証・セットアップと安全境界
 ├── planning/          計画書（タスクごとの範囲と完了条件）
 │   ├── README.md      計画書の一覧と作り方
-│   └── _TEMPLATE.md   計画書の書式
+│   ├── _TEMPLATE.md   計画書の書式
+│   ├── REPOFIX_PLAN.md テンプレートの不整合を直す計画（REPOFIX-1〜6）
+│   ├── AGENTSYNC_PLAN.md 公式仕様と実証研究へ同期する計画（AGENTSYNC-1〜6）
+│   ├── LANGGATE_PLAN.md 日本語・英語のみの言語ゲートと残事項（LANGGATE-1〜4）
+│   ├── BUN_SETUP_PLAN.md Bun 版 CLI と検証基盤への移行（BUNSETUP-1〜4）
+│   ├── BUN_AUDIT_PLAN.md Bun の不具合監査（BUNAUDIT-1）
+│   └── SETUP_CONFIRM_PLAN.md 対話式セットアップの計画承認（SETUPCONF-1）
 ├── research/          調査結果
 │   └── README.md      調査の一覧と書き方
 ├── audit/             差分・問題の監査
 │   ├── index.md       説明
-│   └── activity.md    作業の時系列の記録（追加のみ）
+│   ├── activity.md    作業の時系列の記録（追加のみ）
+│   └── issues-lint.md 発見した問題（agents-md-lint の no-op 不具合と上流報告の文面）
 └── ops/               運用手順
     └── index.md       説明
 ```

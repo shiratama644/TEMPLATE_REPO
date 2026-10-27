@@ -35,4 +35,6 @@ git log --oneline -5          # push 済みコミットが見えること
 ## 注意
 
 - `git reset --hard` は**この例外場景以外では厳禁**（AGENTS.md §4.3）。誤用に注意。
+- ガードレールはこの例外を形で見分ける。`block-dangerous-git.sh` は `git reset --hard FETCH_HEAD` のみを無出力・exit 0 で通し、`git reset --hard HEAD~1` などは `permissionDecision: "deny"` の JSON を返してブロックする（exit code は常に 0 なので、判定は出力の JSON で見る）。`.agent/settings.json` も allow に `Bash(git reset --hard FETCH_HEAD)` を持つ（deny の `Bash(git reset --hard)` は完全一致なので衝突しない）。
+- ブランチ名は必ず `git branch --show-current` で確認してから fetch する（AGENTS.md §4.4）。
 - 環境セットアップ手順はプロジェクトごとに異なるため、§6.1 に具体的な手順を記録しておくこと。

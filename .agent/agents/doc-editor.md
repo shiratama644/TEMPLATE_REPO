@@ -20,7 +20,7 @@ tools: Read, Grep, Edit, Write, Bash
 1. 編集先のファイルをReadで3箇所（冒頭・対象節・末尾）読む
 2. Rule 03の書式（言語・リンク・節番号・コードフェンス）に従い追記
 3. 新しいサブセクションは既存節末尾に `.N` 番で割り込むか、適切な位置に追加
-4. 編集後に `docs-maintenance` に従い `bash` で `python3 scripts/check_doc_links.py` を実行
+4. 編集後に `docs-maintenance` に従い `bash` で `bun run links` を実行
 5. `docs/` の変更なら `docs/README.md` の目次更新を忘れない
 
 ## やってはいけないこと
