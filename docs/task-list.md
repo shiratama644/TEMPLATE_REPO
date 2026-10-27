@@ -114,7 +114,7 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| SETUPCONF-1 | 計画提示後の `y/N` 承認を対話式に追加 | ローカル検証済み | 90% | BUNSETUP-3、BUNAUDIT-1 | `y` で適用、`N` / Enter / `--dry-run` は不変更。非対話式・OS 導入の安全境界と文書を維持し、全ゲート PASS | 疑似端末による回帰テストと `bun run check` 7 ゲート・31 テスト / 237 assertions PASS。CI は push 後に確認 |
+| SETUPCONF-1 | 計画提示後の `y/N` 承認を対話式に追加 | ローカル検証済み | 90% | BUNSETUP-3、BUNAUDIT-1 | `y` で適用、`N` / Enter / `--dry-run` は不変更。非対話式・OS 導入の安全境界と文書を維持し、全ゲート PASS | `77844c5`。疑似端末による回帰テストと `bun run check` 7 ゲート・31 テスト / 237 assertions PASS。CI は push 後に確認 |
 
 ---
 
