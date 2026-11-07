@@ -1,12 +1,12 @@
 export const meta = {
   name: "implement-task",
-  description: "タスクを実装する標準ワークフロー。探索→計画→実装→検証の4フェーズで進める。",
-  whenToUse: "新しい機能追加やバグ修正タスクを実装する時に使用。",
+  description: "実装前の探索・計画・テスト観点・検証計画を準備する。実装と検証はメインエージェントが実行する。",
+  whenToUse: "新機能やバグ修正の実装前に、目的と必要作業を確認して計画を準備する時に使用。",
   phases: [
     { title: "Explore", detail: "コードベースの探索と現状把握" },
     { title: "Plan", detail: "実装計画の立案と設計判断" },
-    { title: "Implement", detail: "実装とテスト作成" },
-    { title: "Verify", detail: "検証とレビュー" }
+    { title: "Test design", detail: "実装前のテスト観点の洗い出し（コード変更なし）" },
+    { title: "Validation plan", detail: "実行すべき検証の計画（未実行）" }
   ]
 };
 
@@ -35,8 +35,9 @@ const EXPLORE_SCHEMA = {
 
 const PLAN_SCHEMA = {
   type: "object",
-  required: ["scope", "prohibitions", "completionCriteria", "approach"],
+  required: ["objective", "scope", "prohibitions", "completionCriteria", "approach"],
   properties: {
+    objective: { type: "string", description: "指示の背後にある目的" },
     scope: {
       type: "array",
       items: { type: "string" },
@@ -58,7 +59,7 @@ const PLAN_SCHEMA = {
 
 const VERIFY_SCHEMA = {
   type: "object",
-  required: ["checks", "passed"],
+  required: ["checks"],
   properties: {
     checks: {
       type: "array",
@@ -67,12 +68,11 @@ const VERIFY_SCHEMA = {
         required: ["name", "status"],
         properties: {
           name: { type: "string" },
-          status: { enum: ["pass", "fail", "skip"] },
+          status: { enum: ["planned", "blocked"] },
           detail: { type: "string" }
         }
       }
-    },
-    passed: { type: "boolean" }
+    }
   }
 };
 
@@ -85,6 +85,7 @@ const exploration = await agent(
 - 現状の実装の把握
 - 依存関係の特定
 - 既存の類似実装の発見
+- 目的の達成に必要な不足（実装・依存・設定・検証・文書）の特定
 
 タスクの背景: ${task}
 `,
@@ -115,7 +116,11 @@ const planning = await agent(
 探索結果:
 ${JSON.stringify(exploration, null, 2)}
 
+AGENTS.md §1.3 と rules/06_autonomy.md に従い、目的外の拡張は避けてください。
 以下を含めて計画を作成:
+- 指示の背後にある目的（達成した状態）
+- 指示になくても目的達成に必要な作業と理由
+- 事前許可が必要な操作（破壊・データ削除・秘密情報・外部公開・課金）や結果を左右する判断
 - 変更範囲（触ってよいファイル・触ってはいけないファイル）
 - 禁止事項（推測で埋めてはいけない仕様・破壊的変更）
 - 完了条件（第三者がYes/No判定できる条件）
@@ -130,7 +135,7 @@ AGENTS.md §6 のプロジェクト固有ルールと、docs/planning/_TEMPLATE.
   }
 );
 
-if (!planning || !planning.scope) {
+if (!planning || !planning.objective || !Array.isArray(planning.scope) || !Array.isArray(planning.completionCriteria)) {
   return {
     status: "blocked",
     message: "実装計画の立案に失敗しました。",
@@ -141,8 +146,8 @@ if (!planning || !planning.scope) {
 
 log(`計画完了: ${planning.scope.length} ファイルを変更予定`);
 
-// Phase 3: Implement
-phase("Implement");
+// Phase 3: Test design (no code is written here)
+phase("Test design");
 
 // 実装はメインエージェントが行うため、ここでは並列でテスト観点の洗い出しをサブエージェントに依頼
 const testPerspectives = await parallel(
@@ -159,7 +164,7 @@ ${JSON.stringify(planning, null, 2)}
 `,
       {
         label: `test-perspective:${type}`,
-        phase: "Implement"
+        phase: "Test design"
       }
     )
   )
@@ -167,17 +172,17 @@ ${JSON.stringify(planning, null, 2)}
 
 log(`テスト観点の洗い出し完了: ${testPerspectives.filter(Boolean).length} タイプ`);
 
-// Phase 4: Verify
-phase("Verify");
+// Phase 4: Validation plan (no verification is executed here)
+phase("Validation plan");
 
 const verification = await agent(
-  `タスク「${task}」の実装が完了した想定で、検証チェックリストを作成してください。
+  `タスク「${task}」の実装前に、検証計画を作成してください。検証を実行した・成功したと仮定しないでください。
 
 計画:
 ${JSON.stringify(planning, null, 2)}
 
-以下の観点でチェック:
-- typecheck, lint, test:unit, build がPASSするか
+以下の観点を検証項目として計画（status は planned または blocked のみ）:
+- AGENTS.md §6.1 に実在する検証コマンドと、目的達成を確かめるテスト
 - 意図しない差分が含まれていないか
 - 機密情報が混入していないか
 - ドキュメントが更新されているか（必要な場合）
@@ -186,13 +191,24 @@ AGENTS.md §3 と rules/04_verification.md に従ってください。
 `,
   {
     label: "verify",
-    phase: "Verify",
+    phase: "Validation plan",
     schema: VERIFY_SCHEMA
   }
 );
 
+if (!verification || !Array.isArray(verification.checks)) {
+  return {
+    status: "blocked",
+    message: "検証計画の作成に失敗しました。実装・検証は未実施です。",
+    exploration,
+    planning,
+    verification
+  };
+}
+
 return {
-  status: "ok",
+  // このワークフローは準備だけ。実装・検証・承認・push の完了を示さない。
+  status: "ready_for_implementation",
   task,
   exploration,
   planning,
@@ -201,7 +217,8 @@ return {
   nextSteps: [
     "計画書を docs/planning/{TOPIC}_PLAN.md に作成",
     "docs/task-list.md にタスクを登録",
-    "実装 → 検証 → コミット → ログ記録のサイクルで進める",
-    "完了後に .agent/logs/ にログを作成"
+    "事前確認が必要な操作や重大な分岐があればユーザーに確認する",
+    "メインエージェントが実装 → 実際の検証 → コミット → ログ記録を反復する",
+    "完了時は追加で判断した作業・未解決・未実施検証を報告する"
   ]
 };

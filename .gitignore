@@ -10,6 +10,10 @@
 /tmp/
 /temp/
 
+# Python（scripts/ の検証スクリプトを import したときに出る生成物）
+__pycache__/
+*.py[cod]
+
 # OS
 .DS_Store
 Thumbs.db
@@ -28,3 +32,15 @@ Thumbs.db
 # Agent auto memory (if not committed)
 .agent/agent-memory/
 .claude/projects/
+
+# Bun / setup
+node_modules/
+.bun/
+.setup-backup/
+.setup-pkg-*.tmp
+
+# Generated language runtimes and build outputs
+.venv/
+target/
+.next/
+.turbo/

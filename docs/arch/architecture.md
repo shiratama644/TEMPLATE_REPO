@@ -5,10 +5,23 @@
 ```
 TEMPLATE_REPO/
 ├── AGENTS.md              # 作業規約（§1〜§5・§7・§8は汎用、§6はプロジェクト固有）
+├── CLAUDE.md              # AGENTS.md への symlink
 ├── README.md              # プロジェクトの概要（テンプレート利用時に書き換える）
 ├── LICENSE
+├── Makefile               # 検証の入口（check / links / mermaid / setup）
+├── package.json / bun.lock # Bun の依存・検証・setup の入口
+├── .githooks/             # Bun 検証と commit-msg フック
+├── biome.json             # JSON / JS / TS / CSS の整形と lint
+├── .editorconfig          # エディタ間の基本書式
+├── .gitleaks.toml         # 秘密情報検出の許可リスト
 ├── .gitignore
-├── .agent/                # Agent の設定と知識
+├── scripts/               # Bun の TypeScript CLI と検査
+│   ├── setup.ts / setup_manifest.ts # 初期設定と選択肢
+│   ├── check_doc_links.ts # Markdown の内部リンク
+│   ├── check_mermaid.ts   # Mermaid 図の宣言
+│   └── check_language.ts  # 日本語・英語ゲート
+├── .github/               # CI・リリース・依存関係レビュー・dependabot
+├── .agent/                # Agent の設定と知識（.claude はここへの symlink）
 │   ├── README.md          # .agent/ の説明
 │   ├── settings.json      # 共有設定（permissions・hooks・env）
 │   ├── rules/             # トピック別ルール
@@ -22,6 +35,7 @@ TEMPLATE_REPO/
 └── docs/                  # ドキュメント（目次: docs/README.md）
     ├── task-list.md       # 進捗の正本
     ├── arch/              # 仕様（本ディレクトリ）
+    ├── adr/               # 設計判断の記録（1 判断 1 ファイル）
     ├── planning/          # 計画書
     ├── research/          # 調査
     ├── audit/             # 監査（差分・問題点の記録）
@@ -45,14 +59,16 @@ TEMPLATE_REPO/
 
 ## 3. Agent が情報を読み込む流れ
 
-1. **セッション開始・指示受領時**: `git status`・現在のブランチ・直近のコミットを確認する（`settings.json` の `SessionStart` フック `hooks/session-start.sh`、`hooks/pre-task.md`）。
+1. **セッション開始・指示受領時**: `SessionStart` フックから `AGENTS.md §1.3` の自律ルールと作業状態を受け取り、`hooks/pre-task.md` で目的・不足作業・事前確認が必要な境界を特定する。現在のブランチ・直近のコミット・未コミット差分も確認する。
 2. **作業規約の確認**: `AGENTS.md` を読む。プロジェクト固有の検証手段は §6.1 を参照。
 3. **知識の選択**: `.agent/skills/index.md` の「読み方ガイド」から、必要なスキルだけを読む（全件は読まない）。テンプレートのプレースホルダが残っている新規リポジトリでは、先に `project-init` を読む（承認前にファイルを書き換えない）。
-4. **編集時**: `PreToolUse` で編集禁止領域を確認し（`pre_edit_guard.sh`）、`PostToolUse` で機密ファイル混入やドキュメント目次の更新漏れを確認する（`post_edit_verify.sh`）。
-5. **完了時**: 検証手段を実行し、証拠を `task-list.md` に記録し、`.agent/logs/` に実行ログを残す（`hooks/log-task.md`）。
+4. **編集時**: `PreToolUse` で編集禁止領域を確認し（`pre-edit-guard.sh`）、`PostToolUse` で機密ファイル混入やドキュメント目次の更新漏れを確認する（`post-edit-verify.sh`）。
+5. **完了時**: `hooks/verify-commit.md` に従い、目的の完了条件と検証結果を確認する。証拠を `task-list.md` に記録し、追加で判断した作業・未解決・未実施検証を `.agent/logs/` と報告に残す（`hooks/log-task.md`）。
 
 ## 4. 変更の原則
 
 - 構成を変えたら、本ファイル・`docs/README.md`・`README.md`・`AGENTS.md §8` を同じ変更で更新する。
-- フックのスクリプトは POSIX `sh` で書き、終了コード（0 = 許可、2 = ブロック）の規約に従う。
+- フックのスクリプトは POSIX `sh` で書き、判定は JSON を stdout へ出して `exit 0` で返す（PreToolUse は `hookSpecificOutput.permissionDecision`、PostToolUse は top-level `decision`）。exit code の意味は公式リファレンスに従い、`.agent/hooks/index.md` に規約を記録する。
 - 環境に依存する設定（OS・ランタイム・外部サービス）はテンプレート本体に入れず、`AGENTS.md §6` に書く。
+- 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない（[`adr/0001-mermaid-source.md`](../adr/0001-mermaid-source.md)）。図の検証は `make mermaid`。
+- `scripts/` の検証スクリプトは TypeScript / Bun を前提とする。日本語判定には Bun 管理の `iconv-lite` を用いる。

@@ -1,0 +1,21 @@
+diff --git a/dist/cli.js b/dist/cli.js
+index c63a1852c30a100bbef19bb9c84addb65d076e86..c71a863d550b5071e7110f0c9bd2cdc4084b4f6d 100755
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -7,6 +7,7 @@ import {
+ // src/cli.ts
+ import {
+   readFileSync,
++  realpathSync,
+   writeFileSync,
+   existsSync,
+   readdirSync
+@@ -335,7 +336,7 @@ function isMainModule() {
+   if (!entry)
+     return false;
+   try {
+-    return pathToFileURL(entry).href === import.meta.url;
++    return pathToFileURL(realpathSync(entry)).href === import.meta.url;
+   } catch {
+     return false;
+   }

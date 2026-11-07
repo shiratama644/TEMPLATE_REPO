@@ -1,12 +1,15 @@
 #!/bin/sh
-# pre_edit_guard.sh — 編集禁止領域への変更をブロックする PreToolUse フック
+# pre-edit-guard.sh — 編集禁止領域への変更をブロックする PreToolUse フック
 #
 # ブロック対象:
 #   .git/ 以下、および生成物ディレクトリ（node_modules/, dist/, build/, coverage/, target/, out/, .venv/, __pycache__/）
 #   .agent/logs/ の既存ファイルの直接編集（追加は log-task.md 経由）
 #
-# 終了コード:
-#   0 = 許可, 2 = ブロック
+# 出力と終了コード（Claude Code Hooks reference 準拠）:
+#   - 許可: 無出力・exit 0
+#   - ブロック: hookSpecificOutput.permissionDecision = "deny" の JSON を stdout へ・exit 0
+#     （PreToolUse の top-level "decision"/"reason" は非推奨。exit 2 と JSON は混ぜない）
+#   - 手動実行は引数にパスを取れる。判定は出力の "permissionDecision": "deny" で見る
 
 set -u
 
@@ -33,14 +36,16 @@ case "$TARGET" in
   ./*) TARGET="${TARGET#./}" ;;
 esac
 
-# 絶対パスが来た場合はリポジトリ相対にしようと試みる（簡易）
-# /home/.../TEMPLATE_REPO/... -> 相対化
-case "$TARGET" in
-  */.agent/logs/*)
-    # logsは新規作成は許可、既存の上書きはブロックしたいが、ここでは簡易的に許可
-    # 実際のブロックは post_edit で「追加のみ」を検証
-    ;;
-esac
+# JSON 文字列のエスケープ（バックスラッシュ・二重引用符。改行とタブは除去）
+json_escape() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n\r\t'
+}
+
+deny() {
+  REASON="$(json_escape "$1")"
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$REASON"
+  exit 0
+}
 
 is_protected() {
   case "$1" in
@@ -65,12 +70,7 @@ is_protected() {
 }
 
 if is_protected "$TARGET"; then
-  {
-    echo "⛔ [pre_edit_guard] 編集禁止領域です: $TARGET"
-    echo "   .git/ と生成物ディレクトリ（node_modules/, dist/, build/, coverage/ など）への直接編集は禁止されています。"
-    echo "   必要な場合はタスク完了後にビルド成果物として生成してください。"
-  } >&2
-  exit 2
+  deny "[pre-edit-guard] 編集禁止領域です: $TARGET — .git/ と生成物ディレクトリ（node_modules/, dist/, build/, coverage/ など）への直接編集は禁止されています。必要な場合はタスク完了後にビルド成果物として生成してください。"
 fi
 
 exit 0

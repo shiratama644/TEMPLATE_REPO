@@ -4,7 +4,7 @@ description: 変更を検証し、Conventional Commits形式でコミットす�
 
 # Commit Command
 
-変更を検証し、コミットする手順。
+変更を検証し、コミットする手順。先に [`../hooks/verify-commit.md`](../hooks/verify-commit.md) と `AGENTS.md §1.3` の目的達成条件を確認し、未実施検証を成功扱いしない。
 
 ## 手順
 
