@@ -24,3 +24,5 @@ LANGGATE-2 は issue 投稿ではなく、不具合を修正する。上流へ�
 
 - PR #5 の CI を push 後に確認し、LANGGATE-2 の状態と実測を記録する。
 - 上流に修正版が公開された時は、パッチの要否を比較検証して削除する。ユーザー指示により issue は作成しない。
+
+追記（push 後）: `9e1d24b` の PR #5 で Bun 全ゲート・gitleaks・dependency-review の 3 チェックが PASS。LANGGATE-2 は本リポジトリで完了。上流 npm 版は未修正。

@@ -204,4 +204,4 @@
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| LANGGATE-2（方針変更後） | `c2edd2f` | `bun install --frozen-lockfile --force`、`bun run check` 7 ゲート・32 テスト / 243 assertions PASS | patch なしで npm bin は exit 0・無出力、patch 後は正常ファイル exit 0・有出力、超過ファイル XP-007・exit 1。CI は push 後に確認 |
+| LANGGATE-2（方針変更後） | `c2edd2f` | `bun install --frozen-lockfile --force`、`bun run check` 7 ゲート・32 テスト / 243 assertions PASS | patch なしで npm bin は exit 0・無出力、patch 後は正常ファイル exit 0・有出力、超過ファイル XP-007・exit 1。PR #5 の Bun・gitleaks・dependency-review は `9e1d24b` で 3 チェック PASS |
