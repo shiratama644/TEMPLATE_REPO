@@ -33,7 +33,7 @@ docs/
 ├── audit/             差分・問題の監査
 │   ├── index.md       説明
 │   ├── activity.md    作業の時系列の記録（追加のみ）
-│   └── issues-lint.md 発見した問題（agents-md-lint の no-op 不具合と上流報告の文面）
+│   └── issues-lint.md 発見した問題（agents-md-lint の no-op 不具合とパッチ対応の記録）
 └── ops/               運用手順
     └── index.md       説明
 ```

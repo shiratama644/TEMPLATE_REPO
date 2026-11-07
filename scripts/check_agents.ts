@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import { root } from "./walk.ts"
-// agents-md-lint 1.0.1 の npm bin symlink は no-op。realpath の CLI 本体を起動する。
+// Bun のパッチで npm bin の no-op を修正済み。CLI は実体から起動し OS 別 bin shim に依存しない。
 export function checkAgents(): number {
   const result = Bun.spawnSync(
     [

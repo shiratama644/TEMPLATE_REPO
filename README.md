@@ -61,6 +61,7 @@ Git フックを導入する場合は `bun run hooks:install`（既存の commit
 
 - 目的を確認して小さく実装 → 検証 → 記録（`AGENTS.md §1.3`）。
 - `bun run check` が検証の正本。個別には `bun run links` / `mermaid` / `lang` / `agents` / `test`。
+- `agents-md-lint@1.0.1` は npm bin の無出力成功を防ぐ依存パッチを Bun の `patchedDependencies` で適用します。`bun install --frozen-lockfile` 後に利用してください。`bun run check` の回帰テストでは Node.js 18 以降で npm bin を起動します（上流の npm パッケージ自体には未反映）。
 - 進捗の正本は `docs/task-list.md`。検証結果と成果物の証拠を残します。
 - このテンプレートの使い方は [`.agent/skills/project-init/SKILL.md`](.agent/skills/project-init/SKILL.md) も参照してください。
 

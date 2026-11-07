@@ -26,5 +26,8 @@
     "@types/node": "^22.0.0",
     "agents-md-lint": "1.0.1",
     "typescript": "^6.0.0"
+  },
+  "patchedDependencies": {
+    "agents-md-lint@1.0.1": "patches/agents-md-lint@1.0.1.patch"
   }
 }

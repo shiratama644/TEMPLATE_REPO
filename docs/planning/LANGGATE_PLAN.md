@@ -32,7 +32,8 @@
 ### 2.2 残事項 3 件（LANGGATE-2〜4）
 
 - **LANGGATE-2**: `agents-md-lint@1.0.1` の bin が symlink 経由で no-op になる不具合（ADR-0002 に記録済み）を
-  上流へ報告する。回避策は本リポジトリに入れたが、**上流が直さないと他の利用者が同じ罠を踏む**。
+  本リポジトリの固定依存にパッチを当て、npm bin 経由でも確実に検査が動くよう修正する。
+  2026-11-07 のユーザー指示で上流 issue 作成は行わず、リポジトリ内の回避策から実体の修正に切り替えた。
 - **LANGGATE-3**: `.agent/hooks/log-task.md` のテンプレートは `Branch: <branch>` を要求するが、
   `AGENTS.md §4.4` は「過去セッションのブランチ名を文書に残さない」と定める。**規約同士が矛盾している**
   （2 つの過去ログが「未確認」として記録済み）。どちらかに寄せて明文化する。
@@ -55,6 +56,7 @@
 - `docs/adr/0003-language-gate.md`（新規。方式と限界の判断記録）＋ `docs/adr/README.md`・`../README.md` の目次
 - `docs/task-list.md`（LANGGATE-1〜4 の行）・`docs/audit/activity.md`（追記）・`.agent/logs/`（新規ログ）
 - 本計画書
+- `package.json` / `bun.lock` / `patches/`（Bun の固定依存パッチ）、`tests/agents.test.ts` と `scripts/check.ts`、第三者通知と関連スキル
 
 変更しない（境界外）:
 
@@ -83,7 +85,7 @@
       exit 1、正常なメッセージで exit 0（`pre-commit run <id> --files …` / `--hook-stage commit-msg` で実測）
 - [ ] `pre-commit run language --all-files` が Passed、`make lang` が exit 0
 - [ ] `make check`（全フック）と `make links` が PASS
-- [ ] 上流リポジトリに issue を作成し、番号を ADR-0002 と task-list に記録する（LANGGATE-2）
+- [ ] Bun `patchedDependencies` が npm bin のエントリポイント判定を realpath で修正し、frozen install 後に Node で symlink を起動して正常系は有出力・exit 0、超過系は XP-007・exit 1 となる（LANGGATE-2）
 - [ ] `log-task.md` と `AGENTS.md §4.4` の矛盾が解消され、両者に同じ方針が書かれている（LANGGATE-3）
 - [ ] `5a10b4d` の誤字が新規ログに正誤として記録されている（LANGGATE-4）
 - [ ] 検査の**限界**（日中共通の漢字だけでは検出できない）が ADR-0003 とスクリプトの docstring に書かれている
@@ -106,7 +108,7 @@
 
 - 検査が**正当な日本語**を error として止める（誤検出。表外漢字・異体字・約物・絵文字）
 - リポジトリ内の既存ファイルが error になり、修正すると文意が変わる
-- 上流リポジトリに issue を作成できない（権限・ネットワーク）
+- Bun の依存パッチが frozen install で再現できない、または npm bin の負のテストが通らない
 - 規約同士に新たな矛盾が見つかる
 - 履歴の書き換え（amend / force push）が必要になる
 
@@ -123,7 +125,7 @@
 | ID | テーマ | 主要成果物 | 依存 |
 |---|---|---|---|
 | LANGGATE-1 | 言語ゲート | `scripts/check_language.py`・フック 2 件・`make lang`・ADR-0003 | — |
-| LANGGATE-2 | 上流への報告 | Taiizor/agents-md-cookbook の issue | — |
+| LANGGATE-2 | 本リポジトリの依存パッチ | Bun patchedDependencies・npm bin 回帰テスト | — |
 | LANGGATE-3 | ブランチ名規約の矛盾解消 | `log-task.md`・`AGENTS.md §4.4` | — |
 | LANGGATE-4 | コミットメッセージ誤字の記録 | 新規ログの正誤欄 | LANGGATE-1 |
 
@@ -195,3 +197,11 @@
 | LANGGATE-2 | `ae24f15` | 実測（再現表 6 行） | **保留（外部判断待ち）**。`gh issue create` は `Resource not accessible by integration` で拒否。上流は issues 有効・未解決 0 件・重複なし。投稿用文面を `docs/audit/issues-lint.md` §6 に保全。正常ファイルでも symlink 経由は出力 0 バイト（realpath 経由は 612 バイト）＝ `run()` が一度も呼ばれていないことを確認 |
 | LANGGATE-3 | `dc0ebaa` | `make check`・`make links`・`git diff --stat` | テンプレートを `Date / Commit / PR` に変更し `Branch:` を廃止、`AGENTS.md §4.4` に同じ方針を追記。過去ログ 3 件は無変更（差分 0）。新ログ `.agent/logs/2026-10-26_language-gate.md` が新形式の最初の例 |
 | LANGGATE-4 | 記録は本コミット | 実測（exit コード） | 履歴（`5a10b4d`）は無変更。`git log -1 --format=%B 5a10b4d` を `--commit-msg` で検査し **exit 1**、`pre-commit run commit-msg-language --hook-stage commit-msg` も **Failed**、「手動」に直すと **exit 0**。正誤は新ログ §2.1 に記録 |
+
+### 2026-11-07: LANGGATE-2 の方針変更
+
+ユーザーは上流 issue の作成を望まず、実際の不具合の修正を指示した。上記 §5・§7・§9 の LANGGATE-2 条件をパッチ適用と負のテストに変更した。§12 の過去の「保留」行は当時の事実として残し、現時点の結果は次の行で記録する。パッチは本リポジトリの Bun インストールにだけ適用され、上流の npm 配布物までは修正しない。
+
+| ID | コミット | テスト | 実測値・備考 |
+|---|---|---|---|
+| LANGGATE-2（方針変更後） | commit 後に記入 | `bun install --frozen-lockfile --force`、`bun run check` 7 ゲート・32 テスト / 243 assertions PASS | patch なしで npm bin は exit 0・無出力、patch 後は正常ファイル exit 0・有出力、超過ファイル XP-007・exit 1。CI は push 後に確認 |

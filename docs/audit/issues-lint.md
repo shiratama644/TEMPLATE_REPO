@@ -228,3 +228,7 @@ than a missing check, because it actively reports success. We found this while a
 quality gate and writing a negative test (an 83 KB `AGENTS.md` fixture that must fail) — the fixture
 passed, which is what exposed the bug.
 ````
+
+## 7. 2026-11-07: issue 作成から依存パッチへの変更
+
+ユーザーは「issue 作成はせず修正する」と明示した。§1〜6 の報告準備・保留経緯は時点記録として残す。Bun の `patchedDependencies` で固定版 1.0.1 の npm bin エントリポイント判定を `realpathSync(entry)` に修正した。`bun install --frozen-lockfile` の後に npm bin symlink を Node で起動する回帰テストを追加した。修正はこのリポジトリの依存に限定され、上流 npm 配布物には反映されていない。

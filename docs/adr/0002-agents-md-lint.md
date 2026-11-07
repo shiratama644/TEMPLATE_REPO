@@ -74,3 +74,11 @@
   **緩和**: 失敗は error のみに限定し、warn の意味と許容理由を計画書 §5・§12 に記録した。AGM-002 は見出しの英語併記で解消し、残る AMC-LENGTH・AGM-003 は実測値と理由を明記して受け入れている。
 - **リスク**: 日本語文書は Windsurf の 6,000 字上限を常に満たせない。
   **緩和**: 字数ベースの上限は CJK に不利（同じ内容の英語の約 2 倍の制約）であることをスキルに明記し、満たせない場合は入れ子の `AGENTS.md` への分割を案内する。
+
+## 2026-11-07 追記: 本リポジトリの依存パッチ
+
+ユーザーの明示指示により、上流 issue の作成は行わず、不具合を本リポジトリで修正する方針に変更した。上の Decision / Alternatives は当時の判断として残す。
+
+`agents-md-lint@1.0.1` の配布済み `dist/cli.js` に、Bun の `patchedDependencies` で `patches/agents-md-lint@1.0.1.patch` を固定する。`realpathSync(process.argv[1])` と `import.meta.url` を比較するため、npm bin symlink 経由でも `run()` が実行される。`bun install --frozen-lockfile` で自動適用される。MIT ライセンスと改変の出典は `.agent/THIRD_PARTY_NOTICES.md` に記録した。
+
+`scripts/check_agents.ts` は OS 別 bin shim に依存しないため実体を引き続き起動するが、`tests/agents.test.ts` は **Node で npm bin 自身を起動**し、正常系は有出力・exit 0、制限超過は XP-007・exit 1 と検証する。パッチの適用範囲は本リポジトリの Bun インストールのみ。npm の公開版や他リポジトリの `npx` まで修正されたとは扱わない。上流に修正版が出たらパッチの不要性を確認し、版を上げて削除する。
