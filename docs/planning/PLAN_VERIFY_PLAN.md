@@ -24,7 +24,7 @@
 - [x] JSON は単一オブジェクト、schemaVersion=1。通常計画と同じ create/retain/update 判定で、失敗時 stdout に部分 JSON を出さない。
 - [x] dry-run・承認・非対話・OS パッケージの安全境界を維持する。`--plan-json --apply` と `--save-config` は拒否。
 - [x] 全 12 テンプレートの静的チェックと、明示ビルド・失敗・前提不足を検査する。exit 0/1/2 の区別を文書化する。
-- [ ] `bun run check`、PR の CI が PASS。未確認の Go / Rust / 非 Linux 実機を実測と区別する。
+- [x] `bun run check`、PR の CI が PASS。未確認の Go / Rust / 非 Linux 実機を実測と区別する。
 
 ## 6. テスト方法
 
@@ -63,3 +63,5 @@
 ## 12. 実績と証拠
 
 ローカル検証: `bun run check` 7 ゲート・44 pass / 2 skip・699 assertions。Go・Rust の実ビルドはローカルに toolchain がなく未実施。CI は push 後に確認。
+
+`cd2ffd3` の PR #5 で Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS。初回 CI は Go の初回ビルドが Bun テスト既定の 5 秒で SIGTERM になったため失敗。`23ea1e3` で終了信号を可視化し、`cd2ffd3` でネイティブビルドのテスト制限時間を調整した。macOS・Windows・Termux は BUNSETUP-4 のまま。

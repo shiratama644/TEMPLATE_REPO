@@ -23,3 +23,8 @@
 
 - PR #5 の CI を確認し、計画・進捗に証拠を追記して完了状態にする。
 - macOS / Windows / Termux の実機検証と OS パッケージ導入の個別承認は BUNSETUP-4。Go / Rust の実ビルドがツールチェーンのある環境でも行われなければ、その事実を残す。
+
+## 5. PR CI 確認（追記）
+
+- `4957545`・`698eb3d` の初回 PR CI は Go の初回ビルド中に Bun テスト既定 5 秒で子プロセスが SIGTERM となり失敗。`23ea1e3` で終了信号を診断し、`cd2ffd3` で実ビルド試験のタイムアウトを延長して根本原因を解消。
+- `cd2ffd3` の PR #5 で Bun 全ゲート・gitleaks・dependency-review の 3 チェック PASS。macOS・Windows・Termux の実機検証は未実施。
