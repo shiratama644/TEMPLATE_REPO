@@ -46,3 +46,4 @@
 | 2026-10-25 | SETUPLIB-1: JSON 設定の言語・テンプレートの不整合を CLI 上書きで直せる旧挙動を維持し、PR #5 の CI を確認 | `b1c36b8`。Bun 7 ゲート・36 テスト / 604 assertions PASS。Bun・gitleaks・dependency-review 3 チェック PASS |
 | 2026-10-25 | REVIEWFIX-1: Linux 専用の疑似端末試験を条件付きにし、OS 共通の承認判断を追加。dry-run の現行表示を検査し、構成図に実ファイルを反映 | `2b65b59`。Bun 7 ゲート・37 テスト / 612 assertions PASS。非 Linux 実機は BUNSETUP-4、CI は push 後に確認 |
 | 2026-10-25 | REVIEWFIX-1: PR #5 でレビュー指摘 3 点の CI を確認し、タスクを完了 | `9d94779`。Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS。ローカル 37 テスト / 612 assertions PASS。非 Linux 実機は BUNSETUP-4 |
+| 2026-10-25 | PLANJSON-1 / GENVERIFY-1: JSON 計画プレビューと生成物の静的・明示ビルド検証を追加 | `4957545`。Linux Bun 7 ゲート・44 pass / 2 skip（Go/Rust ツール不在）・699 assertions PASS。CI は push 後に確認。非 Linux 実機は BUNSETUP-4 |
