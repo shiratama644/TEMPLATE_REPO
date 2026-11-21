@@ -106,6 +106,15 @@ function required<T extends string | boolean>(value: T | typeof CANCEL_SYMBOL): 
   if (isCancel(value)) throw new SetupCancelled()
   return value as T
 }
+export async function planApproval(
+  options: Pick<Options, "dryRun" | "yes" | "apply">,
+  tty: boolean,
+  confirmPlan: () => Promise<boolean | typeof CANCEL_SYMBOL>,
+): Promise<"dry-run" | "decline" | "needs-apply" | "apply"> {
+  if (options.dryRun) return "dry-run"
+  if (tty && !options.yes) return required(await confirmPlan()) ? "apply" : "decline"
+  return options.apply ? "apply" : "needs-apply"
+}
 export function safe(root: string, p: string): string {
   const segments = p.split(/[\\/]/)
   if (isAbsolute(p) || segments.includes("..") || segments.includes(".git") || !p)
@@ -392,24 +401,23 @@ export async function run(args: string[]): Promise<number> {
       "README.md のテンプレート説明",
     ]
     console.log("完了後に手動で確認・修正する候補（自動削除なし）:\n- " + suggestions.join("\n- "))
-    if (o.dryRun) {
+    const decision = await planApproval(o, tty, () =>
+      confirm({
+        message: "この計画を適用しますか？ [y/N]",
+        initialValue: false,
+        active: "y",
+        inactive: "N",
+      }),
+    )
+    if (decision === "dry-run") {
       console.log("dry-run: 変更・インストールは行いません")
       return 0
     }
-    if (tty && !o.yes) {
-      const approved = required(
-        await confirm({
-          message: "この計画を適用しますか？ [y/N]",
-          initialValue: false,
-          active: "y",
-          inactive: "N",
-        }),
-      )
-      if (!approved) {
-        console.log("中止しました。変更・インストールは行いません")
-        return 0
-      }
-    } else if (!o.apply) {
+    if (decision === "decline") {
+      console.log("中止しました。変更・インストールは行いません")
+      return 0
+    }
+    if (decision === "needs-apply") {
       console.log("変更なし。非対話式の適用には --yes --apply を指定してください")
       return 0
     }

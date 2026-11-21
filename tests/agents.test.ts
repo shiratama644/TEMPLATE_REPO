@@ -4,10 +4,16 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-// Exercise the actual npm bin symlink with Node: calling dist/cli.js directly hides the bug.
-test("agents-md-lint npm bin executes for clean and oversized AGENTS.md", () => {
+// POSIX tests the npm bin symlink; Windows has a .cmd shim, so test the CLI entry directly.
+test(`agents-md-lint ${process.platform === "win32" ? "CLI" : "npm bin"} handles clean and oversized AGENTS.md`, () => {
   const dir = mkdtempSync(join(tmpdir(), "agents-bin-"))
-  const bin = join(import.meta.dir, "../node_modules/.bin/agents-md-lint")
+  // Windows npm uses .cmd shims rather than a POSIX symlink; exercise the CLI directly there.
+  const bin = join(
+    import.meta.dir,
+    process.platform === "win32"
+      ? "../node_modules/agents-md-lint/dist/cli.js"
+      : "../node_modules/.bin/agents-md-lint",
+  )
   const file = join(dir, "AGENTS.md")
   const lint = () => spawnSync("node", [bin, "--root", dir, file], { cwd: dir, encoding: "utf8" })
   try {

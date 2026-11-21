@@ -10,6 +10,7 @@ TEMPLATE_REPO/
 ├── LICENSE
 ├── Makefile               # 検証の入口（check / links / mermaid / setup）
 ├── package.json / bun.lock # Bun の依存・検証・setup の入口
+├── patches/               # Bun install で適用する agents-md-lint の修正
 ├── .githooks/             # Bun 検証と commit-msg フック
 ├── biome.json             # JSON / JS / TS / CSS の整形と lint
 ├── .editorconfig          # エディタ間の基本書式
@@ -17,9 +18,12 @@ TEMPLATE_REPO/
 ├── .gitignore
 ├── scripts/               # Bun の TypeScript CLI と検査
 │   ├── setup.ts / setup_manifest.ts / setup_schema.ts # 初期設定・選択肢・Zod スキーマ
+│   ├── check.ts / check_agents.ts / walk.ts # 全ゲート・指示ファイル・ファイル列挙
+│   ├── install_hooks.ts # Git フックの安全な導入
 │   ├── check_doc_links.ts # Markdown の内部リンク
 │   ├── check_mermaid.ts   # Mermaid 図の宣言
 │   └── check_language.ts  # 日本語・英語ゲート
+├── tests/                 # セットアップ・スキーマ・npm bin の回帰テスト
 ├── .github/               # CI・リリース・依存関係レビュー・dependabot
 ├── .agent/                # Agent の設定と知識（.claude はここへの symlink）
 │   ├── README.md          # .agent/ の説明

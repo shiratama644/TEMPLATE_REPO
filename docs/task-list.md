@@ -124,6 +124,14 @@
 |---|---|---|---:|---|---|---|
 | SETUPLIB-1 | Clack・Zod・fast-check を安全境界とともに導入 | 完了 | 100% | SETUPCONF-1 | 対話 UI、設定スキーマ、生成テストが実動作。拒否・dry-run・非対話式・OS 導入の安全境界を維持し、全ゲートと CI PASS | `dc73aa2`。`bun install --frozen-lockfile`・`bun run check` 7 ゲート、36 テスト / 604 assertions PASS。`b1c36b8` で CLI による設定上書きの互換性を維持。疑似端末の選択・拒否・承認・Ctrl+C、Zod の設定、fast-check の安全境界を確認。PR #5 の Bun・gitleaks・dependency-review 3 チェック PASS |
 
+### 構成レビューの指摘修正 (2026-10-25 計画)
+
+> 計画書: [`planning/REVIEW_FIX_PLAN.md`](./planning/REVIEW_FIX_PLAN.md)。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| REVIEWFIX-1 | OS 依存テスト・dry-run の検査・構成図を修正 | ローカル検証済み | 90% | SETUPLIB-1 | Linux 疑似端末試験と OS 共通の承認判断テストが動き、dry-run の現行表示を検査する。構成図は実ファイルと一致。Bun 全ゲート・CI PASS | Linux `bun run check` 7 ゲート・37 テスト / 612 assertions PASS。非 Linux 実機は BUNSETUP-4、CI は push 後に確認 |
+
 ---
 
 ## タスク追加の手順

@@ -3,13 +3,16 @@ import { spawn, spawnSync } from "node:child_process"
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { CANCEL_SYMBOL } from "@clack/prompts"
 import { brokenLinks } from "../scripts/check_doc_links.ts"
 import { classify, findIssues, stripCommit } from "../scripts/check_language.ts"
 import { blocks, checkBlock } from "../scripts/check_mermaid.ts"
-import { detectPackageManager } from "../scripts/setup.ts"
+import { detectPackageManager, planApproval } from "../scripts/setup.ts"
 import { featureNames, presets, scaffold, templates } from "../scripts/setup_manifest.ts"
 
 const dirs: string[] = []
+// Git hooks require a POSIX shell. Git Bash on Windows is not guaranteed on PATH.
+const posixHookTest = process.platform === "win32" ? test.skip : test
 afterEach(() => {
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true })
 })
@@ -445,15 +448,18 @@ test("native presets disclose and filter unsupported features", () => {
   expect(existsSync(join(d, "Dockerfile"))).toBe(true)
 })
 
-test("commit-msg hook rejects a nonconventional header even if body contains a valid one", () => {
-  const d = dir(),
-    message = join(d, "commit-message")
-  writeFileSync(message, "not valid\n\nfeat: valid text in body\n")
-  const hook = join(import.meta.dir, "../.githooks/commit-msg")
-  expect(spawnSync("sh", [hook, message], { cwd: join(import.meta.dir, "..") }).status).toBe(1)
-  writeFileSync(message, "fix: 正しい形式\n")
-  expect(spawnSync("sh", [hook, message], { cwd: join(import.meta.dir, "..") }).status).toBe(0)
-})
+posixHookTest(
+  "commit-msg hook rejects a nonconventional header even if body contains a valid one",
+  () => {
+    const d = dir(),
+      message = join(d, "commit-message")
+    writeFileSync(message, "not valid\n\nfeat: valid text in body\n")
+    const hook = join(import.meta.dir, "../.githooks/commit-msg")
+    expect(spawnSync("sh", [hook, message], { cwd: join(import.meta.dir, "..") }).status).toBe(1)
+    writeFileSync(message, "fix: 正しい形式\n")
+    expect(spawnSync("sh", [hook, message], { cwd: join(import.meta.dir, "..") }).status).toBe(0)
+  },
+)
 
 test("native devcontainers bootstrap application dependencies after creation", () => {
   for (const [language, template, expected] of [
@@ -509,6 +515,42 @@ test("selected quality tools include runnable scaffolds and scoped configuration
     expect(readFileSync(join(web, "playwright.config.ts"), "utf8")).toContain("webServer")
     expect(readFileSync(join(web, "tests/e2e.ts"), "utf8")).toContain("response.ok()")
   }
+})
+
+// util-linux script(1) flags and stty are unavailable on Windows and differ on macOS.
+const linuxPtyTest =
+  process.platform === "linux" &&
+  Bun.which("stty") !== null &&
+  spawnSync("script", ["--version"], { stdio: "ignore" }).status === 0
+    ? test
+    : test.skip
+
+test("plan decision is portable: dry-run never asks, approval is explicit", async () => {
+  let called = 0
+  const answer = async (approved: boolean | typeof CANCEL_SYMBOL) => {
+    called++
+    return approved
+  }
+  expect(
+    await planApproval({ dryRun: true, yes: false, apply: true }, true, () => answer(true)),
+  ).toBe("dry-run")
+  expect(called).toBe(0)
+  expect(
+    await planApproval({ dryRun: false, yes: false, apply: false }, true, () => answer(false)),
+  ).toBe("decline")
+  expect(
+    await planApproval({ dryRun: false, yes: false, apply: false }, true, () => answer(true)),
+  ).toBe("apply")
+  expect(
+    await planApproval({ dryRun: false, yes: true, apply: false }, true, () => answer(true)),
+  ).toBe("needs-apply")
+  expect(
+    await planApproval({ dryRun: false, yes: true, apply: true }, false, () => answer(true)),
+  ).toBe("apply")
+  expect(called).toBe(2)
+  expect(
+    planApproval({ dryRun: false, yes: false, apply: true }, true, () => answer(CANCEL_SYMBOL)),
+  ).rejects.toThrow()
 })
 
 async function interactiveCli(d: string, answer: string | null, ...flags: string[]) {
@@ -570,42 +612,45 @@ async function interactiveCli(d: string, answer: string | null, ...flags: string
   })
 }
 
-test("interactive plan accepts y without --apply and rejects N or empty input", async () => {
-  const cancelled = dir()
-  const no = await interactiveCli(cancelled, "N", "--save-config", "choices.json")
-  expect(no.status).toBe(0)
-  expect(no.output).toContain("この計画を適用しますか？ [y/N]")
-  expect(no.output).toContain("中止しました")
-  expect(readdirSync(cancelled)).toEqual([])
+linuxPtyTest(
+  "interactive plan accepts y without --apply and rejects N or empty input",
+  async () => {
+    const cancelled = dir()
+    const no = await interactiveCli(cancelled, "N", "--save-config", "choices.json")
+    expect(no.status).toBe(0)
+    expect(no.output).toContain("この計画を適用しますか？ [y/N]")
+    expect(no.output).toContain("中止しました")
+    expect(readdirSync(cancelled)).toEqual([])
 
-  const empty = dir()
-  expect((await interactiveCli(empty, "")).status).toBe(0)
-  expect(readdirSync(empty)).toEqual([])
+    const empty = dir()
+    expect((await interactiveCli(empty, "")).status).toBe(0)
+    expect(readdirSync(empty)).toEqual([])
 
-  const interrupted = dir()
-  expect((await interactiveCli(interrupted, "\x03")).status).toBe(0)
-  expect(readdirSync(interrupted)).toEqual([])
+    const interrupted = dir()
+    expect((await interactiveCli(interrupted, "\x03")).status).toBe(0)
+    expect(readdirSync(interrupted)).toEqual([])
 
-  const legacy = dir()
-  expect((await interactiveCli(legacy, "N", "--apply")).status).toBe(0)
-  expect(readdirSync(legacy)).toEqual([])
+    const legacy = dir()
+    expect((await interactiveCli(legacy, "N", "--apply")).status).toBe(0)
+    expect(readdirSync(legacy)).toEqual([])
 
-  const approved = dir()
-  const yes = await interactiveCli(approved, "y", "--save-config", "choices.json")
-  expect(yes.status).toBe(0)
-  expect(existsSync(join(approved, "package.json"))).toBe(true)
-  expect(existsSync(join(approved, "src/index.ts"))).toBe(true)
-  expect(existsSync(join(approved, "choices.json"))).toBe(true)
+    const approved = dir()
+    const yes = await interactiveCli(approved, "y", "--save-config", "choices.json")
+    expect(yes.status).toBe(0)
+    expect(existsSync(join(approved, "package.json"))).toBe(true)
+    expect(existsSync(join(approved, "src/index.ts"))).toBe(true)
+    expect(existsSync(join(approved, "choices.json"))).toBe(true)
 
-  const dryRun = dir()
-  const preview = await interactiveCli(dryRun, null, "--apply", "--dry-run")
-  expect(preview.status).toBe(0)
-  expect(preview.output).toContain("セットアップ計画")
-  expect(preview.output).not.toContain("[y/N]:")
-  expect(readdirSync(dryRun)).toEqual([])
-})
+    const dryRun = dir()
+    const preview = await interactiveCli(dryRun, null, "--apply", "--dry-run")
+    expect(preview.status).toBe(0)
+    expect(preview.output).toContain("セットアップ計画")
+    expect(preview.output).not.toContain("[y/N]")
+    expect(readdirSync(dryRun)).toEqual([])
+  },
+)
 
-test("Clack interactive choices reach a dry-run plan without any writes", async () => {
+linuxPtyTest("Clack interactive choices reach a dry-run plan without any writes", async () => {
   const d = dir()
   const args = [
     process.execPath,
