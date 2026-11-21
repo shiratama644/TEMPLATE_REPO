@@ -8,7 +8,7 @@ Agent の作業規約・記憶・進捗を備えた **Bun ベースのプロジ�
 | :--- | :--- |
 | `AGENTS.md` / `.agent/` | 作業規約・スキル・フック（`.claude` / `CLAUDE.md` は symlink） |
 | `docs/` | 進捗・仕様・計画・監査の正本 |
-| `package.json` / `bun.lock` | Bun の依存とコマンド（`bun run setup`、`bun run check`） |
+| `package.json` / `bun.lock` | Bun の依存とコマンド（`bun run setup`、`bun run verify:generated`、`bun run check`） |
 | `scripts/setup.ts` / `scripts/setup_manifest.ts` / `scripts/setup_schema.ts` | Clack 対話 UI、Zod 設定検証、プリセット・機能の選択、OS 導入案内 |
 | `scripts/check_*.ts` | 文書リンク・Mermaid・日本語/英語・AGENTS.md の品質チェック |
 | `.githooks/` | Bun の検証・コミットメッセージの検査。既存フックがあるときは導入を拒否 |
@@ -37,12 +37,19 @@ bun run setup --help
 bun run setup --list-presets
 bun run setup                                 # 対話式。計画を表示し [y/N] で適用を確認
 bun run setup --preset vite-app --name my-app --dry-run
+bun run setup --plan-json --dir . --preset vite-app --name my-app
 bun run setup --yes --apply --preset next-app --name my-app
 bun run setup --yes --apply --language go --template go-http --name my-api --no-install
+bun run verify:generated --dir . --template next
+bun run verify:generated --dir . --template next --build # 明示した場合だけ実行
 bun run check                                 # CI と同じ入口（型・単体テスト含む）
 ```
 
 対話式は `@clack/prompts` で選択・入力し、Zod で CLI/JSON 設定を検証します。入力名の既定値は出力先フォルダ名を kebab-case に正規化します。計画の提示後に `[y/N]` を尋ね、`y` / `yes` を入力したときだけ適用します。`N` または Enter のみなら変更しません。`--apply` は対話式では不要で、指定しても確認を省略しません。`--yes` のみではファイルを変更しません。非対話式の適用には **`--yes --apply` の両方**が必要です。`--dry-run` は常に読み取り専用です。既存の生成対象ファイルは保持し、変更する `package.json` は `.setup-backup/` に退避します。OS パッケージは対話式で**コマンドごとに yes と入力したときだけ**実行し、非対話式では手順の表示のみです。**文書やスキルの削除は自動では行わず、候補だけ案内します**。
+
+`--plan-json` は非対話の**読み取り専用**プレビューで、標準出力を単一 JSON（`schemaVersion: 1`）にし、エラーは標準エラーへ出します。`--yes` は不要、`--dry-run` は暗黙的に有効になり、`--apply` / `--save-config` との併用は拒否します。`files` は `create` / `retain` / `update` と `backupPlanned`、`selection` は実際の選択と除外機能、`prerequisites` は必要ツール・未導入ツールと OS パッケージの個別確認予定、`dependencies` は Bun 依存の導入予定と未実行を示します。**JSON は承認トークンではありません**。適用時にはファイルの状態と安全条件を再確認します。ファイル本文や秘密情報は出しません。
+
+`verify:generated` は生成先を指定して実行する**別コマンド**です。`--template` は必須（曖昧な自動推測をしません）。既定は全テンプレートの必須ファイルと manifest の存在・形式を確認する静的チェックで、外部コマンドは起動しません。`--build` を明示したときだけ標準ビルド手順を試します。Go はオフラインの `go build`、Rust はオフラインの `cargo check`、Python CLI は実行、FastAPI は既存 `.venv` から import、JS/TS は生成時の標準スクリプトのみ実行します。**依存・OS パッケージは導入しません**。前提不足や変更された build スクリプトは `blocked`、壊れた生成物やビルド失敗は `failed` と区別し、exit code は `passed=0` / `failed=1` / `blocked=2` です。ビルドは成果物・キャッシュを生成し得ます。利用者が信頼するプロジェクトだけに `--build` を指定してください。静的検査はアプリの意味的正しさまでは保証しません。
 
 | 言語 | テンプレート |
 | :--- | :--- |

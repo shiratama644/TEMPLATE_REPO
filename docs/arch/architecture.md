@@ -18,6 +18,7 @@ TEMPLATE_REPO/
 ├── .gitignore
 ├── scripts/               # Bun の TypeScript CLI と検査
 │   ├── setup.ts / setup_manifest.ts / setup_schema.ts # 初期設定・選択肢・Zod スキーマ
+│   ├── verify_generated.ts # 生成物の静的検査・明示ビルド
 │   ├── check.ts / check_agents.ts / walk.ts # 全ゲート・指示ファイル・ファイル列挙
 │   ├── install_hooks.ts # Git フックの安全な導入
 │   ├── check_doc_links.ts # Markdown の内部リンク

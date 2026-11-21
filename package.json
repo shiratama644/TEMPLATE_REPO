@@ -6,6 +6,7 @@
   "packageManager": "bun@1.4.4",
   "scripts": {
     "setup": "bun scripts/setup.ts",
+    "verify:generated": "bun scripts/verify_generated.ts",
     "check": "bun scripts/check.ts",
     "links": "bun scripts/check_doc_links.ts",
     "mermaid": "bun scripts/check_mermaid.ts",

@@ -28,6 +28,8 @@
 |---|---|---|
 
 | BUNSETUP-4 | 実環境検証待ち | macOS / Windows / Termux の実機検証と、利用者が明示的に承認した OS パッケージ導入（このサンドボックスでは行わない） |
+| PLANJSON-1 | ローカル検証済み | PR #5 の CI 確認 |
+| GENVERIFY-1 | ローカル検証済み | PR #5 の CI 確認。Go / Rust の実ビルドは toolchain のある環境でのみ実施 |
 
 ---
 
@@ -131,6 +133,15 @@
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
 | REVIEWFIX-1 | OS 依存テスト・dry-run の検査・構成図を修正 | 完了 | 100% | SETUPLIB-1 | Linux 疑似端末試験と OS 共通の承認判断テストが動き、dry-run の現行表示を検査する。構成図は実ファイルと一致。Bun 全ゲート・CI PASS | `2b65b59`、`9d94779`。Linux `bun run check` 7 ゲート・37 テスト / 612 assertions PASS。PR #5 の Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS。非 Linux 実機は BUNSETUP-4 |
+
+### 計画の機械可読化と生成物検証 (2026-10-25 計画)
+
+> 計画書: [`planning/PLAN_VERIFY_PLAN.md`](./planning/PLAN_VERIFY_PLAN.md)。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| PLANJSON-1 | セットアップの安全な JSON プラン出力 | ローカル検証済み | 90% | REVIEWFIX-1 | 単一 JSON、プレビューのみ、不変更、通常計画と判定一致、全ゲート・CI PASS | Linux `bun run check` 7 ゲート・44 pass / 2 skip（Go・Rust ツール不在）・699 assertions PASS。CI 待ち |
+| GENVERIFY-1 | 生成物の静的・明示ビルド検証 | ローカル検証済み | 90% | PLANJSON-1 | 全テンプレートに対する静的検証、明示ビルドと blocked の区別、全ゲート・CI PASS | Linux 静的検査全 12 テンプレート、TS・Python CLI 実行、依存不足 blocked を確認。CI 待ち。OS 実機は BUNSETUP-4 |
 
 ---
 

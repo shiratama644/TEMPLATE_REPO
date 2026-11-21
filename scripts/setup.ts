@@ -40,6 +40,7 @@ type Options = {
   yes: boolean
   apply: boolean
   dryRun: boolean
+  planJson: boolean
   noInstall: boolean
   noOsInstall: boolean
   help: boolean
@@ -47,13 +48,14 @@ type Options = {
   config?: string
   saveConfig?: string
 }
-const usage = `bun run setup [options]\n\n  --preset <id>       ${Object.keys(presets).join(" | ")}\n  --language <id>     ${Object.keys(templates).join(" | ")}\n  --template <id>     ${Object.values(templates).flat().join(" | ")}\n  --name <name>       Project name (lowercase kebab-case)\n  --description <s>   Project description\n  --features <ids>    Comma-separated feature IDs, or none / all\n  --config <file>     Load JSON configuration\n  --save-config <f>  Save choices when the plan is approved\n  --dir <path>        Target directory (default: current directory)\n  --dry-run           Show plan; never write files or install anything\n  --apply             With --yes, authorize writing without a prompt (not needed interactively)\n  --yes               Skip interactive questions; requires --apply to make changes\n  --no-install        Skip bun install\n  --no-os-install     Show OS package instructions only\n  --list-presets      Show presets and features\n  --help              Show this help\n\nOS packages always require a separate, per-package confirmation in an interactive terminal.\nNon-interactive mode only prints OS installation instructions; --yes never authorizes sudo.\n`
+const usage = `bun run setup [options]\n\n  --preset <id>       ${Object.keys(presets).join(" | ")}\n  --language <id>     ${Object.keys(templates).join(" | ")}\n  --template <id>     ${Object.values(templates).flat().join(" | ")}\n  --name <name>       Project name (lowercase kebab-case)\n  --description <s>   Project description\n  --features <ids>    Comma-separated feature IDs, or none / all\n  --config <file>     Load JSON configuration\n  --save-config <f>  Save choices when the plan is approved\n  --dir <path>        Target directory (default: current directory)\n  --dry-run           Show plan; never write files or install anything\n  --plan-json         Print a single JSON preview; never write or prompt (no --apply/--save-config)\n  --apply             With --yes, authorize writing without a prompt (not needed interactively)\n  --yes               Skip interactive questions; requires --apply to make changes\n  --no-install        Skip bun install\n  --no-os-install     Show OS package instructions only\n  --list-presets      Show presets and features\n  --help              Show this help\n\nOS packages always require a separate, per-package confirmation in an interactive terminal.\nNon-interactive mode only prints OS installation instructions; --yes never authorizes sudo.\n`
 function option(args: string[]): Options {
   const o: Options = {
     dir: process.cwd(),
     yes: false,
     apply: false,
     dryRun: false,
+    planJson: false,
     noInstall: false,
     noOsInstall: false,
     help: false,
@@ -83,6 +85,7 @@ function option(args: string[]): Options {
     } else if (a === "--help" || a === "-h") o.help = true
     else if (a === "--list-presets") o.list = true
     else if (a === "--dry-run") o.dryRun = true
+    else if (a === "--plan-json") o.planJson = true
     else if (a === "--apply") o.apply = true
     else if (a === "--yes") o.yes = true
     else if (a === "--no-install") o.noInstall = true
@@ -191,8 +194,47 @@ const defaultName = (dir: string) => {
     .replace(/-$/g, "")
   return /^[a-z]/.test(stem) ? stem : "project"
 }
+const suggestions = [
+  "docs/planning/ にあるテンプレート用計画書",
+  "docs/task-list.md のサンプル行",
+  "使用しない .agent/skills/ と .agent/agents/",
+  "README.md のテンプレート説明",
+]
+function buildSetupPlan(
+  o: Options,
+  generated: Record<string, string>,
+  pkg: Record<string, unknown>,
+) {
+  const pkgPath = safe(o.dir, "package.json")
+  if (lstatSync(pkgPath, { throwIfNoEntry: false })?.isSymbolicLink())
+    throw new Error("package.json が symlink です。安全のため中止します")
+  const create = Object.entries(generated).filter(([p]) => !existsSync(safe(o.dir, p)))
+  const retained = Object.keys(generated).filter((p) => existsSync(safe(o.dir, p)))
+  const pkgChanged = !existsSync(pkgPath) || readFileSync(pkgPath, "utf8") !== json(pkg)
+  const configDest = o.saveConfig ? safe(o.dir, o.saveConfig) : undefined
+  if (configDest && existsSync(configDest))
+    throw new Error(`既存の設定ファイルを上書きできません: ${o.saveConfig}`)
+  if (pkgChanged && existsSync(pkgPath)) safe(o.dir, ".setup-backup/check")
+  const files: Array<{
+    path: string
+    action: "create" | "retain" | "update"
+    backupPlanned?: boolean
+  }> = [
+    ...create.map(([path]) => ({ path, action: "create" as const })),
+    ...retained.map((path) => ({ path, action: "retain" as const })),
+    {
+      path: "package.json",
+      action: pkgChanged ? (existsSync(pkgPath) ? "update" : "create") : "retain",
+      backupPlanned: pkgChanged && existsSync(pkgPath),
+    },
+    ...(configDest ? [{ path: o.saveConfig as string, action: "create" as const }] : []),
+  ]
+  return { create, retained, pkgChanged, configDest, files, suggestions }
+}
 export async function run(args: string[]): Promise<number> {
   const o = option(args)
+  if (o.planJson && (o.help || o.list))
+    throw new Error("--plan-json は --help / --list-presets と併用できません")
   if (o.help) {
     console.log(usage)
     return 0
@@ -202,6 +244,12 @@ export async function run(args: string[]): Promise<number> {
       console.log(`${key}: ${p.description} (${p.template}, ${p.features.length} 機能)`)
     console.log(`機能: ${featureNames.join(", ")}`)
     return 0
+  }
+  if (o.planJson) {
+    if (o.apply || o.saveConfig)
+      throw new Error("--plan-json は --apply / --save-config と同時に指定できません")
+    o.yes = true
+    o.dryRun = true
   }
   o.dir = resolve(o.dir)
   if (!existsSync(o.dir) || !statSync(o.dir).isDirectory())
@@ -298,7 +346,8 @@ export async function run(args: string[]): Promise<number> {
     if (incompatible.length) {
       if (explicitFeatures)
         throw new Error(`${o.template} では使用できない機能: ${incompatible.join(", ")}`)
-      console.log(`対象言語・テンプレートに非対応の機能を除外: ${incompatible.join(", ")}`)
+      if (!o.planJson)
+        console.log(`対象言語・テンプレートに非対応の機能を除外: ${incompatible.join(", ")}`)
       o.features = o.features.filter((f) => allowed.includes(f))
     }
     const base = scaffold(o.template, o.name)
@@ -375,31 +424,56 @@ export async function run(args: string[]): Promise<number> {
       ...extra.package,
     }
     const pkgPath = safe(o.dir, "package.json")
-    if (lstatSync(pkgPath, { throwIfNoEntry: false })?.isSymbolicLink())
-      throw new Error("package.json が symlink です。安全のため中止します")
-    const create = Object.entries(generated).filter(([p]) => !existsSync(safe(o.dir, p)))
-    const retained = Object.keys(generated).filter((p) => existsSync(safe(o.dir, p)))
-    const pkgChanged = !existsSync(pkgPath) || readFileSync(pkgPath, "utf8") !== json(pkg)
-    const configDest = o.saveConfig ? safe(o.dir, o.saveConfig) : undefined
-    if (configDest && existsSync(configDest))
-      throw new Error(`既存の設定ファイルを上書きできません: ${o.saveConfig}`)
-    // Check the backup path before writing any generated file.
-    if (pkgChanged && existsSync(pkgPath)) safe(o.dir, ".setup-backup/check")
+    const plan = buildSetupPlan(o, generated, pkg)
+    const { create, retained, pkgChanged, configDest, files, suggestions } = plan
+    if (o.planJson) {
+      console.log(
+        json({
+          schemaVersion: 1,
+          mode: "preview",
+          selection: {
+            name: o.name,
+            language: o.language,
+            template: o.template,
+            preset: o.preset,
+            features: o.features,
+            excludedFeatures: incompatible,
+          },
+          files,
+          prerequisites: {
+            runtime: base.requires || [],
+            missing: (base.requires || []).filter((bin) => !available(bin)),
+            osPackageManager: detectPackageManager()?.name ?? null,
+            osPackages: (base.requires || [])
+              .filter((bin) => !available(bin))
+              .map((bin) => {
+                const manager = detectPackageManager()
+                const name = manager?.packages[bin]
+                return {
+                  tool: bin,
+                  command: manager && name ? osCommand(manager.name, name) : null,
+                  status: "manual-confirmation-required",
+                }
+              }),
+            osPackagesRequireIndividualApproval: true,
+          },
+          dependencies: { wouldInstallOnApply: !o.noInstall, executed: false },
+          manualReview: suggestions,
+        }),
+      )
+      return 0
+    }
     console.log(`\nセットアップ計画: ${o.name} / ${o.language} / ${o.template} / ${o.preset}`)
     console.log(`機能: ${o.features.join(", ") || "なし"}`)
     console.log(
       `OS: ${process.platform} / ${detectPackageManager()?.name ?? "未対応"}  必要: ${base.requires?.join(", ") || "Bun"}`,
     )
-    for (const [path] of create) console.log(`+ ${path}`)
-    for (const path of retained) console.log(`= ${path} （既存を保持）`)
-    if (pkgChanged)
-      console.log(`${existsSync(pkgPath) ? "~" : "+"} package.json （バックアップを作成）`)
-    const suggestions = [
-      "docs/planning/ にあるテンプレート用計画書",
-      "docs/task-list.md のサンプル行",
-      "使用しない .agent/skills/ と .agent/agents/",
-      "README.md のテンプレート説明",
-    ]
+    for (const file of files) {
+      if (file.action === "retain") console.log(`= ${file.path} （既存を保持）`)
+      else if (file.path === "package.json" && file.backupPlanned)
+        console.log(`~ package.json （バックアップを作成）`)
+      else console.log(`+ ${file.path}`)
+    }
     console.log("完了後に手動で確認・修正する候補（自動削除なし）:\n- " + suggestions.join("\n- "))
     const decision = await planApproval(o, tty, () =>
       confirm({
