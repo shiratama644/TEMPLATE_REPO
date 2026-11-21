@@ -68,4 +68,4 @@ TTY の操作試験は Linux util-linux の場合だけ行う。OS を問わず�
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| REVIEWFIX-1 | commit 後に記入 | `bun run check` 7 ゲート・37 テスト / 612 assertions PASS（Linux） | CI は push 後に確認。非 Linux 実機は未検証 |
+| REVIEWFIX-1 | `2b65b59` | `bun run check` 7 ゲート・37 テスト / 612 assertions PASS（Linux） | CI は push 後に確認。非 Linux 実機は未検証 |

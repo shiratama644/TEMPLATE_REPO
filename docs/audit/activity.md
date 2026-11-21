@@ -44,3 +44,4 @@
 | 2026-11-07 | LANGGATE-2: PR #5 で依存パッチ・Node npm bin 回帰テストを含む CI を確認し、本リポジトリの修正を完了。上流 issue は作成しない | `9e1d24b`。Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS、32 テスト / 243 assertions PASS |
 | 2026-10-25 | SETUPLIB-1: Clack 対話 UI・Zod 設定検証・fast-check 生成テストを追加。OS 導入の個別 yes と非対話式の境界を維持 | `dc73aa2`。Bun 7 ゲート・35 テスト / 601 assertions PASS。疑似端末で選択・承認・拒否・キャンセル・dry-run を確認。CI は push 後に確認 |
 | 2026-10-25 | SETUPLIB-1: JSON 設定の言語・テンプレートの不整合を CLI 上書きで直せる旧挙動を維持し、PR #5 の CI を確認 | `b1c36b8`。Bun 7 ゲート・36 テスト / 604 assertions PASS。Bun・gitleaks・dependency-review 3 チェック PASS |
+| 2026-10-25 | REVIEWFIX-1: Linux 専用の疑似端末試験を条件付きにし、OS 共通の承認判断を追加。dry-run の現行表示を検査し、構成図に実ファイルを反映 | `2b65b59`。Bun 7 ゲート・37 テスト / 612 assertions PASS。非 Linux 実機は BUNSETUP-4、CI は push 後に確認 |
