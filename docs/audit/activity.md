@@ -42,3 +42,4 @@
 | 2026-10-27 | SETUPCONF-1: PR #5 の CI を確認し、対話式承認の変更を完了。OS 実機検証は BUNSETUP-4 に残す | `b9e4a59`。Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS、ローカル 31 テスト / 237 assertions PASS |
 | 2026-11-07 | LANGGATE-2: 上流 issue ではなく Bun の依存パッチで npm bin symlink の no-op を修正。Node 経由の正常・超過フィクスチャを品質ゲートに追加 | `c2edd2f`。修正前 exit 0・出力 0 B、修正後正常系 exit 0・有出力、XP-007 exit 1。frozen force install と 7 ゲート・32 テスト / 243 assertions PASS。CI は push 後に確認 |
 | 2026-11-07 | LANGGATE-2: PR #5 で依存パッチ・Node npm bin 回帰テストを含む CI を確認し、本リポジトリの修正を完了。上流 issue は作成しない | `9e1d24b`。Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS、32 テスト / 243 assertions PASS |
+| 2026-10-25 | SETUPLIB-1: Clack 対話 UI・Zod 設定検証・fast-check 生成テストを追加。OS 導入の個別 yes と非対話式の境界を維持 | `dc73aa2`。Bun 7 ゲート・35 テスト / 601 assertions PASS。疑似端末で選択・承認・拒否・キャンセル・dry-run を確認。CI は push 後に確認 |

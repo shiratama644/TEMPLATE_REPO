@@ -66,4 +66,4 @@ Clack は疑似端末の画面幅が 0 だとプロンプト表示が崩れる�
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| SETUPLIB-1 | commit 後に記入 | `bun run check` 7 ゲート・35 テスト / 601 assertions PASS | CI は push 後に確認 |
+| SETUPLIB-1 | `dc73aa2` | `bun run check` 7 ゲート・35 テスト / 601 assertions PASS | CI は push 後に確認 |
