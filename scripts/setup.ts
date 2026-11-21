@@ -14,7 +14,7 @@ import {
   writeFileSync,
 } from "node:fs"
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
-import { createInterface } from "node:readline/promises"
+import { type CANCEL_SYMBOL, cancel, confirm, isCancel, select, text } from "@clack/prompts"
 import {
   compatibleFeatures,
   type Feature,
@@ -27,6 +27,7 @@ import {
   type Template,
   templates,
 } from "./setup_manifest.ts"
+import { nameSchema, validateChoices } from "./setup_schema.ts"
 
 type Options = {
   name?: string
@@ -91,31 +92,21 @@ function option(args: string[]): Options {
   return o
 }
 function assertChoices(o: Options): void {
-  if (o.preset !== undefined && (typeof o.preset !== "string" || !(o.preset in presets)))
-    throw new Error(`不明なプリセット: ${o.preset}`)
-  if (o.language !== undefined && (typeof o.language !== "string" || !(o.language in templates)))
-    throw new Error(`不明な言語: ${o.language}`)
-  if (o.template !== undefined && !Object.values(templates).flat().includes(o.template))
-    throw new Error(`不明なテンプレート: ${o.template}`)
-  if (o.features !== undefined) {
-    if (!Array.isArray(o.features) || o.features.some((f) => typeof f !== "string"))
-      throw new Error("機能は文字列の配列で指定してください")
-    const unknown = o.features.filter((f) => !featureNames.includes(f))
-    if (unknown.length) throw new Error(`不明な機能: ${unknown.join(", ")}`)
-  }
-  if (
-    o.name !== undefined &&
-    (typeof o.name !== "string" ||
-      o.name.length > 64 ||
-      !/^[a-z](?:[a-z0-9]|-(?=[a-z0-9]))*$/.test(o.name))
-  )
-    throw new Error("プロジェクト名は英小文字で始まる kebab-case（最大 64 文字）にしてください")
-  if (o.description !== undefined && typeof o.description !== "string")
-    throw new Error("説明は文字列で指定してください")
-  if (o.template && o.language && !templates[o.language].includes(o.template))
-    throw new Error(`${o.template} は ${o.language} に対応しません`)
+  validateChoices({
+    name: o.name,
+    description: o.description,
+    language: o.language,
+    template: o.template,
+    preset: o.preset,
+    features: o.features,
+  })
 }
-function safe(root: string, p: string): string {
+class SetupCancelled extends Error {}
+function required<T extends string | boolean>(value: T | typeof CANCEL_SYMBOL): T {
+  if (isCancel(value)) throw new SetupCancelled()
+  return value as T
+}
+export function safe(root: string, p: string): string {
   const segments = p.split(/[\\/]/)
   if (isAbsolute(p) || segments.includes("..") || segments.includes(".git") || !p)
     throw new Error(`不正な生成パス: ${p}`)
@@ -182,6 +173,15 @@ export function nativeInstallSteps(
 }
 const readJson = (path: string) => JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
 const json = (value: unknown) => JSON.stringify(value, null, 2) + "\n"
+const defaultName = (dir: string) => {
+  const stem = basename(dir)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 64)
+    .replace(/-$/g, "")
+  return /^[a-z]/.test(stem) ? stem : "project"
+}
 export async function run(args: string[]): Promise<number> {
   const o = option(args)
   if (o.help) {
@@ -201,10 +201,8 @@ export async function run(args: string[]): Promise<number> {
     const config = readJson(resolve(o.config))
     if (!config || typeof config !== "object" || Array.isArray(config))
       throw new Error("設定ファイルは JSON オブジェクトで指定してください")
+    validateChoices(config)
     const keys = ["name", "description", "language", "template", "preset", "features"] as const
-    for (const key of Object.keys(config))
-      if (!keys.includes(key as (typeof keys)[number]))
-        throw new Error(`設定ファイルに不明な項目があります: ${key}`)
     for (const k of keys)
       if (config[k] !== undefined && o[k] === undefined)
         (o as unknown as Record<string, unknown>)[k] = config[k]
@@ -213,27 +211,34 @@ export async function run(args: string[]): Promise<number> {
   const tty = Boolean(process.stdin.isTTY && process.stdout.isTTY)
   if (!tty && !o.yes && !o.dryRun)
     throw new Error("非対話式には --yes を指定してください（書き込みには --apply も必要）")
-  const rl = createInterface({ input: process.stdin, output: process.stdout })
-  const ask = async (question: string) => (await rl.question(question)).trim()
-  const select = async <T extends string>(
+  let filesApplied = false
+  const suggestedName = defaultName(o.dir)
+  const selectChoice = async <T extends string>(
     label: string,
     values: readonly T[],
     fallback: T,
-  ): Promise<T> => {
-    console.log(`\n${label}: ${values.map((v, i) => `${i + 1}:${v}`).join("  ")}`)
-    const answer = await ask(`番号を選択 [${values.indexOf(fallback) + 1}]: `)
-    return (values[Number(answer || values.indexOf(fallback) + 1) - 1] ?? fallback) as T
-  }
+  ): Promise<T> =>
+    required(
+      await select<string>({
+        message: label,
+        options: values.map((value) => ({ value, label: value })),
+        initialValue: fallback,
+      }),
+    ) as T
   try {
     if (!o.preset && tty && !o.yes)
-      o.preset = await select("プリセット", Object.keys(presets) as Preset[], "recommended")
+      o.preset = await selectChoice("プリセット", Object.keys(presets) as Preset[], "recommended")
     o.preset ??= "recommended"
     const preset = presets[o.preset]
     if (!o.language && tty && !o.yes)
-      o.language = await select("使用する言語", Object.keys(templates) as Language[], "typescript")
+      o.language = await selectChoice(
+        "使用する言語",
+        Object.keys(templates) as Language[],
+        "typescript",
+      )
     o.language ??= "typescript"
     if (!o.template && tty && !o.yes)
-      o.template = await select(
+      o.template = await selectChoice(
         "テンプレート",
         templates[o.language],
         templates[o.language].includes(preset.template)
@@ -244,14 +249,30 @@ export async function run(args: string[]): Promise<number> {
       ? preset.template
       : templates[o.language][0]
     if (!o.name && tty && !o.yes)
-      o.name = (await ask(`プロジェクト名 [${basename(o.dir)}]: `)) || basename(o.dir)
-    o.name ??= basename(o.dir)
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, "-")
-    if (!o.description && tty && !o.yes) o.description = await ask("したいこと・概要（任意）: ")
+      o.name = required(
+        await text({
+          message: "プロジェクト名",
+          initialValue: suggestedName,
+          defaultValue: suggestedName,
+          validate: (value) =>
+            nameSchema.safeParse(value).success
+              ? undefined
+              : "英小文字で始まる kebab-case（最大 64 文字）で指定してください",
+        }),
+      )
+    o.name ??= suggestedName
+    if (!o.description && tty && !o.yes)
+      o.description = required(
+        await text({ message: "したいこと・概要（任意）", defaultValue: "" }),
+      )
     if (!o.features && tty && !o.yes) {
       console.log(`推奨機能: ${preset.features.join(", ") || "なし"}`)
-      const input = await ask("機能を変更する場合はカンマ区切りで入力（Enter で推奨）: ")
+      const input = required(
+        await text({
+          message: "機能を変更する場合はカンマ区切りで入力（Enter で推奨）",
+          defaultValue: "",
+        }),
+      )
       if (input)
         o.features =
           input === "none"
@@ -376,8 +397,15 @@ export async function run(args: string[]): Promise<number> {
       return 0
     }
     if (tty && !o.yes) {
-      const answer = (await ask("この計画を適用しますか？ [y/N]: ")).toLowerCase()
-      if (answer !== "y" && answer !== "yes") {
+      const approved = required(
+        await confirm({
+          message: "この計画を適用しますか？ [y/N]",
+          initialValue: false,
+          active: "y",
+          inactive: "N",
+        }),
+      )
+      if (!approved) {
         console.log("中止しました。変更・インストールは行いません")
         return 0
       }
@@ -432,6 +460,7 @@ export async function run(args: string[]): Promise<number> {
       for (const path of changed) if (backup) copyFileSync(join(backup, basename(path)), path)
       throw e
     }
+    filesApplied = true
     console.log(
       `作成 ${create.length} 件、保持 ${retained.length} 件。${changed.length ? `バックアップ: ${backup}` : ""}`,
     )
@@ -464,7 +493,14 @@ export async function run(args: string[]): Promise<number> {
         missingNativeTool = true
         continue
       }
-      if ((await ask(`${bin} を今インストールしますか？コマンドを確認し yes と入力: `)) !== "yes") {
+      if (
+        required(
+          await text({
+            message: `${bin} を今インストールしますか？コマンドを確認し yes と入力`,
+            defaultValue: "",
+          }),
+        ) !== "yes"
+      ) {
         missingNativeTool = true
         continue
       }
@@ -494,8 +530,16 @@ export async function run(args: string[]): Promise<number> {
       "セットアップ処理が終わりました。案内した文書・スキル候補を確認してください（自動削除はしません）。",
     )
     return 0
-  } finally {
-    rl.close()
+  } catch (e) {
+    if (e instanceof SetupCancelled) {
+      cancel(
+        filesApplied
+          ? "後続の導入を中止しました。生成済みのファイルは保持します"
+          : "中止しました。変更・インストールは行いません",
+      )
+      return 0
+    }
+    throw e
   }
 }
 if (import.meta.main)

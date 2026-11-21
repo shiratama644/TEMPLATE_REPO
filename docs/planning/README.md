@@ -28,6 +28,7 @@
 | [`BUN_SETUP_PLAN.md`](./BUN_SETUP_PLAN.md) | BUNSETUP-1〜4 | 1〜3 完了、4 実機検証待ち | Bun 版の対話/非対話 setup と検査の移行 |
 | [`BUN_AUDIT_PLAN.md`](./BUN_AUDIT_PLAN.md) | BUNAUDIT-1 | 完了（実機は別タスク） | Bun CLI・生成物・検査のバグ監査と安全境界 |
 | [`SETUP_CONFIRM_PLAN.md`](./SETUP_CONFIRM_PLAN.md) | SETUPCONF-1 | 完了 | 対話式 CLI の計画承認と非対話式の安全境界 |
+| [`SETUP_LIBS_PLAN.md`](./SETUP_LIBS_PLAN.md) | SETUPLIB-1 | ローカル検証済み | Clack・Zod・fast-check による対話 UI・検証・生成テスト |
 | `INIT_STATE.md` | — | 実行時に作成 | 初期設定の作業記憶（スロット状態・予算）。承認前に書いてよい唯一のファイル |
 | `INIT_PLAN.md` | — | 実行時に作成 | 承認済みの初期設定計画。書式は [`project-init`](../../.agent/skills/project-init/SKILL.md)。テンプレート本体には置かない |
 

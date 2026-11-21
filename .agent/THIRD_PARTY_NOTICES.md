@@ -10,6 +10,8 @@
 | [anthropics/skills](https://github.com/anthropics/skills) | 各 skill の LICENSE.txt（Apache License 2.0） | skill: skill-creator, discernment-nudge（各ディレクトリに LICENSE.txt を同梱） |
 | [Taiizor/agents-md-cookbook](https://github.com/Taiizor/agents-md-cookbook) | MIT | tool: `agents-md-lint@1.0.1`（`package.json` / `bun.lock` で版固定し `bun run agents` / `bun run check` から実行）。**Bun の `patchedDependencies` で MIT 配布物 `dist/cli.js` に 2 行の差分を適用**（エントリポイントの realpath 解決）。指示ファイルの予算（Codex 32,768 bytes / Windsurf 6,000 字 / 行数 150・300）と、下記の実証研究の整理を参照した。ライセンス全文は [上流 LICENSE](https://github.com/Taiizor/agents-md-cookbook/blob/main/LICENSE) を参照（npm パッケージは license フィールドが MIT。ライセンスファイルは未同梱） |
 
+`@clack/prompts@1.9.0`（MIT: [Clack](https://github.com/bombshell-dev/clack)）を対話式 CLI、`zod@4.6.7`（MIT: [Zod](https://github.com/colinhacks/zod)）を入力スキーマ、`fast-check@4.10.3`（MIT: [fast-check](https://github.com/dubzzz/fast-check)）を開発用の生成テストに利用する。いずれも `package.json` / `bun.lock` に固定し、配布コードやライセンスは各 npm パッケージ・上流で確認できる。ソースを本リポジトリへ転記していない。
+
 上記以外（`.agent/skills/` の `ci-quality-gates`、`e2e`、`testing`、`docs-maintenance`、`sandbox-constraints`、`project-init` など）は本リポジトリのオリジナルです。`verify-doc-integrity` は `docs-maintenance` へ統合した。
 
 **取り込まなかったもの**: Anthropic の docx / pdf / pptx / xlsx 等の skill は、Anthropic の独自（proprietary）ライセンスのため再配布していません。`doc-coauthoring` は同梱ライセンスが無いため除外しました。ECC の `.claude/` 固有設定（ecc-tools.json、team/、enterprise/ 等）と、ECC ランタイムに依存する hook・skill（strategic-compact、blueprint、resume-session、save-session 等）も取り込んでいません。

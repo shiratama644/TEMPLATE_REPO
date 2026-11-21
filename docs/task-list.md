@@ -116,6 +116,14 @@
 |---|---|---|---:|---|---|---|
 | SETUPCONF-1 | 計画提示後の `y/N` 承認を対話式に追加 | 完了 | 100% | BUNSETUP-3、BUNAUDIT-1 | `y` で適用、`N` / Enter / `--dry-run` は不変更。非対話式・OS 導入の安全境界と文書を維持し、全ゲート PASS | `77844c5`。疑似端末による回帰テストと `bun run check` 7 ゲート・31 テスト / 237 assertions PASS。`b9e4a59` の PR #5 で Bun・gitleaks・dependency-review の 3 チェック PASS |
 
+### セットアップの対話 UI・設定検証・生成テスト (2026-10-25 計画)
+
+> 計画書: [`planning/SETUP_LIBS_PLAN.md`](./planning/SETUP_LIBS_PLAN.md)。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| SETUPLIB-1 | Clack・Zod・fast-check を安全境界とともに導入 | ローカル検証済み | 90% | SETUPCONF-1 | 対話 UI、設定スキーマ、生成テストが実動作。拒否・dry-run・非対話式・OS 導入の安全境界を維持し、全ゲートと CI PASS | `bun install --frozen-lockfile`・`bun run check` 7 ゲート、35 テスト / 601 assertions PASS。疑似端末の選択・拒否・承認・Ctrl+C、Zod の設定、fast-check の安全境界を確認。CI は push 後に確認 |
+
 ---
 
 ## タスク追加の手順

@@ -9,7 +9,7 @@ Agent の作業規約・記憶・進捗を備えた **Bun ベースのプロジ�
 | `AGENTS.md` / `.agent/` | 作業規約・スキル・フック（`.claude` / `CLAUDE.md` は symlink） |
 | `docs/` | 進捗・仕様・計画・監査の正本 |
 | `package.json` / `bun.lock` | Bun の依存とコマンド（`bun run setup`、`bun run check`） |
-| `scripts/setup.ts` / `scripts/setup_manifest.ts` | 対話・非対話の初期設定、プリセット・機能の選択、OS 検出と導入案内 |
+| `scripts/setup.ts` / `scripts/setup_manifest.ts` / `scripts/setup_schema.ts` | Clack 対話 UI、Zod 設定検証、プリセット・機能の選択、OS 導入案内 |
 | `scripts/check_*.ts` | 文書リンク・Mermaid・日本語/英語・AGENTS.md の品質チェック |
 | `.githooks/` | Bun の検証・コミットメッセージの検査。既存フックがあるときは導入を拒否 |
 | `.github/workflows/` | Bun の CI と gitleaks、依存差分レビュー、リリース |
@@ -42,7 +42,7 @@ bun run setup --yes --apply --language go --template go-http --name my-api --no-
 bun run check                                 # CI と同じ入口（型・単体テスト含む）
 ```
 
-対話式では計画の提示後に `[y/N]` を尋ね、`y` / `yes` を入力したときだけ適用します。`N` または Enter のみなら変更しません。`--apply` は対話式では不要で、指定しても確認を省略しません。`--yes` のみではファイルを変更しません。非対話式の適用には **`--yes --apply` の両方**が必要です。`--dry-run` は常に読み取り専用です。既存の生成対象ファイルは保持し、変更する `package.json` は `.setup-backup/` に退避します。OS パッケージは対話式で**コマンドごとに yes と入力したときだけ**実行し、非対話式では手順の表示のみです。**文書やスキルの削除は自動では行わず、候補だけ案内します**。
+対話式は `@clack/prompts` で選択・入力し、Zod で CLI/JSON 設定を検証します。入力名の既定値は出力先フォルダ名を kebab-case に正規化します。計画の提示後に `[y/N]` を尋ね、`y` / `yes` を入力したときだけ適用します。`N` または Enter のみなら変更しません。`--apply` は対話式では不要で、指定しても確認を省略しません。`--yes` のみではファイルを変更しません。非対話式の適用には **`--yes --apply` の両方**が必要です。`--dry-run` は常に読み取り専用です。既存の生成対象ファイルは保持し、変更する `package.json` は `.setup-backup/` に退避します。OS パッケージは対話式で**コマンドごとに yes と入力したときだけ**実行し、非対話式では手順の表示のみです。**文書やスキルの削除は自動では行わず、候補だけ案内します**。
 
 | 言語 | テンプレート |
 | :--- | :--- |
@@ -61,6 +61,7 @@ Git フックを導入する場合は `bun run hooks:install`（既存の commit
 
 - 目的を確認して小さく実装 → 検証 → 記録（`AGENTS.md §1.3`）。
 - `bun run check` が検証の正本。個別には `bun run links` / `mermaid` / `lang` / `agents` / `test`。
+- `fast-check` は開発用依存で、名前・パス保護の再現可能な生成テストに使います（生成先アプリへ自動追加はしません）。
 - `agents-md-lint@1.0.1` は npm bin の無出力成功を防ぐ依存パッチを Bun の `patchedDependencies` で適用します。`bun install --frozen-lockfile` 後に利用してください。`bun run check` の回帰テストでは Node.js 18 以降で npm bin を起動します（上流の npm パッケージ自体には未反映）。
 - 進捗の正本は `docs/task-list.md`。検証結果と成果物の証拠を残します。
 - このテンプレートの使い方は [`.agent/skills/project-init/SKILL.md`](.agent/skills/project-init/SKILL.md) も参照してください。

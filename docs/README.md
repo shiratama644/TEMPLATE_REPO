@@ -27,7 +27,8 @@ docs/
 │   ├── LANGGATE_PLAN.md 日本語・英語のみの言語ゲートと残事項（LANGGATE-1〜4）
 │   ├── BUN_SETUP_PLAN.md Bun 版 CLI と検証基盤への移行（BUNSETUP-1〜4）
 │   ├── BUN_AUDIT_PLAN.md Bun の不具合監査（BUNAUDIT-1）
-│   └── SETUP_CONFIRM_PLAN.md 対話式セットアップの計画承認（SETUPCONF-1）
+│   ├── SETUP_CONFIRM_PLAN.md 対話式セットアップの計画承認（SETUPCONF-1）
+│   └── SETUP_LIBS_PLAN.md Clack・Zod・fast-check の導入（SETUPLIB-1）
 ├── research/          調査結果
 │   └── README.md      調査の一覧と書き方
 ├── audit/             差分・問題の監査

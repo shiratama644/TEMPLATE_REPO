@@ -16,7 +16,7 @@ TEMPLATE_REPO/
 ├── .gitleaks.toml         # 秘密情報検出の許可リスト
 ├── .gitignore
 ├── scripts/               # Bun の TypeScript CLI と検査
-│   ├── setup.ts / setup_manifest.ts # 初期設定と選択肢
+│   ├── setup.ts / setup_manifest.ts / setup_schema.ts # 初期設定・選択肢・Zod スキーマ
 │   ├── check_doc_links.ts # Markdown の内部リンク
 │   ├── check_mermaid.ts   # Mermaid 図の宣言
 │   └── check_language.ts  # 日本語・英語ゲート

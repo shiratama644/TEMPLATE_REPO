@@ -524,7 +524,13 @@ async function interactiveCli(d: string, answer: string | null, ...flags: string
   ]
   const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`
   return await new Promise<{ status: number | null; output: string }>((resolve, reject) => {
-    const child = spawn("script", ["-q", "-e", "-c", args.map(quote).join(" "), "/dev/null"])
+    const child = spawn("script", [
+      "-q",
+      "-e",
+      "-c",
+      `stty cols 100 rows 30; exec ${args.map(quote).join(" ")}`,
+      "/dev/null",
+    ])
     let output = "",
       sent = false
     const timer = setTimeout(() => {
@@ -534,9 +540,9 @@ async function interactiveCli(d: string, answer: string | null, ...flags: string
     }, 10_000)
     child.stdout.on("data", (chunk: Buffer) => {
       output += chunk.toString()
-      if (!sent && output.includes("[y/N]:")) {
+      if (!sent && output.includes("[y/N]")) {
         sent = true
-        child.stdin.write(`${answer ?? ""}\n`)
+        child.stdin.write(`${answer ?? ""}\r`)
       }
     })
     child.stderr.on("data", (chunk: Buffer) => {
@@ -558,13 +564,17 @@ test("interactive plan accepts y without --apply and rejects N or empty input", 
   const cancelled = dir()
   const no = await interactiveCli(cancelled, "N", "--save-config", "choices.json")
   expect(no.status).toBe(0)
-  expect(no.output).toContain("この計画を適用しますか？ [y/N]:")
+  expect(no.output).toContain("この計画を適用しますか？ [y/N]")
   expect(no.output).toContain("中止しました")
   expect(readdirSync(cancelled)).toEqual([])
 
   const empty = dir()
   expect((await interactiveCli(empty, "")).status).toBe(0)
   expect(readdirSync(empty)).toEqual([])
+
+  const interrupted = dir()
+  expect((await interactiveCli(interrupted, "\x03")).status).toBe(0)
+  expect(readdirSync(interrupted)).toEqual([])
 
   const legacy = dir()
   expect((await interactiveCli(legacy, "N", "--apply")).status).toBe(0)
@@ -583,4 +593,59 @@ test("interactive plan accepts y without --apply and rejects N or empty input", 
   expect(preview.output).toContain("セットアップ計画")
   expect(preview.output).not.toContain("[y/N]:")
   expect(readdirSync(dryRun)).toEqual([])
+})
+
+test("Clack interactive choices reach a dry-run plan without any writes", async () => {
+  const d = dir()
+  const args = [
+    process.execPath,
+    join(import.meta.dir, "../scripts/setup.ts"),
+    "--dir",
+    d,
+    "--no-install",
+    "--dry-run",
+  ]
+  const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`
+  const prompts = [
+    "プリセット",
+    "使用する言語",
+    "テンプレート",
+    "プロジェクト名",
+    "したいこと・概要",
+    "機能を変更する場合",
+  ]
+  const result = await new Promise<{ status: number | null; output: string }>((resolve, reject) => {
+    const child = spawn("script", [
+      "-q",
+      "-e",
+      "-c",
+      `stty cols 100 rows 30; exec ${args.map(quote).join(" ")}`,
+      "/dev/null",
+    ])
+    let output = "",
+      index = 0
+    const timer = setTimeout(() => {
+      child.kill()
+      reject(new Error(`選択画面が終了しません: ${output}`))
+    }, 10_000)
+    child.stdout.on("data", (chunk: Buffer) => {
+      output += chunk.toString()
+      if (index < prompts.length && output.includes(prompts[index])) {
+        index++
+        child.stdin.write("\r")
+      }
+    })
+    child.on("error", (error) => {
+      clearTimeout(timer)
+      reject(error)
+    })
+    child.on("close", (status) => {
+      clearTimeout(timer)
+      if (index !== prompts.length) reject(new Error(`選択が ${index} 件で停止: ${output}`))
+      else resolve({ status, output })
+    })
+  })
+  expect(result.status).toBe(0)
+  expect(result.output).toContain("セットアップ計画")
+  expect(readdirSync(d)).toEqual([])
 })
