@@ -73,3 +73,5 @@ Git レポートは `--json` と人向け表示を共有する内部データ構
 - 反復 2（負例）: zizmor オフライン正常 exit 0、意図的な template-injection fixture は exit 14。Knip 6.43.0 は Node 上の oxc-parser 6 GiB 仮想バッファ確保が失敗。`KNIP_DISABLE_RAW_TRANSFER=1` で根の exit 0、独立した未使用ファイル fixture の exit 1 を確認。Knip の個別例外は外部 Lace サンプル、パッチ済み CLI の動的呼出、util-linux の `script(1)` に限定。
 - 反復 3（単体/統合）: Git/PR の読み取り専用レポートは一時 Git repo と API モックで正常、branch/HEAD 不一致、未完了/失敗 checks、通信不能を区別。Linux の `bun run check` は 7 ゲート・48 pass / 2 skip / 716 assertions、`bun run knip` exit 0。actionlint の実バイナリ、OSV の DB 照会・定期/手動実行と今回の PR CI は**未検証**。未確認を成功としない。
 - 反復 4（差分レビュー/実環境）は CI 実行後に続行。GitHub Releases や GHCR への接続障害が続く場合は保留とする。
+
+- 反復 4（実 CI と差分確認）: `ee2df51` の PR #5 push / pull_request CI で actionlint の固定資産検証・正常/負例、zizmor、Bun 全ゲート、Knip、gitleaks、dependency-review が PASS（PR CI run `44930666010`、push run `44930660916`）。Git/PR 実 API は PR #5 の head とチェックをローカルから読取専用照合して pass。サンドボックスの Bun TLS は信頼する CA 設定がないと unknown / exit 1（証明書検証は無効化せず、`NODE_EXTRA_CA_CERTS` に検証済み環境 CA を指定して再試験）。OSV 手動起動は既定ブランチに workflow が無いため HTTP 404、実走査は未検証。TOOLING-2 はデフォルトブランチ反映後まで保留。

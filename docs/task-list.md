@@ -28,9 +28,9 @@
 |---|---|---|
 
 | BUNSETUP-4 | 実環境検証待ち | macOS / Windows / Termux の実機検証と、利用者が明示的に承認した OS パッケージ導入（このサンドボックスでは行わない） |
-| TOOLING-1 | 実装中 | actionlint の CI 実行と負例の実測、PR チェック結果の確認 |
-| TOOLING-2 | 実装中 | OSV の定期/手動の実行確認と CI 検証 |
-| TOOLING-3 | 実装中 | PR 実 API と CI の実環境確認 |
+| TOOLING-1 | 完了 | actionlint / zizmor の正常・負例と CI を確認済み |
+| TOOLING-2 | 実環境検証待ち | OSV workflow は既定ブランチに未反映。手動起動は HTTP 404、反映後に DB 照会と定期実行の成否を確認 |
+| TOOLING-3 | 完了 | ローカル Git・PR 実 API とモックで正常/異常/未確認を確認済み |
 
 ---
 
@@ -150,9 +150,9 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| TOOLING-1 | actionlint / zizmor の独立ゲート | 実装中 | 70% | — | workflow の正常・異常 fixture、CI の検査、全ゲート PASS | zizmor 1.31.1 オフライン正常 exit 0・負例 template-injection exit 14。actionlint 1.7.12 はリリース資産取得が本環境で EOF、CI 実行待ち |
-| TOOLING-2 | knip / OSV-Scanner の導入 | 実装中 | 65% | TOOLING-1 | 未使用依存の正確な検出と `bun.lock` の脆弱性定期/手動走査 | Knip 6.43.0 exit 0、未使用ファイルの負例 exit 1。OSV v2.7.0 再利用ワークフローはローカル・手動未実行 |
-| TOOLING-3 | Git / PR 読取専用レポート | 実装中 | 75% | TOOLING-1 | simple-git / Octokit / conventional-commits-parser を用いた状態照合、正常・負のテスト | ローカル一時 Git repo + API モック 3 テスト PASS、実 API 未検証 |
+| TOOLING-1 | actionlint / zizmor の独立ゲート | 完了 | 100% | — | workflow の正常・異常 fixture、CI の検査、全ゲート PASS | zizmor 正常 exit 0・負例 exit 14。actionlint 1.7.12 の SHA-256 と正常/負例は PR #5 CI `44930666010` で PASS（ローカル直接取得のみ EOF） |
+| TOOLING-2 | knip / OSV-Scanner の導入 | 実環境検証待ち | 80% | TOOLING-1 | 未使用依存の正確な検出と `bun.lock` の脆弱性定期/手動走査 | Knip 正常 exit 0・負例 exit 1、PR #5 CI `44930666010` PASS。OSV 手動 dispatch は未登録のため HTTP 404。既定ブランチ反映後に実スキャンが必要 |
+| TOOLING-3 | Git / PR 読取専用レポート | 完了 | 100% | TOOLING-1 | simple-git / Octokit / conventional-commits-parser を用いた状態照合、正常・負のテスト | 一時 Git repo と API モック 3 テスト PASS、PR #5 の実 API 照合で pass。証明書不備時は unknown / exit 1（信頼済 CA 指定で成功）。CI `44930666010` PASS |
 
 ---
 
