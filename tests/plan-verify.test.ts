@@ -154,7 +154,10 @@ test.skipIf(!Bun.which("go"))("Go CLI and HTTP build in isolated temporary outpu
     const dir = target()
     expect(create(dir, template, "go").status).toBe(0)
     const result = cli(verify, dir, "--template", template, "--build")
-    expect(result.status).toBe(0)
+    if (result.status !== 0)
+      throw new Error(
+        `native build ${template}: ${JSON.stringify({ status: result.status, signal: result.signal, error: result.error?.message, stdout: result.stdout, stderr: result.stderr })}`,
+      )
     expect(result.stdout).toContain("passed: build")
     expect(existsSync(join(dir, "app"))).toBe(false)
   }
@@ -166,7 +169,10 @@ test.skipIf(!Bun.which("cargo"))(
     const dir = target()
     expect(create(dir, "rust-cli", "rust").status).toBe(0)
     const result = cli(verify, dir, "--template", "rust-cli", "--build")
-    expect(result.status).toBe(0)
+    if (result.status !== 0)
+      throw new Error(
+        `rust build: ${JSON.stringify({ status: result.status, signal: result.signal, error: result.error?.message, stdout: result.stdout, stderr: result.stderr })}`,
+      )
     expect(existsSync(join(dir, "target"))).toBe(false)
   },
 )
