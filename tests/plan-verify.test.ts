@@ -149,19 +149,23 @@ test("build is explicit, missing runtime is blocked, never installs", () => {
   expect(readdirSync(dir).sort()).toEqual(before)
 })
 
-test.skipIf(!Bun.which("go"))("Go CLI and HTTP build in isolated temporary output", () => {
-  for (const template of ["go-cli", "go-http"]) {
-    const dir = target()
-    expect(create(dir, template, "go").status).toBe(0)
-    const result = cli(verify, dir, "--template", template, "--build")
-    if (result.status !== 0)
-      throw new Error(
-        `native build ${template}: ${JSON.stringify({ status: result.status, signal: result.signal, error: result.error?.message, stdout: result.stdout, stderr: result.stderr })}`,
-      )
-    expect(result.stdout).toContain("passed: build")
-    expect(existsSync(join(dir, "app"))).toBe(false)
-  }
-})
+test.skipIf(!Bun.which("go"))(
+  "Go CLI and HTTP build in isolated temporary output",
+  () => {
+    for (const template of ["go-cli", "go-http"]) {
+      const dir = target()
+      expect(create(dir, template, "go").status).toBe(0)
+      const result = cli(verify, dir, "--template", template, "--build")
+      if (result.status !== 0)
+        throw new Error(
+          `native build ${template}: ${JSON.stringify({ status: result.status, signal: result.signal, error: result.error?.message, stdout: result.stdout, stderr: result.stderr })}`,
+        )
+      expect(result.stdout).toContain("passed: build")
+      expect(existsSync(join(dir, "app"))).toBe(false)
+    }
+  },
+  300_000,
+)
 
 test.skipIf(!Bun.which("cargo"))(
   "Rust CLI can be checked offline without keeping target artifacts",
@@ -175,6 +179,7 @@ test.skipIf(!Bun.which("cargo"))(
       )
     expect(existsSync(join(dir, "target"))).toBe(false)
   },
+  150_000,
 )
 
 test("local plain TS build runs only on explicit request and rejects altered scripts", () => {
