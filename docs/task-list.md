@@ -130,7 +130,7 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| REVIEWFIX-1 | OS 依存テスト・dry-run の検査・構成図を修正 | ローカル検証済み | 90% | SETUPLIB-1 | Linux 疑似端末試験と OS 共通の承認判断テストが動き、dry-run の現行表示を検査する。構成図は実ファイルと一致。Bun 全ゲート・CI PASS | `2b65b59`。Linux `bun run check` 7 ゲート・37 テスト / 612 assertions PASS。非 Linux 実機は BUNSETUP-4、CI は push 後に確認 |
+| REVIEWFIX-1 | OS 依存テスト・dry-run の検査・構成図を修正 | 完了 | 100% | SETUPLIB-1 | Linux 疑似端末試験と OS 共通の承認判断テストが動き、dry-run の現行表示を検査する。構成図は実ファイルと一致。Bun 全ゲート・CI PASS | `2b65b59`、`9d94779`。Linux `bun run check` 7 ゲート・37 テスト / 612 assertions PASS。PR #5 の Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS。非 Linux 実機は BUNSETUP-4 |
 
 ---
 

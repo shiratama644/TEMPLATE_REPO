@@ -22,3 +22,8 @@
 
 - PR #5 の最終 CI を確認し、タスクの状態を更新する。
 - macOS / Windows / Termux の実機での対話 UI、symlink 権限、OS パッケージ導入は BUNSETUP-4 に残る。今回の対応を実機検証済みと誤記しない。
+
+## 5. CI 確認（追記）
+
+- PR #5 の `9d94779` で Bun 全ゲート・gitleaks・dependency-review の 3 チェックが PASS。タスクリスト・計画書を完了に更新。
+- macOS・Windows・Termux の実機検証は引き続き BUNSETUP-4 に残す。
