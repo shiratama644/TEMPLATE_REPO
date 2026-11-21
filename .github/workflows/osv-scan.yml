@@ -1,0 +1,20 @@
+# Full lockfile scan; PR dependency-review remains the separate delta gate.
+name: OSV Scanner
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scan:
+    name: bun.lock known vulnerabilities
+    permissions:
+      contents: read
+      actions: read # reusable workflow uploads the scan artifact
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+    with:
+      scan-args: |-
+        --lockfile=bun.lock
+      upload-sarif: false
+      fail-on-vuln: true

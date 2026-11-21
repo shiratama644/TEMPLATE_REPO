@@ -28,6 +28,9 @@
 |---|---|---|
 
 | BUNSETUP-4 | 実環境検証待ち | macOS / Windows / Termux の実機検証と、利用者が明示的に承認した OS パッケージ導入（このサンドボックスでは行わない） |
+| TOOLING-1 | 実装中 | actionlint の CI 実行と負例の実測、PR チェック結果の確認 |
+| TOOLING-2 | 実装中 | OSV の定期/手動の実行確認と CI 検証 |
+| TOOLING-3 | 実装中 | PR 実 API と CI の実環境確認 |
 
 ---
 
@@ -140,6 +143,16 @@
 |---|---|---|---:|---|---|---|
 | PLANJSON-1 | セットアップの安全な JSON プラン出力 | 完了 | 100% | REVIEWFIX-1 | 単一 JSON、プレビューのみ、不変更、通常計画と判定一致、全ゲート・CI PASS | Linux `bun run check` 7 ゲート・44 pass / 2 skip（Go・Rust ツール不在）・699 assertions PASS。`cd2ffd3` の PR #5 Bun・gitleaks・dependency-review 3 チェック PASS |
 | GENVERIFY-1 | 生成物の静的・明示ビルド検証 | 完了 | 100% | PLANJSON-1 | 全テンプレートに対する静的検証、明示ビルドと blocked の区別、全ゲート・CI PASS | Linux 静的検査全 12 テンプレート、TS・Python CLI 実行、依存不足 blocked を確認。`cd2ffd3` の PR #5 で 3 チェック PASS（初回 CI はネイティブビルドのテスト上限 5 秒により失敗、テスト上限調整後に成功）。OS 実機は BUNSETUP-4 |
+
+### 品質・Git レポートのツール統合 (2026-10-25 計画)
+
+> 計画書: [`planning/TOOLING_PLAN.md`](./planning/TOOLING_PLAN.md)。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| TOOLING-1 | actionlint / zizmor の独立ゲート | 実装中 | 70% | — | workflow の正常・異常 fixture、CI の検査、全ゲート PASS | zizmor 1.31.1 オフライン正常 exit 0・負例 template-injection exit 14。actionlint 1.7.12 はリリース資産取得が本環境で EOF、CI 実行待ち |
+| TOOLING-2 | knip / OSV-Scanner の導入 | 実装中 | 65% | TOOLING-1 | 未使用依存の正確な検出と `bun.lock` の脆弱性定期/手動走査 | Knip 6.43.0 exit 0、未使用ファイルの負例 exit 1。OSV v2.7.0 再利用ワークフローはローカル・手動未実行 |
+| TOOLING-3 | Git / PR 読取専用レポート | 実装中 | 75% | TOOLING-1 | simple-git / Octokit / conventional-commits-parser を用いた状態照合、正常・負のテスト | ローカル一時 Git repo + API モック 3 テスト PASS、実 API 未検証 |
 
 ---
 

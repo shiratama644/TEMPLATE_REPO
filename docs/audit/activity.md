@@ -48,3 +48,4 @@
 | 2026-10-25 | REVIEWFIX-1: PR #5 でレビュー指摘 3 点の CI を確認し、タスクを完了 | `9d94779`。Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS。ローカル 37 テスト / 612 assertions PASS。非 Linux 実機は BUNSETUP-4 |
 | 2026-10-25 | PLANJSON-1 / GENVERIFY-1: JSON 計画プレビューと生成物の静的・明示ビルド検証を追加 | `4957545`。Linux Bun 7 ゲート・44 pass / 2 skip（Go/Rust ツール不在）・699 assertions PASS。CI は push 後に確認。非 Linux 実機は BUNSETUP-4 |
 | 2026-10-25 | PLANJSON-1 / GENVERIFY-1: 初回 CI の Go / Rust ビルドテストで制限時間超過（SIGTERM）を調査し、テスト時間を調整。PR #5 の再検証を完了 | `23ea1e3`・`cd2ffd3`。Bun 全ゲート・gitleaks・dependency-review 3 チェック PASS。ローカル 44 pass / 2 skip / 699 assertions。非 Linux 実機は BUNSETUP-4 |
+| 2026-10-25 | TOOLING-1〜3 の計画と初回実装。actionlint / zizmor の CI ゲート、Knip と OSV、読取専用 Git/PR レポートを追加。初回 zizmor 診断に従い Actions の SHA 固定と最小権限を修正 | Bun 7 ゲート・48 pass / 2 skip / 716 assertions PASS。Knip と zizmor 正常 exit 0・負例は非 0。actionlint バイナリは取得時 EOF、OSV DB と PR CI は未検証 |

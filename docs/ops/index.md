@@ -10,4 +10,11 @@
 
 ## 現在の内容
 
-現在、運用手順はありません。
+品質ゲートと読み取り専用レポートの実行方法を以下に記載します。
+
+## 品質ゲートと読み取り専用レポート
+
+- `bun run check` は既存の 7 ゲート、`bun run knip` は未使用コード/依存の独立ゲート。Knip 6.43.0 は Node 環境の raw transfer で仮想メモリ確保に失敗するため `KNIP_DISABLE_RAW_TRANSFER=1` を固定。設定の例外は `knip.jsonc` に理由を記載。`--fix` は使わない。
+- `bun run git:report -- --json`（または `bun scripts/git_report.ts --json`）は現在の Git 状態のみ。`bun scripts/git_report.ts --branch <期待ブランチ> --repo owner/name --pr <番号> --json` は `GITHUB_TOKEN` があるときだけ PR を GET で参照する。`pass` / `fail` / `unknown` を分け、未確認時は exit 1。出力を共有するときはコミット件名に秘密がないか確認すること。トークンをコマンド引数に渡さない。
+- actionlint 1.7.12 と zizmor 1.31.1 は CI の `workflow-audit` で正常・負例を実行。zizmor は `--offline --min-severity medium`（通信なしの静的監査）。actionlint の配布バイナリは SHA-256 固定。ダウンロード/検査失敗はジョブ失敗。
+- OSV-Scanner v2.7.0 は `bun.lock` 全体を毎週と手動でスキャンする独立 workflow。PR の dependency-review は差分を検査する別の役割。DB 通信不能・スキャン失敗を「脆弱性 0 件」と読まない。定期/手動 workflow はデフォルトブランチに反映された後に実行を確認すること。

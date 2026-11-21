@@ -16,7 +16,7 @@ export const nameSchema = z
   .string()
   .max(64)
   .regex(/^[a-z](?:[a-z0-9]|-(?=[a-z0-9]))*$/)
-export const configSchema = z.strictObject({
+const configSchema = z.strictObject({
   preset: preset.optional(),
   language: language.optional(),
   template: template.optional(),
@@ -24,7 +24,7 @@ export const configSchema = z.strictObject({
   description: z.string().optional(),
   features: z.array(feature).optional(),
 })
-export const choicesSchema = configSchema.superRefine((o, ctx) => {
+const choicesSchema = configSchema.superRefine((o, ctx) => {
   if (o.language && o.template && !templates[o.language].includes(o.template))
     ctx.addIssue({
       code: "custom",

@@ -31,6 +31,7 @@
 | [`SETUP_LIBS_PLAN.md`](./SETUP_LIBS_PLAN.md) | SETUPLIB-1 | 完了 | Clack・Zod・fast-check による対話 UI・検証・生成テスト |
 | [`REVIEW_FIX_PLAN.md`](./REVIEW_FIX_PLAN.md) | REVIEWFIX-1 | 完了（非 Linux 実機は BUNSETUP-4） | OS 依存テスト・dry-run 検査・構成図の修正 |
 | [`PLAN_VERIFY_PLAN.md`](./PLAN_VERIFY_PLAN.md) | PLANJSON-1・GENVERIFY-1 | 完了（非 Linux 実機は BUNSETUP-4） | JSON プレビューと生成物の静的・ビルド検証 |
+| [`TOOLING_PLAN.md`](./TOOLING_PLAN.md) | TOOLING-1〜3 | 実装中 | 品質ゲートと Git / PR 読取専用レポート |
 | `INIT_STATE.md` | — | 実行時に作成 | 初期設定の作業記憶（スロット状態・予算）。承認前に書いてよい唯一のファイル |
 | `INIT_PLAN.md` | — | 実行時に作成 | 承認済みの初期設定計画。書式は [`project-init`](../../.agent/skills/project-init/SKILL.md)。テンプレート本体には置かない |
 
