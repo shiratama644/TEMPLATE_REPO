@@ -24,3 +24,5 @@
 
 - PR #5 の最終 HEAD の CI を確認し、結果を `docs/task-list.md` に記録する。
 - OS パッケージの実導入および macOS・Windows・Termux の実機検証は BUNSETUP-4 に残す。
+
+追記（CI 後）: `b1c36b8` で設定ファイルの不整合を CLI 引数で上書きできる旧挙動を維持。ローカル 36 テスト / 604 assertions と PR #5 の Bun・gitleaks・dependency-review 3 チェック PASS。

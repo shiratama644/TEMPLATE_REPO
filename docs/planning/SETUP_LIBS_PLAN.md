@@ -29,7 +29,7 @@
 - [x] `@clack/prompts` で選択・入力・計画後の既定 No 確認とキャンセルを実装。端末の y/No・空入力・Ctrl+C、dry-run が回帰テストで保護される。
 - [x] `zod` の厳格な選択スキーマで CLI と JSON 設定を検証し、不明キー・不正名・非対応の言語とテンプレートを拒否する。
 - [x] `fast-check` はテスト専用にし、パス逸脱・`.git`・名前の境界を再現可能な seed で検証する。
-- [ ] `bun install --frozen-lockfile`、`bun run check` の全ゲート、PR の CI が PASS。変更と出典を文書に同期する。
+- [x] `bun install --frozen-lockfile`、`bun run check` の全ゲート、PR の CI が PASS。変更と出典を文書に同期する。
 
 ## 6. テスト方法
 
@@ -66,4 +66,4 @@ Clack は疑似端末の画面幅が 0 だとプロンプト表示が崩れる�
 
 | ID | コミット | テスト | 実測値・備考 |
 |---|---|---|---|
-| SETUPLIB-1 | `dc73aa2` | `bun run check` 7 ゲート・35 テスト / 601 assertions PASS | CI は push 後に確認 |
+| SETUPLIB-1 | `dc73aa2` / `b1c36b8` | `bun run check` 7 ゲート・36 テスト / 604 assertions PASS | PR #5 の Bun・gitleaks・dependency-review 3 チェック PASS |
