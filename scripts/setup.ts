@@ -27,7 +27,7 @@ import {
   type Template,
   templates,
 } from "./setup_manifest.ts"
-import { nameSchema, validateChoices } from "./setup_schema.ts"
+import { nameSchema, validateChoices, validateConfig } from "./setup_schema.ts"
 
 type Options = {
   name?: string
@@ -201,7 +201,7 @@ export async function run(args: string[]): Promise<number> {
     const config = readJson(resolve(o.config))
     if (!config || typeof config !== "object" || Array.isArray(config))
       throw new Error("設定ファイルは JSON オブジェクトで指定してください")
-    validateChoices(config)
+    validateConfig(config)
     const keys = ["name", "description", "language", "template", "preset", "features"] as const
     for (const k of keys)
       if (config[k] !== undefined && o[k] === undefined)

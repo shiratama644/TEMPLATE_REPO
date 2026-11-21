@@ -16,26 +16,31 @@ export const nameSchema = z
   .string()
   .max(64)
   .regex(/^[a-z](?:[a-z0-9]|-(?=[a-z0-9]))*$/)
-export const choicesSchema = z
-  .strictObject({
-    preset: preset.optional(),
-    language: language.optional(),
-    template: template.optional(),
-    name: nameSchema.optional(),
-    description: z.string().optional(),
-    features: z.array(feature).optional(),
-  })
-  .superRefine((o, ctx) => {
-    if (o.language && o.template && !templates[o.language].includes(o.template))
-      ctx.addIssue({
-        code: "custom",
-        path: ["template"],
-        message: `${o.template} は ${o.language} に対応しません`,
-      })
-  })
+export const configSchema = z.strictObject({
+  preset: preset.optional(),
+  language: language.optional(),
+  template: template.optional(),
+  name: nameSchema.optional(),
+  description: z.string().optional(),
+  features: z.array(feature).optional(),
+})
+export const choicesSchema = configSchema.superRefine((o, ctx) => {
+  if (o.language && o.template && !templates[o.language].includes(o.template))
+    ctx.addIssue({
+      code: "custom",
+      path: ["template"],
+      message: `${o.template} は ${o.language} に対応しません`,
+    })
+})
 
+export function validateConfig(input: unknown): void {
+  validateSchema(input, configSchema)
+}
 export function validateChoices(input: unknown): void {
-  const result = choicesSchema.safeParse(input)
+  validateSchema(input, choicesSchema)
+}
+function validateSchema(input: unknown, schema: typeof configSchema | typeof choicesSchema): void {
+  const result = schema.safeParse(input)
   if (result.success) return
   const issue = result.error.issues[0]
   if (issue.code === "unrecognized_keys")

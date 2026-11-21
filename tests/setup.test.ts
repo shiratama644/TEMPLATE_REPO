@@ -208,6 +208,16 @@ test("invalid preset, language and JSON configuration fail with actionable diagn
   expect(readdirSync(d)).toEqual(["settings.json"])
 })
 
+test("CLI choices can override an incompatible config pair before validation", () => {
+  const d = dir(),
+    config = join(d, "settings.json")
+  writeFileSync(config, '{"language":"go","template":"next"}')
+  const result = cli(d, "--yes", "--dry-run", "--config", config, "--language", "typescript")
+  expect(result.status).toBe(0)
+  expect(result.stdout).toContain("セットアップ計画")
+  expect(readdirSync(d)).toEqual(["settings.json"])
+})
+
 test("save-config supports nested paths and never writes Git metadata", () => {
   const d = dir()
   expect(
