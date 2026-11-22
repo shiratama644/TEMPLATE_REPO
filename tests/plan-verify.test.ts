@@ -149,7 +149,7 @@ test("build is explicit, missing runtime is blocked, never installs", () => {
   expect(readdirSync(dir).sort()).toEqual(before)
 })
 
-test.skipIf(!Bun.which("go"))(
+test.skipIf(!Bun.which("go") && process.env.CI_REQUIRE_NATIVE !== "1")(
   "Go CLI and HTTP build in isolated temporary output",
   () => {
     for (const template of ["go-cli", "go-http"]) {
@@ -167,7 +167,7 @@ test.skipIf(!Bun.which("go"))(
   300_000,
 )
 
-test.skipIf(!Bun.which("cargo"))(
+test.skipIf(!Bun.which("cargo") && process.env.CI_REQUIRE_NATIVE !== "1")(
   "Rust CLI can be checked offline without keeping target artifacts",
   () => {
     const dir = target()

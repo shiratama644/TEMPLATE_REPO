@@ -33,6 +33,7 @@
 | TOOLING-3 | 完了 | ローカル Git・PR 実 API とモックで正常/異常/未確認を確認済み |
 | COMMITGATE-1 | 完了 | parser を commit-msg に接続し、実 Git テストと PR CI を確認 |
 | HOOKAUTO-1 | 完了 | frozen install で自動有効化、既存フック保持、実 commit と PR CI を確認 |
+| FULLGATE-1 | 実装中 | CI Go/Rust の skip 0 と OSV 実スキャンを確認。ローカル apt は配布元接続失敗 |
 
 ---
 
@@ -164,6 +165,14 @@
 |---|---|---|---:|---|---|---|
 | COMMITGATE-1 | parser を commit-msg hook の実ゲートに接続 | 完了 | 100% | TOOLING-3 | 形式/言語ゲート、正常・異常・ファイル不在のテスト、実 `git commit` と PR CI | `e162a0b`。一時 Git repo の実 commit で拒否/許可を実測。7 ゲート 51 pass / 2 skip / 746 assertions・Knip PASS。PR #5 run `44967854460` で全チェック PASS。固有 trailer hook は未上書き |
 | HOOKAUTO-1 | 新フックを自動で有効化し既存フックを保持 | 完了 | 100% | COMMITGATE-1 | Bun install 後の自動有効化、旧フック保持、実 commit・負例・全ゲート・CI | frozen install で `.githooks` 有効化。旧 trailer hook 内容は不変、実 Git repo で旧 pre-commit/trailer と新形式ゲートを確認。7 ゲート 54 pass / 2 skip / 765 assertions、Knip PASS。`facf9e7` の実 commit で旧 trailer と新ゲートを実測。PR #5 run `44968756446` 全チェック PASS |
+
+### 全ゲートの完全検証 (2026-10-25 計画)
+
+> 計画書: [`planning/FULL_GATES_PLAN.md`](./planning/FULL_GATES_PLAN.md)。
+
+| ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
+|---|---|---|---:|---|---|---|
+| FULLGATE-1 | Go/Rust を CI で必須化し、OSV で `bun.lock` を PR 全走査する | 実装中 | 55% | TOOLING-2 | CI skip 0、OSV 実スキャン、全チェック成功。ローカルと定期実行の制約は正直に記録 | ローカル 54 pass / 2 skip。`CI_REQUIRE_NATIVE=1` で欠損ツール 2 fail / skip 0。apt 配布元の接続失敗で Go/Rust の導入不可。PR 実走査待ち |
 
 ---
 
