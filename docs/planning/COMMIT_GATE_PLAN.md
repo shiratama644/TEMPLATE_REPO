@@ -32,3 +32,5 @@
 - ローカル反復 1: 既存 shell 正規表現を、`conventional-commits-parser@7.1.3` を使用した共通分類器に置換。レポートも同じ分類器を利用し、既存の日本語/英語ゲートを維持。
 - ローカル反復 2: 本文だけ有効、空件名、誤 type、ファイル欠損、不正 UTF-8、禁止文字を負例に追加。一時 Git repository で実際に commit-msg hook を動かし、拒否時の commit 数 0、正常時 1 を確認。
 - ローカル反復 3: `bun run check` 7 ゲート・51 pass / 2 skip / 746 assertions、`bun run knip` exit 0。元環境の `.git/hooks/commit-msg` はプラットフォームの trailer フックで、上書きも自動統合もしない。PR CI は push 後に確認。
+
+- 反復 4（PR CI）: `e162a0b` の PR #5 run `44967854460` は Bun 全ゲート（hook の実 Git commit テスト含む）/ Knip / actionlint・zizmor / gitleaks、dependency-review すべて PASS。固有 `.git/hooks/commit-msg` は追跡対象外で、手動統合しない限り**このサンドボックス自身の commit では新しい hook は起動しない**。実装の有効性はテスト用 Git repository で直接検証済み。

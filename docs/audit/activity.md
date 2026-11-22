@@ -51,3 +51,4 @@
 | 2026-10-25 | TOOLING-1〜3 の計画と初回実装。actionlint / zizmor の CI ゲート、Knip と OSV、読取専用 Git/PR レポートを追加。初回 zizmor 診断に従い Actions の SHA 固定と最小権限を修正 | Bun 7 ゲート・48 pass / 2 skip / 716 assertions PASS。Knip と zizmor 正常 exit 0・負例は非 0。actionlint バイナリは取得時 EOF、OSV DB と PR CI は未検証 |
 | 2026-10-25 | TOOLING-1・3 の CI / 実 API を確認。TOOLING-2 の OSV 定期/手動スキャンは既定ブランチ未反映のため実環境検証待ち | `ee2df51`。PR #5 run `44930666010` と push run `44930660916` で Bun / Knip / actionlint / zizmor / gitleaks、dependency-review PASS。PR #5 の読み取り専用 API レポート pass。OSV 手動 dispatch HTTP 404 |
 | 2026-10-25 | COMMITGATE-1: Conventional Commits parser を commit-msg hook に接続し、shell 正規表現を置換。既存言語ゲートと固有 trailer フックは保持 | 一時 Git commit で不正形式・禁止文字を拒否し正常形式を許可。Bun 7 ゲート・51 pass / 2 skip / 746 assertions と Knip PASS。PR CI 待ち |
+| 2026-10-25 | COMMITGATE-1 の PR #5 CI を確認し完了。固有 Git trailer フックは上書きせず、利用者が必要時に手動統合 | `e162a0b` の PR CI run `44967854460` で Bun 全ゲート・Knip・actionlint/zizmor・gitleaks・dependency-review PASS |

@@ -31,7 +31,7 @@
 | TOOLING-1 | 完了 | actionlint / zizmor の正常・負例と CI を確認済み |
 | TOOLING-2 | 実環境検証待ち | OSV workflow は既定ブランチに未反映。手動起動は HTTP 404、反映後に DB 照会と定期実行の成否を確認 |
 | TOOLING-3 | 完了 | ローカル Git・PR 実 API とモックで正常/異常/未確認を確認済み |
-| COMMITGATE-1 | ローカル検証済み | parser を commit-msg に接続し実 Git テストを確認。PR CI とプラットフォーム固有フックの導入は未確認 |
+| COMMITGATE-1 | 完了 | parser を commit-msg に接続し、実 Git テストと PR CI を確認。固有フックとの手動統合は利用者判断 |
 
 ---
 
@@ -161,7 +161,7 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| COMMITGATE-1 | parser を commit-msg hook の実ゲートに接続 | ローカル検証済み | 85% | TOOLING-3 | 形式/言語ゲート、正常・異常・ファイル不在のテスト、実 `git commit` と PR CI | 一時 Git repo で拒否と許可を実測。7 ゲート 51 pass / 2 skip / 746 assertions・Knip PASS。PR CI 待ち。現サンドボックスの既存 trailer hook は未上書き |
+| COMMITGATE-1 | parser を commit-msg hook の実ゲートに接続 | 完了 | 100% | TOOLING-3 | 形式/言語ゲート、正常・異常・ファイル不在のテスト、実 `git commit` と PR CI | `e162a0b`。一時 Git repo の実 commit で拒否/許可を実測。7 ゲート 51 pass / 2 skip / 746 assertions・Knip PASS。PR #5 run `44967854460` で全チェック PASS。固有 trailer hook は未上書き |
 
 ---
 
