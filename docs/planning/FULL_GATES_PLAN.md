@@ -34,3 +34,5 @@
 - PR CI の OSV・ネイティブ実行と既定ブランチでの定期/手動スキャンは未検証。結果を得た時点で追記する。
 
 - 初回 push `7c50154` の CI は起動前に失敗。公式の reusable workflow は `upload-sarif: false` でもネストされた job が `security-events: write` を要求し、呼び元の `contents: read` / `actions: read` では GitHub が拒否。権限を拡大せず、同じ v2.7.0 の scanner action を読取専用 job で直接実行する方式へ変更。次の CI で実動を確認する（無条件の成功扱いはしない）。
+
+- 再実行 `4737e30` の PR CI run `44969429250`: OSV bun.lock full scan、Bun 全ゲート・Knip・actionlint/zizmor・gitleaks・dependency-review はすべて PASS。Go/Cargo 必須チェックも成功。Python の skip も排除するため CI で `python3 --version` を明示確認する。既存 setup-node v4 の Node.js 20 非推奨警告は公式 v5 の SHA 固定版へ更新する。

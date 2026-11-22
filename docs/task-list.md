@@ -33,7 +33,7 @@
 | TOOLING-3 | 完了 | ローカル Git・PR 実 API とモックで正常/異常/未確認を確認済み |
 | COMMITGATE-1 | 完了 | parser を commit-msg に接続し、実 Git テストと PR CI を確認 |
 | HOOKAUTO-1 | 完了 | frozen install で自動有効化、既存フック保持、実 commit と PR CI を確認 |
-| FULLGATE-1 | 実装中 | CI Go/Rust の skip 0 と OSV 実スキャンを確認。ローカル apt は配布元接続失敗 |
+| FULLGATE-1 | 実環境検証待ち | PR CI の Go/Rust 必須検証と OSV 全走査は PASS。ローカル2件はツール不在でskip、OSV 定期/手動は既定ブランチ未反映 |
 
 ---
 
@@ -172,7 +172,7 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| FULLGATE-1 | Go/Rust を CI で必須化し、OSV で `bun.lock` を PR 全走査する | 実装中 | 55% | TOOLING-2 | CI skip 0、OSV 実スキャン、全チェック成功。ローカルと定期実行の制約は正直に記録 | ローカル 54 pass / 2 skip。`CI_REQUIRE_NATIVE=1` で欠損ツール 2 fail / skip 0。apt 配布元の接続失敗で Go/Rust の導入不可。PR 実走査待ち |
+| FULLGATE-1 | Go/Rust を CI で必須化し、OSV で `bun.lock` を PR 全走査する | 実環境検証待ち | 80% | TOOLING-2 | CI skip 0、OSV 実スキャン、全チェック成功。ローカルと定期実行の制約は正直に記録 | ローカル 54 pass / 2 skip。`CI_REQUIRE_NATIVE=1` で欠損ツール 2 fail / skip 0。apt 配布元の接続失敗で Go/Rust の導入不可。PR CI `4737e30` の OSV 実走査 PASS。ローカル2件はツール不在でskip、週次/手動は未検証 |
 
 ---
 
