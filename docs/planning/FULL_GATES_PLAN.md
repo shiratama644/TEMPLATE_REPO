@@ -32,3 +32,5 @@
 - ローカル基準: Bun 7ゲート exit 0、54 pass / 2 skip / 765 assertions、Knip exit 0。CI 強制モードの負例は Go/Cargo 不在で 2 fail、skip 0（exit 1）。
 - 個別承認に基づく Debian `apt-get update` はネットワーク制限で3つの Debian 配布元すべてに接続失敗（apt 自体は警告のみで exit 0）。`golang-go` と `rustc cargo` の install は package index 不在でいずれも exit 100。**OS パッケージは導入されていない**。
 - PR CI の OSV・ネイティブ実行と既定ブランチでの定期/手動スキャンは未検証。結果を得た時点で追記する。
+
+- 初回 push `7c50154` の CI は起動前に失敗。公式の reusable workflow は `upload-sarif: false` でもネストされた job が `security-events: write` を要求し、呼び元の `contents: read` / `actions: read` では GitHub が拒否。権限を拡大せず、同じ v2.7.0 の scanner action を読取専用 job で直接実行する方式へ変更。次の CI で実動を確認する（無条件の成功扱いはしない）。

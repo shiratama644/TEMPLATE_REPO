@@ -91,12 +91,16 @@ jobs:
           grep -q 'template-injection' /tmp/zizmor-negative.log || { cat /tmp/zizmor-negative.log; exit 1; }
   osv-lockfile:
     name: OSV bun.lock full scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
-      actions: read
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
-    with:
-      scan-args: |-
-        --lockfile=bun.lock
-      upload-sarif: false
-      fail-on-vuln: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Scan bun.lock with OSV-Scanner v2.7.0
+        uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+        with:
+          scan-args: |-
+            --lockfile=bun.lock
