@@ -37,7 +37,7 @@
 | HOOKAUTO-1 | 完了 | frozen install で自動有効化、既存フック保持、実 commit と PR CI を確認 |
 | FULLGATE-1 | 実環境検証待ち | PR CI のネイティブ必須検証と OSV 全走査は PASS。ユーザーはPRをマージせず、ローカルGo/Rustは別環境で検証する方針。週次/手動OSVは未確認 |
 | BUGLOOP-1 | 完了 | 4反復・PR判定の誤PASS/誤unknown修正・skill/rule反映。ローカル7ゲート/Knip、PR全5チェック PASS。2 skip は未検証のまま |
-| PUBLICPREP-1 | CI 確認待ち | 作業ログと一時ファイルを削除し、配布用参照を整えた。ローカル7ゲート・Knip PASS、PR CI を確認する。PR はマージしない |
+| PUBLICPREP-1 | 完了（PR未マージ） | 作業ログと一時ファイルを削除、配布用参照を整備。ローカル7ゲート・Knip、PR全5チェック PASS。main は未反映 |
 
 ---
 
@@ -192,7 +192,7 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| PUBLICPREP-1 | 個別の作業ログと一時ファイルを除外し、公開用ツリーの整合性を確認する | CI 確認待ち | 85% | BUGLOOP-1 | ログ削除、将来のログ除外、リンク・全ゲート・Knip・PR CI を確認。PR 未マージ | 17 文書 + .gitkeep 削除、/tmp の作業ファイル19件削除。ローカル7ゲート 59 pass / 2 skip / 780 assertions、Knip・diff check PASS。PR CI 待ち |
+| PUBLICPREP-1 | 個別の作業ログと一時ファイルを除外し、公開用ツリーの整合性を確認する | 完了（PR未マージ） | 100% | BUGLOOP-1 | ログ削除、将来のログ除外、リンク・全ゲート・Knip・PR CI を確認。PR 未マージ | 17 文書 + .gitkeep 削除、/tmp の作業ファイル19件削除。ローカル7ゲート 59 pass / 2 skip / 780 assertions、Knip・diff check PASS。PR #5 `51b8829` CI 45045990609 + Dependency Review 45045990341 全5チェック PASS。PR は未マージ、main のテンプレートには未反映 |
 
 ---
 

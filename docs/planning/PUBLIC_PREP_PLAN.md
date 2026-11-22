@@ -23,7 +23,7 @@ PR のマージ、GitHub Release、別ブランチへの変更、Git 履歴の�
 - [x] 現行ツリーに個別の作業ログが無く、将来のログも `.gitignore` で除外される。
 - [x] 現行手順がログの新規作成を要求せず、削除されたログへの Markdown リンクがない。
 - [x] GitHub テンプレートの使い方と未マージ時の制約を README に記載。
-- [ ] `bun run check`・`bun run knip`・`git diff --check`、PR CI と差分レビューを確認。
+- [x] `bun run check`・`bun run knip`・`git diff --check`、PR CI と差分レビューを確認。
 
 ## 6. テスト方法
 
@@ -50,4 +50,4 @@ PR のマージ、GitHub Release、別ブランチへの変更、Git 履歴の�
 
 ## 10. 実績
 
-`bun run check`: ローカル 7 ゲート、59 pass / 2 skip / 780 assertions。`bun run knip` と `git diff --check`: exit 0。GitHub は public / template、PR #5 は OPEN。push 後の CI は別途追記。
+`bun run check`: ローカル 7 ゲート、59 pass / 2 skip / 780 assertions。`bun run knip` と `git diff --check`: exit 0。GitHub は public / template、PR #5 は OPEN。PR #5 の `51b8829` で CI run `45045990609`（OSV 全走査・actionlint/zizmor・Bun 全ゲート + Knip・gitleaks）と Dependency Review `45045990341` は全5チェック PASS。PR は OPEN・未マージであり、main から作る GitHub テンプレートには本変更が含まれない。

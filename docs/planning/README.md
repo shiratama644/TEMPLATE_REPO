@@ -35,7 +35,7 @@
 | [`COMMIT_GATE_PLAN.md`](./COMMIT_GATE_PLAN.md) | COMMITGATE-1 | 完了 | commit-msg による Conventional Commits 形式検証 |
 | [`FULL_GATES_PLAN.md`](./FULL_GATES_PLAN.md) | FULLGATE-1 | 実環境検証待ち | Go/Rust のスキップ禁止と OSV full scan の実測 |
 | [`BUG_LOOP_PLAN.md`](./BUG_LOOP_PLAN.md) | BUGLOOP-1 | 完了 | 有界なバグ監査と実測した知見の skill/rule 反映 |
-| [`PUBLIC_PREP_PLAN.md`](./PUBLIC_PREP_PLAN.md) | PUBLICPREP-1 | CI 確認待ち | 公開用作業ログの削除・参照整理と PR 検証 |
+| [`PUBLIC_PREP_PLAN.md`](./PUBLIC_PREP_PLAN.md) | PUBLICPREP-1 | 完了（PR未マージ） | 公開用作業ログの削除・参照整理と PR 検証 |
 | `INIT_STATE.md` | — | 実行時に作成 | 初期設定の作業記憶（スロット状態・予算）。承認前に書いてよい唯一のファイル |
 | `INIT_PLAN.md` | — | 実行時に作成 | 承認済みの初期設定計画。書式は [`project-init`](../../.agent/skills/project-init/SKILL.md)。テンプレート本体には置かない |
 
