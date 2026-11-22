@@ -4,8 +4,9 @@
 !.env.example
 !.env.template
 
-# Logs / temp（リポジトリ直下のみ。.agent/logs/ は実行記録として追跡する）
+# Logs / temp（作業用ログは Git に含めない）
 *.log
+.agent/logs/
 /logs/
 /tmp/
 /temp/

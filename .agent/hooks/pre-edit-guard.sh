@@ -3,7 +3,6 @@
 #
 # ブロック対象:
 #   .git/ 以下、および生成物ディレクトリ（node_modules/, dist/, build/, coverage/, target/, out/, .venv/, __pycache__/）
-#   .agent/logs/ の既存ファイルの直接編集（追加は log-task.md 経由）
 #
 # 出力と終了コード（Claude Code Hooks reference 準拠）:
 #   - 許可: 無出力・exit 0

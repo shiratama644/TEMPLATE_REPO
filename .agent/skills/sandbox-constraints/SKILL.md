@@ -23,7 +23,7 @@ description: Sandbox / ブラウザ・ネットワーク / GitHub App の恒常�
 
 ### ネットワーク依存の処理
 
-- Bun で GitHub API の TLS が `UNABLE_TO_VERIFY_LEAF_SIGNATURE` になり、Octokit の PR 参照が 500/unknown になる環境では、証明書検証を無効化せず `NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt` を設定して再実測する。`gh api` が成功しても Bun の信頼ストアが同じとは限らない（`.agent/logs/2026-10-25_bug-audit-loop.md`）。
+- Bun で GitHub API の TLS が `UNABLE_TO_VERIFY_LEAF_SIGNATURE` になり、Octokit の PR 参照が 500/unknown になる環境では、証明書検証を無効化せず `NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt` を設定して再実測する。`gh api` が成功しても Bun の信頼ストアが同じとは限らない（PR レポートの実 API 再検証で確認）。
 
 - 外部に依存しない部分（変換、入力の整形、純粋関数）は、ネットワークなしで単体テストする。
 - 外部呼び出しの戻り値による分岐はモックで確かめる。実結合は「実環境検証待ち」としてタスクを分離する。

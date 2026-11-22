@@ -41,4 +41,4 @@ paths:
 - `docs/task-list.md` のタスク ID の再利用
 - `AGENTS.md` の汎用節（§1〜§5）の勝手な削除・大幅な書き換え（プロジェクト固有は §6 へ）
 - 完了したタスクの計画書・記録の削除（履歴として残す）
-- 過去の ADR・`activity.md`・`.agent/logs/` の書き換え（追記のみ）
+- 過去の ADR・`activity.md` の書き換え（追記のみ）

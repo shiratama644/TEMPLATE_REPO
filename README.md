@@ -29,6 +29,12 @@ Agent の作業規約・記憶・進捗を備えた **Bun ベースのプロジ�
 
 このテンプレートが `CLAUDE.md` → `AGENTS.md`、`.claude/` → `.agent/` の **symlink** を置くのはそのためです。内容を複製すると必ずずれます。予算（bytes・行数・字数）と段階開示の詳しい考え方は [`agents-md-authoring`](.agent/skills/agents-md-authoring/SKILL.md) と [`context-budget`](.agent/skills/context-budget/SKILL.md) にあります。
 
+## GitHub テンプレートとして使う
+
+GitHub の公開リポジトリで **Use this template** → **Create a new repository** を選び、自分のリポジトリを作成してください。続いて Bun 1.4.4 以降を導入し、下のコマンドで依存を固定して検査・初期設定します。`.agent/` に個別の作業ログやローカルの秘密情報は含めません。新しいリポジトリで初期設定する際は `project-init` を参照してください。
+
+このリポジトリは GitHub テンプレートで、npm パッケージではありません（`package.json` は `private: true`）。公開ブランチにまだ反映されていない変更は、GitHub のテンプレート作成ボタンには含まれません。
+
 ## 使い方
 
 ```bash

@@ -93,7 +93,7 @@
 | [using-git-worktrees](./using-git-worktrees/SKILL.md) | 作業を隔離した git worktree で行い、本線を汚さない | 共通 | superpowers |
 | [finishing-a-development-branch](./finishing-a-development-branch/SKILL.md) | 作業ブランチを、マージ・PR・保留・破棄のいずれかで締める | 共通 | superpowers |
 | [test-driven-development](./test-driven-development/SKILL.md) | 失敗するテストを先に書き、最小の実装で通してから整える | ソフトウェア | superpowers |
-| [bug-audit-loop](./bug-audit-loop/SKILL.md) | 範囲と停止条件を定め、負例・全ゲートで反復監査する | ソフトウェア | 自作（過去ログ） |
+| [bug-audit-loop](./bug-audit-loop/SKILL.md) | 範囲と停止条件を定め、負例・全ゲートで反復監査する | ソフトウェア | 自作（テスト・計画） |
 | [systematic-debugging](./systematic-debugging/SKILL.md) | 原因を仮説と検証で絞り込み、推測での修正を避ける | 共通 | superpowers |
 | [verification-before-completion](./verification-before-completion/SKILL.md) | 完了を宣言する前に `bash` で検証する | 共通 | superpowers |
 | [requesting-code-review](./requesting-code-review/SKILL.md) | 差分をレビューできる形にまとめ、観点を明示してレビューを依頼する | 共通 | superpowers |

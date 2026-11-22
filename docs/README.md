@@ -34,7 +34,8 @@ docs/
 │   ├── TOOLING_PLAN.md 品質・Git レポートのツール統合（TOOLING-1〜3）
 │   ├── COMMIT_GATE_PLAN.md parser によるコミット形式ゲート（COMMITGATE-1）
 │   ├── FULL_GATES_PLAN.md ネイティブ/OSV の全ゲート実測（FULLGATE-1）
-│   └── BUG_LOOP_PLAN.md 反復的バグ監査と知見の再利用（BUGLOOP-1）
+│   ├── BUG_LOOP_PLAN.md 反復的バグ監査と知見の再利用（BUGLOOP-1）
+│   └── PUBLIC_PREP_PLAN.md 公開テンプレートのログ整理（PUBLICPREP-1）
 ├── research/          調査結果
 │   └── README.md      調査の一覧と書き方
 ├── audit/             差分・問題の監査
@@ -64,5 +65,5 @@ docs/
 - **進捗の正本は `task-list.md`**。チャットや他の文書と矛盾したら `task-list.md` を正とする。
 - 文書を追加・削除・移動したら、**この目次を同じ変更の中で更新する**。
 - 判断を変える場合は新しい ADR を追加する（過去の ADR は書き換えない）。新規は `adr/NNNN-title.md` に書く。
-- 作業の事実は `audit/activity.md` と `.agent/logs/` に追記する（書き換えない）。
+- 進捗と検証証拠は `task-list.md`、公開用の判断は ADR に記録する。過去の個別作業ログはテンプレートに同梱しない。
 - ファイル名は短く正確に。ハイフンは最大 1 つ。

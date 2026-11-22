@@ -10,7 +10,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 - **検証の正本は `bun run check`**（`make check` は互換入口）。CI も同じコマンドを使う。
 - `bun install --frozen-lockfile` で `bun.lock` の版を固定し、Biome・TypeScript・iconv-lite・agents-md-lint を Bun で管理する。
 - プロジェクト固有の検証を増やす際は `AGENTS.md §6.1` に記録し、`scripts/check.ts` のゲートへ追加してから CI を確認する。
-- **負のテスト**で違反時に止まり、正常系で通ることを確かめる。正常系は exit 0 **だけでなく有出力**と実際の入口（npm bin symlink など）を確認する（出典: `.agent/logs/2026-11-07_fix-agents-lint.md`）。失敗を SKIP で恒常的に回避しない。
+- **負のテスト**で違反時に止まり、正常系で通ることを確かめる。正常系は exit 0 **だけでなく有出力**と実際の入口（npm bin symlink など）を確認する（`tests/agents.test.ts` の再現テストを参照）。失敗を SKIP で恒常的に回避しない。
 - `Git/PR` の結果は既知の失敗 > 未完了/skip/未取得 > 成功の順に分類する。失敗と保留が混在しても FAIL を隠さず、check runs と commit status の両方を確認する。
 
 ## 検証の順序

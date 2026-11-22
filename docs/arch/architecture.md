@@ -36,7 +36,6 @@ TEMPLATE_REPO/
 │   ├── commands/          # 単一ファイルのプロンプト
 │   ├── output-styles/     # 出力スタイル
 │   ├── workflows/         # 複数エージェントをまとめる手順
-│   └── logs/              # タスク実行ログ（追加のみ）
 └── docs/                  # ドキュメント（目次: docs/README.md）
     ├── task-list.md       # 進捗の正本
     ├── arch/              # 仕様（本ディレクトリ）
@@ -58,7 +57,6 @@ TEMPLATE_REPO/
 | `docs/task-list.md` | 進捗と証拠の正本 | 高（タスクごと） |
 | `docs/arch/` | 仕様・構成・判断の記録 | 中 |
 | `docs/planning/` | 個別タスクの計画 | 高（タスクごと） |
-| `.agent/logs/` | 実行の事実の記録。書き換えない | 追加のみ |
 
 同じ内容を複数箇所に書かない。作業手順は AGENTS.md、詳細ルールは rules/、分野の知識は skills/、進捗は task-list.md を正とする。
 
@@ -68,7 +66,7 @@ TEMPLATE_REPO/
 2. **作業規約の確認**: `AGENTS.md` を読む。プロジェクト固有の検証手段は §6.1 を参照。
 3. **知識の選択**: `.agent/skills/index.md` の「読み方ガイド」から、必要なスキルだけを読む（全件は読まない）。テンプレートのプレースホルダが残っている新規リポジトリでは、先に `project-init` を読む（承認前にファイルを書き換えない）。
 4. **編集時**: `PreToolUse` で編集禁止領域を確認し（`pre-edit-guard.sh`）、`PostToolUse` で機密ファイル混入やドキュメント目次の更新漏れを確認する（`post-edit-verify.sh`）。
-5. **完了時**: `hooks/verify-commit.md` に従い、目的の完了条件と検証結果を確認する。証拠を `task-list.md` に記録し、追加で判断した作業・未解決・未実施検証を `.agent/logs/` と報告に残す（`hooks/log-task.md`）。
+5. **完了時**: `hooks/verify-commit.md` に従い、目的の完了条件と検証結果を確認する。証拠・未解決・未実施検証を `task-list.md` に記録し、報告にも残す（`hooks/log-task.md`）。
 
 ## 4. 変更の原則
 

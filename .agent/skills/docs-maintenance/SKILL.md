@@ -5,7 +5,7 @@ description: Use when docs change, before commit, or when cleaning duplicate doc
 
 # Docs Maintenance — ドキュメント整理とURL検証スキル
 
-> 正本: `AGENTS.md`（読込順序・5点出力・docs-only代替）、`docs/README.md` 索引、`.agent/logs/` 参照
+> 正本: `AGENTS.md`（読込順序・5点出力・docs-only代替）、`docs/README.md` 索引
 
 ## 読込順序（AGENTS.md最優先）
 

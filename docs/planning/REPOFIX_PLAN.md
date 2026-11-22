@@ -165,4 +165,4 @@ ADR 0001 に記録する。要点: GitHub は Mermaid をそのまま描画す�
 | REPOFIX-6 | `194838e` | `git check-ignore` | `.gitignore:14:__pycache__/` に一致。import 後の `git status` は `.gitignore` のみ |
 
 全コミット前に `make check`（pre-commit 全フック）を実行し PASS。記録は `9f51c67`（計画登録）と本計画書の更新コミット。
-実測の詳細は [`.agent/logs/2026-10-25_fix-repo-inconsistencies.md`](../../.agent/logs/2026-10-25_fix-repo-inconsistencies.md)。
+実測の概要は本計画書 §12。個別の作業ログは公開用テンプレートから削除済み。

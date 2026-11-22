@@ -56,4 +56,4 @@ docs/
 - ルール: `.agent/rules/`（トピック別）
 - スキル: `.agent/skills/`（ノウハウ・手順）
 - フック: `.agent/hooks/`（トリガー別の定型手順）
-- ログ: `.agent/logs/`（実行記録、追加のみ）
+- 記録: `docs/task-list.md`（進捗・証拠）と `docs/adr/`（判断）

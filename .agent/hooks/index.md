@@ -28,7 +28,7 @@
 | [pre-edit-guard.sh](./pre-edit-guard.sh) | PreToolUse | 編集禁止領域（.git/, node_modules/, dist/, build/, coverage/ 等の生成物）への変更をブロック（`permissionDecision: deny` の JSON） |
 | [post-edit-verify.sh](./post-edit-verify.sh) | PostToolUse | 機密ファイル混入（`decision: block` の JSON でモデルに返す）・docs/README 目次の事後検証（警告のみ） |
 | [verify-commit.md](./verify-commit.md) | commit直前 | プロジェクト検証 + 目的達成・追加の必要作業・未実施検証の確認 |
-| [log-task.md](./log-task.md) | タスク完了時 | 4 セクションのログ（自分で判断した追加作業・未解決・未実施検証を含む）→ 再利用可能な知見をスキルへ同期 |
+| [log-task.md](./log-task.md) | タスク完了時 | タスクリストに検証・未実施事項を記録 → 再利用可能な知見をスキルへ同期 |
 | [sandbox-recovery.md](./sandbox-recovery.md) | Sandbox再構築検知時 | `git fetch` → `reset --hard FETCH_HEAD`（例外的許可）→ §6.1 の環境セットアップ → 健全性確認 |
 
 ## 運用ルール
@@ -65,7 +65,7 @@
 | `Stop` / `SubagentStop` | `AGENTS.md §5` の停止条件（検証 PASS・working tree clean・push 済み）を機械的に確認してから止める |
 | `PreCompact` / `PostCompact` | 圧縮の前後で正本の所在と未完了タスクを再注入する（長いセッションでの記憶喪失対策） |
 | `InstructionsLoaded` | `AGENTS.md` や `.agent/rules/*.md` が読み込まれた時に検査する |
-| `SessionEnd` | セッション終了時に [`log-task.md`](./log-task.md) の追記を促す |
+| `SessionEnd` | セッション終了時に [`log-task.md`](./log-task.md) によるタスク状態の更新を促す |
 | `PermissionRequest` / `PermissionDenied` | 許可要求の記録・監査（`docs/audit/`） |
 | `TaskCreated` / `TaskCompleted` | タスク管理（`docs/task-list.md`）との同期 |
 | `FileChanged` / `CwdChanged` / `DirectoryAdded` | 作業対象の変化に追従する |
