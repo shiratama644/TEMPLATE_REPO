@@ -18,3 +18,7 @@
 - 新しい利用者指示に従い `bun install` の postinstall で `.githooks` を有効化。既存の Git hooksPath が別にある場合、または引き継げない実行可能フックがある場合は設定を変更せず失敗する。
 - 既存 `.git/hooks/commit-msg` / `pre-commit` は新しいフックの検査成功後に連鎖実行し、ファイル自体は上書きしない。既存 trailer の保持と新形式ゲートの拒否を一時 Git repo で実測。サンドボックスの元の trailer フックも改変なし、frozen install 後 `core.hooksPath=.githooks` を確認。
 - `bun run check` 7 ゲート・54 pass / 2 skip / 765 assertions と Knip PASS。PR CI は push 後に確認。
+
+## HOOKAUTO-1 PR CI（追記）
+
+- `facf9e7` の実 commit は自動有効化された pre-commit 全ゲートと parser の commit-msg を通過し、元の `.git/hooks/commit-msg` の trailer を保持した。PR #5 run `44968756446` と push run `44968750570` で全チェック PASS。

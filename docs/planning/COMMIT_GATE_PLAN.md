@@ -40,3 +40,5 @@
 利用者の新しい指示により §3 の「既存フックがある環境では自動導入を拒む」は本タスクについて改定する。`bun install` の postinstall で `.githooks` を有効化し、既存の commit-msg / pre-commit を**ファイル変更なしで連鎖実行**する。別の `core.hooksPath` または引き継げない実行可能フックがあれば導入前に停止し、既存設定を保持する。Git 管理外では postinstall を省略する。再実行は冪等とし、実 Git repo で古い trailer と新形式ゲートを同時に検証する。
 
 実測: サンドボックスの `bun install --frozen-lockfile` が postinstall を起動し、`core.hooksPath=.githooks` となった。元の `.git/hooks/commit-msg` の内容は不変。別の実行可能フックや既存 hooksPath の負例は変更なしで停止する。一時 Git repo の実 commit で形式違反は履歴増加 0、正常時は既存 trailer と legacy pre-commit を連鎖実行。CI と最終差分は push 後に確認する。
+
+- CI 確認: `facf9e7` の push run `44968750570` と PR #5 run `44968756446` で Bun・Knip・actionlint/zizmor・gitleaks、dependency-review の全チェック PASS。実際の `facf9e7` の commit は有効化された pre-commit / commit-msg を通過し、旧 trailer が残った。

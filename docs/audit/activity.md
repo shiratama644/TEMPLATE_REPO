@@ -53,3 +53,4 @@
 | 2026-10-25 | COMMITGATE-1: Conventional Commits parser を commit-msg hook に接続し、shell 正規表現を置換。既存言語ゲートと固有 trailer フックは保持 | 一時 Git commit で不正形式・禁止文字を拒否し正常形式を許可。Bun 7 ゲート・51 pass / 2 skip / 746 assertions と Knip PASS。PR CI 待ち |
 | 2026-10-25 | COMMITGATE-1 の PR #5 CI を確認し完了。固有 Git trailer フックは上書きせず、利用者が必要時に手動統合 | `e162a0b` の PR CI run `44967854460` で Bun 全ゲート・Knip・actionlint/zizmor・gitleaks・dependency-review PASS |
 | 2026-10-25 | HOOKAUTO-1: Bun install 時に新 Git フックを自動有効化。既存の trailer / pre-commit は上書きせず連鎖実行、別 hooksPath と未知フックは停止 | frozen install で `core.hooksPath=.githooks`。元の `.git/hooks/commit-msg` 不変。一時 Git repo の拒否/許可/連鎖・拒否負例 PASS。CI は push 後に確認 |
+| 2026-10-25 | HOOKAUTO-1 の実際のコミットと PR #5 CI を確認し完了 | `facf9e7` の commit は自動有効化した pre-commit / commit-msg を通り旧 trailer を保持。push run `44968750570` と PR run `44968756446` で全チェック PASS |
