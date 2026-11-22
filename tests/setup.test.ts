@@ -704,3 +704,17 @@ linuxPtyTest("Clack interactive choices reach a dry-run plan without any writes"
   expect(result.output).toContain("セットアップ計画")
   expect(readdirSync(d)).toEqual([])
 })
+
+test("published docs start without the template author's completed tasks or plans", () => {
+  const base = join(import.meta.dir, "../docs")
+  expect(readdirSync(join(base, "planning")).sort()).toEqual(["README.md", "_TEMPLATE.md"])
+  expect(readdirSync(join(base, "adr")).sort()).toEqual(["README.md"])
+  expect(readdirSync(join(base, "audit")).sort()).toEqual(["index.md"])
+  expect(readFileSync(join(base, "task-list.md"), "utf8")).toContain(
+    "現在、登録済みのタスクはありません",
+  )
+  expect(readFileSync(join(base, "task-list.md"), "utf8")).not.toMatch(
+    /PUBLICPREP-1|BUGLOOP-1|PR #5/,
+  )
+  expect(readdirSync(join(base, "arch"))).not.toContain("milestones.md")
+})

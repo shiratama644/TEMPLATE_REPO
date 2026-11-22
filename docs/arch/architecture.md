@@ -35,14 +35,14 @@ TEMPLATE_REPO/
 │   ├── agents/            # サブエージェントの定義
 │   ├── commands/          # 単一ファイルのプロンプト
 │   ├── output-styles/     # 出力スタイル
-│   ├── workflows/         # 複数エージェントをまとめる手順
+│   └── workflows/         # 複数エージェントをまとめる手順
 └── docs/                  # ドキュメント（目次: docs/README.md）
-    ├── task-list.md       # 進捗の正本
+    ├── task-list.md       # 派生プロジェクト用の空の進捗表
     ├── arch/              # 仕様（本ディレクトリ）
-    ├── adr/               # 設計判断の記録（1 判断 1 ファイル）
-    ├── planning/          # 計画書
+    ├── adr/               # 新たに採用した設計判断
+    ├── planning/          # 計画書の書式（過去の開発計画は含めない）
     ├── research/          # 調査
-    ├── audit/             # 監査（差分・問題点の記録）
+    ├── audit/             # 新しい差分・問題の記録
     └── ops/               # 運用手順
 ```
 
@@ -73,5 +73,5 @@ TEMPLATE_REPO/
 - 構成を変えたら、本ファイル・`docs/README.md`・`README.md`・`AGENTS.md §8` を同じ変更で更新する。
 - フックのスクリプトは POSIX `sh` で書き、判定は JSON を stdout へ出して `exit 0` で返す（PreToolUse は `hookSpecificOutput.permissionDecision`、PostToolUse は top-level `decision`）。exit code の意味は公式リファレンスに従い、`.agent/hooks/index.md` に規約を記録する。
 - 環境に依存する設定（OS・ランタイム・外部サービス）はテンプレート本体に入れず、`AGENTS.md §6` に書く。
-- 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない（[`adr/0001-mermaid-source.md`](../adr/0001-mermaid-source.md)）。図の検証は `make mermaid`。
+- 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない。図の検証は `make mermaid`。
 - `scripts/` の検証スクリプトは TypeScript / Bun を前提とする。日本語判定には Bun 管理の `iconv-lite` を用いる。

@@ -446,7 +446,7 @@ flowchart TD
 | 4 | `.agent/rules/project-template.md` | §6 と揃える |
 | 5 | `.agent/skills/project-overview/SKILL.md` | このプロジェクトの全体像 |
 | 6 | `README.md` | 概要・使い方 |
-| 7 | `docs/arch/architecture.md` / `milestones.md` | 最小限 |
+| 7 | `docs/arch/architecture.md` | 最小限 |
 | 8 | `docs/task-list.md` | 承認した最初のタスク |
 | 9 | `docs/README.md` | 目次 |
 | 10 | `package.json` の検証・セットアップ設定 | §6.1 に書いたときだけ |

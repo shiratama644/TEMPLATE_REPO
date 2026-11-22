@@ -195,8 +195,8 @@ const defaultName = (dir: string) => {
   return /^[a-z]/.test(stem) ? stem : "project"
 }
 const suggestions = [
-  "docs/planning/ にあるテンプレート用計画書",
-  "docs/task-list.md のサンプル行",
+  "docs/planning/_TEMPLATE.md を使ったプロジェクトの計画",
+  "docs/task-list.md への最初のタスク登録",
   "使用しない .agent/skills/ と .agent/agents/",
   "README.md のテンプレート説明",
 ]

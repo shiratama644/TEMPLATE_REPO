@@ -1,69 +1,19 @@
 # ドキュメント索引
 
-このフォルダは、プロジェクトの**進捗・仕様・計画・調査・監査・運用**の文書を種類ごとに分けて置く場所です。ルートの [`README.md`](../README.md) からプロジェクトの概要に入れます。
+この `docs/` は派生プロジェクトの仕様・計画・進捗・判断を記録するための初期構成です。テンプレート自体を作ったときのタスクや監査履歴は含みません。概要と使い方は [README.md](../README.md) を参照してください。
 
-## ディレクトリ構成
-
-```
-docs/
-├── README.md          ← 本ファイル（全体の目次）
-├── task-list.md       ★ 進捗管理の唯一の正本（状態・証拠）
-├── arch/              仕様（どう作るか・どういう構成か）
-│   ├── README.md      仕様書の一覧と読み方
-│   ├── product.md     目的・対象・用語
-│   ├── architecture.md ディレクトリ構成・読み込みの流れ
-│   └── milestones.md  段階と完了条件
-├── adr/               個別の ADR（1 判断 1 ファイル。今後の新規判断はここに書く）
-│   ├── README.md      書き方と番号規則
-│   ├── 0001-mermaid-source.md  図の正本は Mermaid ソース（PNG を置かない）
-│   ├── 0002-agents-md-lint.md  指示ファイルの予算検査に npm の linter を採用
-│   ├── 0003-language-gate.md   文書とコミットメッセージは日本語と英語のみ
-│   └── 0004-bun-setup.md      Bun の検証・セットアップと安全境界
-├── planning/          計画書（タスクごとの範囲と完了条件）
-│   ├── README.md      計画書の一覧と作り方
-│   ├── _TEMPLATE.md   計画書の書式
-│   ├── REPOFIX_PLAN.md テンプレートの不整合を直す計画（REPOFIX-1〜6）
-│   ├── AGENTSYNC_PLAN.md 公式仕様と実証研究へ同期する計画（AGENTSYNC-1〜6）
-│   ├── LANGGATE_PLAN.md 日本語・英語のみの言語ゲートと残事項（LANGGATE-1〜4）
-│   ├── BUN_SETUP_PLAN.md Bun 版 CLI と検証基盤への移行（BUNSETUP-1〜4）
-│   ├── BUN_AUDIT_PLAN.md Bun の不具合監査（BUNAUDIT-1）
-│   ├── SETUP_CONFIRM_PLAN.md 対話式セットアップの計画承認（SETUPCONF-1）
-│   ├── SETUP_LIBS_PLAN.md Clack・Zod・fast-check の導入（SETUPLIB-1）
-│   ├── REVIEW_FIX_PLAN.md 構成レビューの指摘修正（REVIEWFIX-1）
-│   ├── PLAN_VERIFY_PLAN.md 計画 JSON と生成物検証（PLANJSON-1・GENVERIFY-1）
-│   ├── TOOLING_PLAN.md 品質・Git レポートのツール統合（TOOLING-1〜3）
-│   ├── COMMIT_GATE_PLAN.md parser によるコミット形式ゲート（COMMITGATE-1）
-│   ├── FULL_GATES_PLAN.md ネイティブ/OSV の全ゲート実測（FULLGATE-1）
-│   ├── BUG_LOOP_PLAN.md 反復的バグ監査と知見の再利用（BUGLOOP-1）
-│   └── PUBLIC_PREP_PLAN.md 公開テンプレートのログ整理（PUBLICPREP-1）
-├── research/          調査結果
-│   └── README.md      調査の一覧と書き方
-├── audit/             差分・問題の監査
-│   ├── index.md       説明
-│   ├── activity.md    作業の時系列の記録（追加のみ）
-│   └── issues-lint.md 発見した問題（agents-md-lint の no-op 不具合とパッチ対応の記録）
-└── ops/               運用手順
-    └── index.md       説明
-```
-
-## 用途別の参照
-
-| 知りたいこと | 見る文書 |
+| 場所 | 内容 |
 |---|---|
-| 今どの作業が進んでいるか | [`task-list.md`](./task-list.md) |
-| テンプレートの目的と使い方 | [`arch/product.md`](./arch/product.md)、[`../README.md`](../README.md) |
-| 構成と Agent の読み込みの流れ | [`arch/architecture.md`](./arch/architecture.md) |
-| なぜこの構成なのか | [`adr/`](./adr/README.md)（個別 ADR） |
-| 次に何をするか・段階の状況 | [`arch/milestones.md`](./arch/milestones.md) |
-| タスクの詳細計画 | [`planning/README.md`](./planning/README.md) |
-| 作業規約・検証手段 | [`../AGENTS.md`](../AGENTS.md) |
-| 新規プロジェクトの初期設定 | [`../.agent/skills/project-init/SKILL.md`](../.agent/skills/project-init/SKILL.md) |
-| Agent の知識・手順 | [`../.agent/skills/index.md`](../.agent/skills/index.md) |
+| [`task-list.md`](./task-list.md) | 空の進捗表。初期設定後にプロジェクトのタスクと証拠を記入 |
+| [`arch/`](./arch/README.md) | テンプレートの目的・構成。派生先の仕様に合わせて更新 |
+| [`adr/`](./adr/README.md) | 新しいプロジェクトの設計判断を番号順に記録 |
+| [`planning/`](./planning/README.md) | 計画書の作り方と [`_TEMPLATE.md`](./planning/_TEMPLATE.md) |
+| [`research/`](./research/README.md) | 調査結果と採否の記録 |
+| [`audit/`](./audit/index.md) | 新たに発見した問題・差分の記録 |
+| [`ops/`](./ops/index.md) | Bun の品質ゲートと運用手順 |
 
-## 運用ルール
+## 利用時の手順
 
-- **進捗の正本は `task-list.md`**。チャットや他の文書と矛盾したら `task-list.md` を正とする。
-- 文書を追加・削除・移動したら、**この目次を同じ変更の中で更新する**。
-- 判断を変える場合は新しい ADR を追加する（過去の ADR は書き換えない）。新規は `adr/NNNN-title.md` に書く。
-- 進捗と検証証拠は `task-list.md`、公開用の判断は ADR に記録する。過去の個別作業ログはテンプレートに同梱しない。
-- ファイル名は短く正確に。ハイフンは最大 1 つ。
+1. [`project-init`](../.agent/skills/project-init/SKILL.md) で目的と変更範囲を確認し、計画の承認後に文書を派生プロジェクト向けに書き換えます。
+2. `task-list.md` に新しいタスクを登録します。テンプレートの過去のタスク ID を継承する必要はありません。
+3. 新しい文書を追加・削除・移動したら、この索引を同じ変更で更新します。未確認の検証は PASS とせず、task-list の証拠に理由を残します。
