@@ -36,3 +36,6 @@
 - 初回 push `7c50154` の CI は起動前に失敗。公式の reusable workflow は `upload-sarif: false` でもネストされた job が `security-events: write` を要求し、呼び元の `contents: read` / `actions: read` では GitHub が拒否。権限を拡大せず、同じ v2.7.0 の scanner action を読取専用 job で直接実行する方式へ変更。次の CI で実動を確認する（無条件の成功扱いはしない）。
 
 - 再実行 `4737e30` の PR CI run `44969429250`: OSV bun.lock full scan、Bun 全ゲート・Knip・actionlint/zizmor・gitleaks・dependency-review はすべて PASS。Go/Cargo 必須チェックも成功。Python の skip も排除するため CI で `python3 --version` を明示確認する。既存 setup-node v4 の Node.js 20 非推奨警告は公式 v5 の SHA 固定版へ更新する。
+
+- `99e8cac` の PR CI run `44969604062`: OSV bun.lock full scan、Go/Cargo/Python 必須チェック、Bun 7 ゲートと Knip、actionlint/zizmor、gitleaks、dependency-review がすべて PASS。テストに残る Linux の条件付き skip を排除するため、PTTY 用の `script` と `stty` も CI で事前確認する。
+- 利用者の後続選択: PR #5 は今回マージしない。週次/手動 OSV workflow は既定ブランチ未登録のまま**実行不能・未検証**。ローカルの Go/Rust は第三者 npm 配布物を使わず、利用可能な別環境で後日実機検証する。従ってこのサンドボックスの 2 skip を 0 と表示したり FULLGATE-1 を「完了」としたりしない。

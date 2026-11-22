@@ -29,6 +29,8 @@ jobs:
           go version
           cargo --version
           python3 --version
+          script --version
+          stty --version
       - run: bun run check
         env:
           CI_REQUIRE_NATIVE: "1"

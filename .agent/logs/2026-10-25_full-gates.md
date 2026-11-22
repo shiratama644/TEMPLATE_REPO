@@ -16,3 +16,8 @@
 ## 残事項
 
 ローカル Go/Rust の実ビルドはこの環境では不可。CI の正常をローカル実測と混同しない。OSV の週次/手動 workflow は別途 PR のマージ許可と既定ブランチへの反映後に検証する。
+
+## 後続判断・CI（追記）
+
+- `99e8cac` の PR #5 run `44969604062` で OSV full scan と Go/Rust/Python 必須チェックを含む全5チェックが PASS。条件付き PTTY テストにも未確認の skip を残さないよう `script --version`・`stty --version` を CI 必須チェックに追加。
+- ユーザーは PR #5 を今回はマージしないと回答。週次/手動 OSV workflow は既定ブランチ未登録のため未検証。ローカル Go/Rust は別環境で検証する方針を選択（第三者 npm 配布物は使わない）。現サンドボックスの 54 pass / 2 skip は 56 pass と表記しない。

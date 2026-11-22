@@ -33,7 +33,7 @@
 | TOOLING-3 | 完了 | ローカル Git・PR 実 API とモックで正常/異常/未確認を確認済み |
 | COMMITGATE-1 | 完了 | parser を commit-msg に接続し、実 Git テストと PR CI を確認 |
 | HOOKAUTO-1 | 完了 | frozen install で自動有効化、既存フック保持、実 commit と PR CI を確認 |
-| FULLGATE-1 | 実環境検証待ち | PR CI の Go/Rust 必須検証と OSV 全走査は PASS。ローカル2件はツール不在でskip、OSV 定期/手動は既定ブランチ未反映 |
+| FULLGATE-1 | 実環境検証待ち | PR CI のネイティブ必須検証と OSV 全走査は PASS。ユーザーはPRをマージせず、ローカルGo/Rustは別環境で検証する方針。週次/手動OSVは未確認 |
 
 ---
 
