@@ -39,3 +39,4 @@
 
 - `99e8cac` の PR CI run `44969604062`: OSV bun.lock full scan、Go/Cargo/Python 必須チェック、Bun 7 ゲートと Knip、actionlint/zizmor、gitleaks、dependency-review がすべて PASS。テストに残る Linux の条件付き skip を排除するため、PTTY 用の `script` と `stty` も CI で事前確認する。
 - 利用者の後続選択: PR #5 は今回マージしない。週次/手動 OSV workflow は既定ブランチ未登録のまま**実行不能・未検証**。ローカルの Go/Rust は第三者 npm 配布物を使わず、利用可能な別環境で後日実機検証する。従ってこのサンドボックスの 2 skip を 0 と表示したり FULLGATE-1 を「完了」としたりしない。
+- `c5b9d4e` の PR #5 run `44978609305` で `script` / `stty` を含む CI 前提チェック、Bun、Knip、OSV、actionlint/zizmor、gitleaks、dependency-review の5チェックが PASS。ログの生データ取得はサンドボックスから Actions の配布ホストへ到達できず未実施。CI に明示した Go/Cargo/Python/script/stty の前提とテスト条件から、該当の条件付きスキップは生じない設計を確認。**ローカルの 2 skip と既定ブランチの週次/手動 OSV は未解消**であり、FULLGATE-1 は実環境検証待ち。

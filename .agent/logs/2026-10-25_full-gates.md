@@ -21,3 +21,8 @@
 
 - `99e8cac` の PR #5 run `44969604062` で OSV full scan と Go/Rust/Python 必須チェックを含む全5チェックが PASS。条件付き PTTY テストにも未確認の skip を残さないよう `script --version`・`stty --version` を CI 必須チェックに追加。
 - ユーザーは PR #5 を今回はマージしないと回答。週次/手動 OSV workflow は既定ブランチ未登録のため未検証。ローカル Go/Rust は別環境で検証する方針を選択（第三者 npm 配布物は使わない）。現サンドボックスの 54 pass / 2 skip は 56 pass と表記しない。
+
+## 最終 PR CI（追記）
+
+- `c5b9d4e` PR #5 run `44978609305` の全5チェック PASS。CI の Go/Cargo/Python/script/stty 前提チェックは成功した。生ログの取得先はこのサンドボックスの通信制限外のためテスト数を直接採取できず、CI 条件とジョブの成功から条件付き skip を防ぐ設計の動作を確認。
+- PR は利用者の指示で未マージ。週次/手動 OSV とローカル Go/Rust は引き続き未検証。FULLGATE-1 を「完了」にはしない。
