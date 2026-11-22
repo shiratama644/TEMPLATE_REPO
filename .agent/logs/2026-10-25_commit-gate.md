@@ -12,3 +12,9 @@
 ## PR CI（追記）
 
 - `e162a0b` の PR #5 run `44967854460` は Bun 全ゲート（実 Git commit テスト含む）、Knip、actionlint/zizmor、gitleaks、dependency-review PASS。既存 trailer フックは上書きしていないため、このサンドボックスで新規 tracked hook を自動実行するには別途手動統合が必要。
+
+## HOOKAUTO-1: 自動有効化（追記）
+
+- 新しい利用者指示に従い `bun install` の postinstall で `.githooks` を有効化。既存の Git hooksPath が別にある場合、または引き継げない実行可能フックがある場合は設定を変更せず失敗する。
+- 既存 `.git/hooks/commit-msg` / `pre-commit` は新しいフックの検査成功後に連鎖実行し、ファイル自体は上書きしない。既存 trailer の保持と新形式ゲートの拒否を一時 Git repo で実測。サンドボックスの元の trailer フックも改変なし、frozen install 後 `core.hooksPath=.githooks` を確認。
+- `bun run check` 7 ゲート・54 pass / 2 skip / 765 assertions と Knip PASS。PR CI は push 後に確認。

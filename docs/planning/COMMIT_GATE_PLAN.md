@@ -34,3 +34,9 @@
 - ローカル反復 3: `bun run check` 7 ゲート・51 pass / 2 skip / 746 assertions、`bun run knip` exit 0。元環境の `.git/hooks/commit-msg` はプラットフォームの trailer フックで、上書きも自動統合もしない。PR CI は push 後に確認。
 
 - 反復 4（PR CI）: `e162a0b` の PR #5 run `44967854460` は Bun 全ゲート（hook の実 Git commit テスト含む）/ Knip / actionlint・zizmor / gitleaks、dependency-review すべて PASS。固有 `.git/hooks/commit-msg` は追跡対象外で、手動統合しない限り**このサンドボックス自身の commit では新しい hook は起動しない**。実装の有効性はテスト用 Git repository で直接検証済み。
+
+## 7. 後続変更: HOOKAUTO-1（自動有効化）
+
+利用者の新しい指示により §3 の「既存フックがある環境では自動導入を拒む」は本タスクについて改定する。`bun install` の postinstall で `.githooks` を有効化し、既存の commit-msg / pre-commit を**ファイル変更なしで連鎖実行**する。別の `core.hooksPath` または引き継げない実行可能フックがあれば導入前に停止し、既存設定を保持する。Git 管理外では postinstall を省略する。再実行は冪等とし、実 Git repo で古い trailer と新形式ゲートを同時に検証する。
+
+実測: サンドボックスの `bun install --frozen-lockfile` が postinstall を起動し、`core.hooksPath=.githooks` となった。元の `.git/hooks/commit-msg` の内容は不変。別の実行可能フックや既存 hooksPath の負例は変更なしで停止する。一時 Git repo の実 commit で形式違反は履歴増加 0、正常時は既存 trailer と legacy pre-commit を連鎖実行。CI と最終差分は push 後に確認する。

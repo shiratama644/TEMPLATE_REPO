@@ -11,7 +11,7 @@ Agent の作業規約・記憶・進捗を備えた **Bun ベースのプロジ�
 | `package.json` / `bun.lock` | Bun の依存とコマンド（`bun run setup`、`bun run verify:generated`、`bun run check`） |
 | `scripts/setup.ts` / `scripts/setup_manifest.ts` / `scripts/setup_schema.ts` | Clack 対話 UI、Zod 設定検証、プリセット・機能の選択、OS 導入案内 |
 | `scripts/check_*.ts` | 文書リンク・Mermaid・日本語/英語・AGENTS.md の品質チェック |
-| `.githooks/` | Bun の検証・コミットメッセージの検査。既存フックがあるときは導入を拒否 |
+| `.githooks/` | Bun の検証・コミットメッセージの検査。対応する既存フックは維持して連鎖実行 |
 | `.github/workflows/` | Bun の CI と gitleaks、依存差分レビュー、リリース |
 | `Makefile` | `make check` 等の Bun コマンドへの互換入口 |
 
@@ -62,7 +62,7 @@ bun run check                                 # CI と同じ入口（型・単�
 
 選択した言語やテンプレートに使えない機能は、明示指定時はエラーで停止し、プリセット由来なら除外した機能を表示します。`library` プリセットは型宣言・publint・size-limit を使える生成物を作りますが、公開やリリースは自動では行いません。Husky を選択した場合も Git フックは自動登録せず、生成先で既存フックを確認してから `bun run husky:install` を明示実行します（既存フックがあれば停止）。Vitest と Playwright の初期テストは生成物の動作確認用のスモークテストです。本格的なブラウザ操作やアプリ固有のテストは派生プロジェクト側で追加してください。
 
-Git フックを導入する場合は `bun run hooks:install`（既存の commit-msg / pre-commit フックがある場合は上書きせず停止）。`make setup` も同じ操作です。このリポジトリの `.githooks/commit-msg` は `conventional-commits-parser` で形式を検証し、既存の日本語/英語ゲートも実行します。`bun run commit:check <メッセージファイル>` で形式だけを手動確認できます。こちらの作業環境には既存の commit-msg フックがあるため、導入は行っていません。既存フックは自動上書きせず、利用者が手動で統合してください。
+`bun install` の postinstall で、このリポジトリの `.githooks` を自動有効化します（再実行は冪等）。既存の `.git/hooks/commit-msg` と `pre-commit` はファイルを上書きせず、検査後に連鎖実行します。別の `core.hooksPath` や引き継げない種類の実行可能フックがある場合は停止して理由を表示します。Git 管理外のアーカイブでは導入を省略します。再実行は `bun run hooks:install`。形式だけを調べる場合は `bun run commit:check <メッセージファイル>`。派生プロジェクトの Husky は別の設定で、こちらの自動導入の対象ではありません。
 
 ## 運用の考え方
 

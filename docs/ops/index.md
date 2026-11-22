@@ -23,4 +23,4 @@
 
 `.githooks/commit-msg` は日本語/英語ゲートの後で `conventional-commits-parser` による形式検証を実行し、失敗時は commit を拒否します。見出しは `feat` / `fix` / `docs` / `test` / `refactor` / `perf` / `chore` / `build` / `ci` のいずれか、任意の英数字・`_`・`-` の scope、任意の `!`、`: ` と空でない件名。本文・Git コメント・scissors 以下は形式検証対象外です。
 
-`bun run commit:check <コミットメッセージファイル>` は形式だけを手動検査します。フックを有効にするには `bun run hooks:install` を明示実行。既存の `.git/hooks/commit-msg` や別の `core.hooksPath` がある環境ではインストーラは止まります。既存フックを勝手に上書きせず、管理者が両方の処理を手動で統合してください。フックが無効な環境では commit 時ゲートは実行されません。
+`bun run commit:check <コミットメッセージファイル>` は形式だけを手動検査します。`bun install` の postinstall は Git repository のルートであるとき `.githooks` を自動有効化します。既存の `.git/hooks/commit-msg` と `pre-commit` は書き換えず、新フックから検査成功後に連鎖実行します（既存の trailer 等も維持）。再実行は `bun run hooks:install`。他の実行可能な Git フックや別の `core.hooksPath` がある場合は安全のため導入を失敗させ、既存設定を変えません。Git 管理外のアーカイブでは postinstall は何も変更せず終了します。`--ignore-scripts` で依存導入した場合は自動導入されないので、`bun run hooks:install` を明示実行してください。

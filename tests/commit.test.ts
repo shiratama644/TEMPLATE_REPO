@@ -62,9 +62,11 @@ posix("actual git commit-msg hook rejects bad headers and accepts valid messages
   const d = dir()
   const root = join(import.meta.dir, "..")
   symlinkSync(join(root, "scripts"), join(d, "scripts"), "dir")
-  mkdirSync(join(d, "hooks"))
-  copyFileSync(join(root, ".githooks/commit-msg"), join(d, "hooks/commit-msg"))
-  chmodSync(join(d, "hooks/commit-msg"), 0o755)
+  mkdirSync(join(d, ".githooks"))
+  for (const name of ["commit-msg", "chain-legacy"]) {
+    copyFileSync(join(root, ".githooks", name), join(d, ".githooks", name))
+    chmodSync(join(d, ".githooks", name), 0o755)
+  }
   const git = (...args: string[]) => spawnSync("git", args, { cwd: d, encoding: "utf8" })
   expect(git("init", "-q").status).toBe(0)
   const commit = (message: string) =>
@@ -74,7 +76,7 @@ posix("actual git commit-msg hook rejects bad headers and accepts valid messages
       "-c",
       "user.email=test@example.org",
       "-c",
-      `core.hooksPath=${join(d, "hooks")}`,
+      `core.hooksPath=${join(d, ".githooks")}`,
       "commit",
       "--allow-empty",
       "-m",

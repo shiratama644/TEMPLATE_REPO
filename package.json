@@ -19,7 +19,8 @@
     "hooks:install": "bun scripts/install_hooks.ts",
     "knip": "KNIP_DISABLE_RAW_TRANSFER=1 knip --reporter compact",
     "git:report": "bun scripts/git_report.ts",
-    "commit:check": "bun scripts/check_commit.ts"
+    "commit:check": "bun scripts/check_commit.ts",
+    "postinstall": "bun scripts/install_hooks.ts --if-git"
   },
   "dependencies": {
     "@clack/prompts": "1.9.0",

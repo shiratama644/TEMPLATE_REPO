@@ -31,7 +31,8 @@
 | TOOLING-1 | 完了 | actionlint / zizmor の正常・負例と CI を確認済み |
 | TOOLING-2 | 実環境検証待ち | OSV workflow は既定ブランチに未反映。手動起動は HTTP 404、反映後に DB 照会と定期実行の成否を確認 |
 | TOOLING-3 | 完了 | ローカル Git・PR 実 API とモックで正常/異常/未確認を確認済み |
-| COMMITGATE-1 | 完了 | parser を commit-msg に接続し、実 Git テストと PR CI を確認。固有フックとの手動統合は利用者判断 |
+| COMMITGATE-1 | 完了 | parser を commit-msg に接続し、実 Git テストと PR CI を確認 |
+| HOOKAUTO-1 | ローカル検証済み | postinstall による自動有効化と既存フック連鎖を実測、PR CI 待ち |
 
 ---
 
@@ -162,6 +163,7 @@
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
 | COMMITGATE-1 | parser を commit-msg hook の実ゲートに接続 | 完了 | 100% | TOOLING-3 | 形式/言語ゲート、正常・異常・ファイル不在のテスト、実 `git commit` と PR CI | `e162a0b`。一時 Git repo の実 commit で拒否/許可を実測。7 ゲート 51 pass / 2 skip / 746 assertions・Knip PASS。PR #5 run `44967854460` で全チェック PASS。固有 trailer hook は未上書き |
+| HOOKAUTO-1 | 新フックを自動で有効化し既存フックを保持 | ローカル検証済み | 85% | COMMITGATE-1 | Bun install 後の自動有効化、旧フック保持、実 commit・負例・全ゲート・CI | frozen install で `.githooks` 有効化。旧 trailer hook 内容は不変、実 Git repo で旧 pre-commit/trailer と新形式ゲートを確認。7 ゲート 54 pass / 2 skip / 765 assertions、Knip PASS。CI 待ち |
 
 ---
 
