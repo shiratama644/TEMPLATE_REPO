@@ -108,3 +108,102 @@ test("PR reports distinguish checks, mismatches, absent credentials and API fail
       ?.checks,
   ).toBe("unknown")
 })
+
+test("known failures cannot be hidden by pending checks or an unavailable PR API", async () => {
+  const { dir, git } = repo()
+  const head = git("rev-parse", "HEAD")
+  const local = await localReport(dir)
+  expect(
+    assessPR(local, {
+      number: 3,
+      branch: "report-test",
+      head,
+      checks: [
+        { status: "completed", conclusion: "failure" },
+        { status: "queued", conclusion: null },
+      ],
+    }).verdict,
+  ).toBe("fail")
+  const mismatch = await buildReport(dir, "different-branch", { repo: "owner/repo", number: 3 })
+  expect(mismatch.verdict).toBe("fail")
+  const offline = await buildReport(dir, "different-branch", {
+    repo: "owner/repo",
+    number: 3,
+    client: {
+      getPR: async () => {
+        throw new Error("offline")
+      },
+    },
+  })
+  expect(offline.verdict).toBe("fail")
+  expect(offline.reasons.join()).toContain("未確認")
+})
+
+test("a failed commit status is not a passing PR even when all check runs succeed", async () => {
+  const { dir, git } = repo()
+  const head = git("rev-parse", "HEAD")
+  const local = await localReport(dir)
+  const data = {
+    number: 3,
+    branch: "report-test",
+    head,
+    checks: [{ status: "completed", conclusion: "success" }],
+    statusContexts: "failure",
+  }
+  expect(assessPR(local, data).verdict).toBe("fail")
+  expect(assessPR(local, { ...data, statusContexts: "pending" }).verdict).toBe("unknown")
+  expect(assessPR(local, { ...data, statusContexts: "success" }).verdict).toBe("pass")
+})
+
+test("incomplete conclusions are unknown and a closed PR cannot pass", async () => {
+  const { dir, git } = repo()
+  const head = git("rev-parse", "HEAD")
+  const local = await localReport(dir)
+  const data = {
+    number: 3,
+    branch: "report-test",
+    head,
+    checks: [{ status: "completed", conclusion: null }],
+  }
+  expect(assessPR(local, data).verdict).toBe("unknown")
+  expect(
+    assessPR(local, {
+      ...data,
+      state: "closed",
+      checks: [{ status: "completed", conclusion: "success" }],
+    }).verdict,
+  ).toBe("fail")
+})
+
+test("skipped and neutral PR checks are not counted as passing evidence", async () => {
+  const { dir, git } = repo()
+  const head = git("rev-parse", "HEAD")
+  const local = await localReport(dir)
+  for (const conclusion of ["skipped", "neutral"]) {
+    const result = assessPR(local, {
+      number: 3,
+      branch: "report-test",
+      head,
+      checks: [{ status: "completed", conclusion }],
+    })
+    expect(result.verdict).toBe("unknown")
+    expect(result.pr?.checks).toBe("unknown")
+  }
+})
+
+test("truncated check pagination stays unknown unless a visible check failed", async () => {
+  const { dir, git } = repo()
+  const head = git("rev-parse", "HEAD")
+  const local = await localReport(dir)
+  const data = {
+    number: 3,
+    branch: "report-test",
+    head,
+    checksTruncated: true,
+    checks: [{ status: "completed", conclusion: "success" }],
+  }
+  expect(assessPR(local, data).verdict).toBe("unknown")
+  expect(
+    assessPR(local, { ...data, checks: [{ status: "completed", conclusion: "failure" }] }).verdict,
+  ).toBe("fail")
+})

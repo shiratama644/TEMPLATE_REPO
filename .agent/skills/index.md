@@ -41,6 +41,7 @@
 | 計画を実行する（順番に / サブエージェントに分担） | [`executing-plans`](./executing-plans/SKILL.md) / [`subagent-driven-development`](./subagent-driven-development/SKILL.md) |
 | 機能追加・バグ修正を テスト先行で進める | [`test-driven-development`](./test-driven-development/SKILL.md) |
 | 不具合の原因を体系的に特定する | [`systematic-debugging`](./systematic-debugging/SKILL.md) |
+| 反復監査で負例からバグを探し修正する | [`bug-audit-loop`](./bug-audit-loop/SKILL.md) |
 | 「完了」と言う前に検証する | [`verification-before-completion`](./verification-before-completion/SKILL.md) |
 | 差分をレビューする / レビュー指摘を受けて対応する | [`requesting-code-review`](./requesting-code-review/SKILL.md) / [`receiving-code-review`](./receiving-code-review/SKILL.md) |
 | 作業ブランチの後始末（マージ・PR・破棄） | [`finishing-a-development-branch`](./finishing-a-development-branch/SKILL.md) / [`using-git-worktrees`](./using-git-worktrees/SKILL.md) |
@@ -92,6 +93,7 @@
 | [using-git-worktrees](./using-git-worktrees/SKILL.md) | 作業を隔離した git worktree で行い、本線を汚さない | 共通 | superpowers |
 | [finishing-a-development-branch](./finishing-a-development-branch/SKILL.md) | 作業ブランチを、マージ・PR・保留・破棄のいずれかで締める | 共通 | superpowers |
 | [test-driven-development](./test-driven-development/SKILL.md) | 失敗するテストを先に書き、最小の実装で通してから整える | ソフトウェア | superpowers |
+| [bug-audit-loop](./bug-audit-loop/SKILL.md) | 範囲と停止条件を定め、負例・全ゲートで反復監査する | ソフトウェア | 自作（過去ログ） |
 | [systematic-debugging](./systematic-debugging/SKILL.md) | 原因を仮説と検証で絞り込み、推測での修正を避ける | 共通 | superpowers |
 | [verification-before-completion](./verification-before-completion/SKILL.md) | 完了を宣言する前に `bash` で検証する | 共通 | superpowers |
 | [requesting-code-review](./requesting-code-review/SKILL.md) | 差分をレビューできる形にまとめ、観点を明示してレビューを依頼する | 共通 | superpowers |

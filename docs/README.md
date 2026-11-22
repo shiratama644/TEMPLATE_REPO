@@ -33,7 +33,8 @@ docs/
 │   ├── PLAN_VERIFY_PLAN.md 計画 JSON と生成物検証（PLANJSON-1・GENVERIFY-1）
 │   ├── TOOLING_PLAN.md 品質・Git レポートのツール統合（TOOLING-1〜3）
 │   ├── COMMIT_GATE_PLAN.md parser によるコミット形式ゲート（COMMITGATE-1）
-│   └── FULL_GATES_PLAN.md ネイティブ/OSV の全ゲート実測（FULLGATE-1）
+│   ├── FULL_GATES_PLAN.md ネイティブ/OSV の全ゲート実測（FULLGATE-1）
+│   └── BUG_LOOP_PLAN.md 反復的バグ監査と知見の再利用（BUGLOOP-1）
 ├── research/          調査結果
 │   └── README.md      調査の一覧と書き方
 ├── audit/             差分・問題の監査

@@ -22,31 +22,54 @@ export interface PRData {
   branch: string
   head: string
   checks: Array<{ status: string; conclusion: string | null }>
+  statusContexts?: string | null
+  checksTruncated?: boolean
+  state?: "open" | "closed"
 }
 export function assessPR(report: Report, pr: PRData): Report {
   const reasons = [...report.reasons]
-  if (pr.branch !== report.branch || pr.head !== report.head)
+  let remote: Verdict = "pass"
+  const mismatch = pr.branch !== report.branch || pr.head !== report.head
+  if (mismatch) {
     reasons.push("PR の branch/HEAD がローカルと一致しません")
+    remote = "fail"
+  }
+  if (pr.state === "closed") {
+    reasons.push("PR は閉じられています")
+    remote = "fail"
+  }
   let checks: Verdict = "pass"
+  // A known failure must win over an incomplete check; otherwise failure is hidden as unknown.
   if (
-    pr.checks.length === 0 ||
-    pr.checks.some((c) => c.status !== "completed" || c.conclusion === null)
-  ) {
-    checks = "unknown"
-    reasons.push("PR checks が未取得または未完了です")
-  } else if (
-    pr.checks.some((c) => !["success", "neutral", "skipped"].includes(c.conclusion ?? ""))
+    pr.checks.some(
+      (c) =>
+        c.status === "completed" &&
+        c.conclusion !== null &&
+        !["success", "neutral", "skipped"].includes(c.conclusion),
+    ) ||
+    ["failure", "error"].includes(pr.statusContexts ?? "")
   ) {
     checks = "fail"
-    reasons.push("PR checks に失敗があります")
+    reasons.push("PR checks または commit status に失敗があります")
+  } else if (
+    pr.checks.length === 0 ||
+    pr.checksTruncated ||
+    pr.checks.some((c) => c.status !== "completed" || c.conclusion !== "success") ||
+    pr.statusContexts === "pending"
+  ) {
+    checks = "unknown"
+    reasons.push("PR checks または commit status が未取得・未完了です")
   }
+  if (checks === "fail") remote = "fail"
+  else if (checks === "unknown" && remote === "pass") remote = "unknown"
   return {
     ...report,
-    verdict: reasons.some((r) => r.includes("一致しません") || r.includes("失敗"))
-      ? "fail"
-      : reasons.length
-        ? "unknown"
-        : "pass",
+    verdict:
+      report.verdict === "fail" || remote === "fail"
+        ? "fail"
+        : report.verdict === "unknown" || remote === "unknown"
+          ? "unknown"
+          : "pass",
     pr: {
       number: pr.number,
       branch: pr.branch,
@@ -107,20 +130,26 @@ function octokitClient(token: string): PRClient {
   return {
     async getPR(owner, repo, number) {
       const { data: pr } = await api.pulls.get({ owner, repo, pull_number: number })
-      const { data: checks } = await api.checks.listForRef({
-        owner,
-        repo,
-        ref: pr.head.sha,
-        per_page: 100,
-      })
-      // A truncated response cannot establish that all checks passed.
-      if (checks.total_count > checks.check_runs.length)
-        return { number, branch: pr.head.ref, head: pr.head.sha, checks: [] }
+      const [{ data: checks }, { data: contexts }] = await Promise.all([
+        api.checks.listForRef({ owner, repo, ref: pr.head.sha, per_page: 100 }),
+        api.repos.getCombinedStatusForRef({ owner, repo, ref: pr.head.sha, per_page: 100 }),
+      ])
+      // Truncation cannot establish that all checks/status contexts passed.
       return {
         number,
         branch: pr.head.ref,
         head: pr.head.sha,
+        state: pr.state,
         checks: checks.check_runs.map(({ status, conclusion }) => ({ status, conclusion })),
+        checksTruncated: checks.total_count > checks.check_runs.length,
+        statusContexts:
+          contexts.total_count > contexts.statuses.length &&
+          contexts.state !== "failure" &&
+          contexts.state !== "error"
+            ? "pending"
+            : contexts.total_count
+              ? contexts.state
+              : null,
       }
     },
   }
@@ -137,7 +166,7 @@ export async function buildReport(
   if (!pr.client && !pr.token)
     return {
       ...local,
-      verdict: "unknown",
+      verdict: local.verdict === "fail" ? "fail" : "unknown",
       reasons: [...local.reasons, "PR 参照には GITHUB_TOKEN が必要です"],
     }
   try {
@@ -149,7 +178,7 @@ export async function buildReport(
   } catch {
     return {
       ...local,
-      verdict: "unknown",
+      verdict: local.verdict === "fail" ? "fail" : "unknown",
       reasons: [...local.reasons, "PR API 参照に失敗しました (未確認)"],
     }
   }
