@@ -1,8 +1,10 @@
 // Read-only Git/PR snapshot. Never invokes a Git mutator or a GitHub write endpoint.
 
 import { Octokit } from "@octokit/rest"
-import { CommitParser } from "conventional-commits-parser"
 import { simpleGit } from "simple-git"
+import { classifyCommit } from "./conventional_commit.ts"
+
+export { classifyCommit } from "./conventional_commit.ts"
 
 type Verdict = "pass" | "fail" | "unknown"
 export interface Report {
@@ -14,24 +16,7 @@ export interface Report {
   pr?: { number: number; branch: string; head: string; checks: Verdict; reason: string }
   reasons: string[]
 }
-const parser = new CommitParser({
-  headerPattern: /^(\w+)(?:\(([^)]*)\))?!?: (.+)$/,
-  headerCorrespondence: ["type", "scope", "subject"],
-})
 const shaPattern = /^[0-9a-f]{40}$/i
-export function classifyCommit(message: string): { type: string | null; subject: string } {
-  const { type, subject } = parser.parse(message)
-  // Parsing is not a lint gate: require a conventional header, including an optional scope/!.
-  const header = message.split(/\r?\n/, 1)[0]
-  return {
-    type: /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w.-]+\))?!?: .+/.test(
-      header,
-    )
-      ? type
-      : null,
-    subject: subject ?? header,
-  }
-}
 export interface PRData {
   number: number
   branch: string

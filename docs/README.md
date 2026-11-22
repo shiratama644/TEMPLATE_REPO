@@ -31,7 +31,8 @@ docs/
 │   ├── SETUP_LIBS_PLAN.md Clack・Zod・fast-check の導入（SETUPLIB-1）
 │   ├── REVIEW_FIX_PLAN.md 構成レビューの指摘修正（REVIEWFIX-1）
 │   ├── PLAN_VERIFY_PLAN.md 計画 JSON と生成物検証（PLANJSON-1・GENVERIFY-1）
-│   └── TOOLING_PLAN.md 品質・Git レポートのツール統合（TOOLING-1〜3）
+│   ├── TOOLING_PLAN.md 品質・Git レポートのツール統合（TOOLING-1〜3）
+│   └── COMMIT_GATE_PLAN.md parser によるコミット形式ゲート（COMMITGATE-1）
 ├── research/          調査結果
 │   └── README.md      調査の一覧と書き方
 ├── audit/             差分・問題の監査

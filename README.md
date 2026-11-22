@@ -62,7 +62,7 @@ bun run check                                 # CI と同じ入口（型・単�
 
 選択した言語やテンプレートに使えない機能は、明示指定時はエラーで停止し、プリセット由来なら除外した機能を表示します。`library` プリセットは型宣言・publint・size-limit を使える生成物を作りますが、公開やリリースは自動では行いません。Husky を選択した場合も Git フックは自動登録せず、生成先で既存フックを確認してから `bun run husky:install` を明示実行します（既存フックがあれば停止）。Vitest と Playwright の初期テストは生成物の動作確認用のスモークテストです。本格的なブラウザ操作やアプリ固有のテストは派生プロジェクト側で追加してください。
 
-Git フックを導入する場合は `bun run hooks:install`（既存の commit-msg / pre-commit フックがある場合は上書きせず停止）。`make setup` も同じ操作です。こちらの作業環境には既存の commit-msg フックがあるため、導入は行っていません。
+Git フックを導入する場合は `bun run hooks:install`（既存の commit-msg / pre-commit フックがある場合は上書きせず停止）。`make setup` も同じ操作です。このリポジトリの `.githooks/commit-msg` は `conventional-commits-parser` で形式を検証し、既存の日本語/英語ゲートも実行します。`bun run commit:check <メッセージファイル>` で形式だけを手動確認できます。こちらの作業環境には既存の commit-msg フックがあるため、導入は行っていません。既存フックは自動上書きせず、利用者が手動で統合してください。
 
 ## 運用の考え方
 
