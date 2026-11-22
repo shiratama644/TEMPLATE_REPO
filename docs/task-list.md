@@ -34,7 +34,7 @@
 | COMMITGATE-1 | 完了 | parser を commit-msg に接続し、実 Git テストと PR CI を確認 |
 | HOOKAUTO-1 | 完了 | frozen install で自動有効化、既存フック保持、実 commit と PR CI を確認 |
 | FULLGATE-1 | 実環境検証待ち | PR CI のネイティブ必須検証と OSV 全走査は PASS。ユーザーはPRをマージせず、ローカルGo/Rustは別環境で検証する方針。週次/手動OSVは未確認 |
-| BUGLOOP-1 | CI確認待ち | 4反復・PR判定の誤PASS/誤unknown修正・skill/rule反映。7ゲート/Knip PASS、PR CI 待ち |
+| BUGLOOP-1 | 完了 | 4反復・PR判定の誤PASS/誤unknown修正・skill/rule反映。ローカル7ゲート/Knip、PR全5チェック PASS。2 skip は未検証のまま |
 
 ---
 
@@ -181,7 +181,7 @@
 
 | ID | タスク | 状態 | 進捗 | 依存 | 完了条件 | 証拠 |
 |---|---|---|---:|---|---|---|
-| BUGLOOP-1 | 反復監査で再現できるバグを修正し、ログの知見を skill/rule へ反映 | CI確認待ち | 90% | FULLGATE-1 | 4反復・負例/正常例・全ゲート/Knip/CI、未検証を区別 | 4反復を `BUG_LOOP_PLAN.md` §10 に記録。最終7ゲート 59 pass / 2 skip / 780 assertions、Knip・diff check PASS。16 ログを確認、PR CI 待ち |
+| BUGLOOP-1 | 反復監査で再現できるバグを修正し、ログの知見を skill/rule へ反映 | 完了 | 100% | FULLGATE-1 | 4反復・負例/正常例・全ゲート/Knip/CI、未検証を区別 | 4反復を `BUG_LOOP_PLAN.md` §10 に記録。最終7ゲート 59 pass / 2 skip / 780 assertions、Knip・diff check PASS。16 ログを確認、PR #5 `8824651` CI 45044912821 + Dependency Review 45044912843 全5チェック PASS |
 
 ---
 

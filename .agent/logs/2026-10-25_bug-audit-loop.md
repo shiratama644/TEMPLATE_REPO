@@ -22,3 +22,7 @@
 ## 4. 残り
 
 PR #5 はユーザーの意向によりマージしない。PR CI とローカル Go/Rust・別OS・既定ブランチのOSV実行はそれぞれ区別して報告する。
+
+## 5. PR CI と API 実測（追記）
+
+`8824651` の PR #5 CI `45044912821`・Dependency Review `45044912843` は全5チェック PASS。`bun run git:report` は初回 PR API 500 で `unknown`、続けて Bun の直接 fetch で `UNABLE_TO_VERIFY_LEAF_SIGNATURE` を再現。証明書検証は無効化せず `NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt` を指定して再実行し、PR #5 の branch・HEAD 一致と `checks: pass`・`verdict: pass` を取得。この環境での Bun TLS 設定不足と API 失敗を区別し、sandbox-constraints skill に回避策を追加した。ローカル Go/Rust は引き続き2 skip、週次/手動 OSV と別OSは未検証。PRはマージしない。

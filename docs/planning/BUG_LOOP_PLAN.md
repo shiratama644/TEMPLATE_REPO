@@ -25,7 +25,7 @@
 - [x] 4反復: 探索/仮説→負例・現象再現→最小修正→全ゲート・差分レビュー。実際に見つからなければ「発見なし」と明示する。
 - [x] 変更した判定には失敗/保留/成功の回帰試験を追加し、既存 7 ゲートと Knip が PASS。
 - [x] ログから採用した教訓の出典を示し、現用 skill / rule を事実に合わせる。過去ログは追記以外で触らない。
-- [ ] PR CI を確認し、実環境の未検証（Go/Rust ローカル・別 OS・週次/手動 OSV）を PASS としない。
+- [x] PR CI を確認し、実環境の未検証（Go/Rust ローカル・別 OS・週次/手動 OSV）を PASS としない。
 
 ## 6. テスト方法
 
@@ -60,4 +60,4 @@
 | 3 | check runs 成功でも commit status failure を未参照のため `pass`、closed PR も pass（status RED） | commit status と PR state を取得・分類し成功/保留/失敗の回帰を追加 | API スコープの個別実測なし |
 | 4 | completed/null は誤 FAIL、skipped/neutral は誤 PASS、100件超の部分取得は全件の証拠がない（各負例 RED） | null/skip は unknown、既知 failure は fail、途中で切れた結果は unknown。部分取得で見えた failure は残す。59 pass / 2 skip / 780 assertions、7ゲート・Knip・diff check exit 0 | 週次/手動OSV、別OS、ローカルGo/Rustは未検証 |
 
-再探索: `scripts/setup.ts` の安全パス、`check_agents.ts` の実体起動、`check_doc_links.ts` のゲート境界を点検したが、範囲内で追加の再現可能な不具合は確認できなかった。既存ログの教訓を `.agent/skills/bug-audit-loop/SKILL.md`、`ci-quality-gates/SKILL.md`、`.agent/rules/04_verification.md` に反映。PR CI の確認は push 後。
+再探索: `scripts/setup.ts` の安全パス、`check_agents.ts` の実体起動、`check_doc_links.ts` のゲート境界を点検したが、範囲内で追加の再現可能な不具合は確認できなかった。既存ログの教訓を `.agent/skills/bug-audit-loop/SKILL.md`、`ci-quality-gates/SKILL.md`、`.agent/rules/04_verification.md` に反映。PR #5 の `8824651` で CI run `45044912821`（OSV full scan、actionlint/zizmor、Bun 全ゲート+Knip、gitleaks）と Dependency Review `45044912843` が全5チェック PASS。Git/PR CLI は初回 Bun の信頼ストア欠損で unknown を返した（無検証成功とはしなかった）。`NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt` を明示して再実行し、PR #5 の branch/HEAD/checks 一致、verdict `pass` を確認。Go/Rust ローカル 2 skip は未解消。
