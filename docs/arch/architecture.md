@@ -18,9 +18,13 @@ TEMPLATE_REPO/
 ├── .gitleaks.toml         # 秘密情報検出の許可リスト
 ├── .gitignore
 ├── scripts/               # Bun の TypeScript CLI と検査
-│   ├── setup.ts / setup-manifest.ts / setup-schema.ts # 初期設定・選択肢・Zod スキーマ
+│   ├── setup.ts # 初期設定の入口（引数・対話・承認・適用の指揮）
+│   ├── setup-options.ts / setup-manifest.ts / setup-schema.ts # 引数と承認・雛形・Zod スキーマ
+│   ├── setup-package.ts / setup-plan.ts / setup-apply.ts / setup-install.ts # package.json・計画・書き込み・導入
+│   ├── setup-env.ts / safe-path.ts # OS パッケージと言語別の手順・生成パスの検証
 │   ├── verify-generated.ts # 生成物の静的検査・明示ビルド
 │   ├── check.ts / check-agents.ts / check-index.ts / walk.ts # 全ゲート・指示ファイル・入口整合・ファイル列挙
+│   ├── check-shell.ts / check-function-length.ts / check-coverage.ts # POSIX sh・関数長・カバレッジ
 │   ├── install-hooks.ts # Git フックの安全な導入
 │   ├── check-doc-links.ts # Markdown の内部リンク
 │   ├── check-mermaid.ts   # Mermaid 図の宣言

@@ -14,7 +14,10 @@
 
 ## 品質ゲートと読み取り専用レポート
 
-- `bun run check` は既存の 8 ゲート、`bun run knip` は未使用コード/依存の独立ゲート。Knip 6.43.0 は Node 環境の raw transfer で仮想メモリ確保に失敗するため `KNIP_DISABLE_RAW_TRANSFER=1` を固定。設定の例外は `knip.jsonc` に理由を記載。`--fix` は使わない。
+- `bun run check` は 10 ゲート、`bun run knip` は未使用コード/依存の独立ゲート。追加した 3 つは次のとおりです。
+  - **POSIX sh**（`bun run shell`）: `.agent/hooks/*.sh` と `.githooks/*` の shebang・`dash -n`・bashism（`[[ ]]`・`${var/pat/rep}`・`&>`・`source`・`set -o` 等）を検査します。コメントは対象外で、`[[:space:]]` は POSIX の文字クラスとして許可します。Windows では skip を表示します。
+  - **関数長**（`bun run length`）: `scripts/**/*.ts` の関数・メソッド・アロー関数を TypeScript の AST で数え、100 行超えたら失敗します（現状の最長は `setup.ts` の `run` 82 行）。テストはシナリオを上から読むため対象外です。
+  - **テストとカバレッジ**（`bun run coverage`）: `bun test --coverage` を実行し、行カバレッジの合計が 55% を下回ったら失敗します（現状 64%）。**CLI として起動して検査するモジュール**（`setup.ts`・`setup-plan.ts`・`setup-apply.ts`・`setup-install.ts`・`setup-package.ts`・`verify-generated.ts`・`check.ts`）は計測されないため、この数値は実態より低く出ます。下限は「低下させない」ための犬であり、網羅性の証明ではありません。Knip 6.43.0 は Node 環境の raw transfer で仮想メモリ確保に失敗するため `KNIP_DISABLE_RAW_TRANSFER=1` を固定。設定の例外は `knip.jsonc` に理由を記載。`--fix` は使わない。
 - `bun run git:report -- --json`（または `bun scripts/git-report.ts --json`）は現在の Git 状態のみ。`bun scripts/git-report.ts --branch <期待ブランチ> --repo owner/name --pr <番号> --json` は `GITHUB_TOKEN` があるときだけ PR を GET で参照する。`pass` / `fail` / `unknown` を分け、未確認時は exit 1。出力を共有するときはコミット件名に秘密がないか確認すること。トークンをコマンド引数に渡さない。
 - CI（`ci.yml`）は main への push・PR・merge queue（`merge_group`）・手動で実行します。PR の連続 push は前の実行を打ち切り、main への push は打ち切りません。`check` ジョブは `bun run check`（`CI_REQUIRE_NATIVE=1`）と `bun run knip` を実行し、Go/Cargo を必須として実ビルドのスキップを禁止します。ローカルでは両ツールがなければ 2 テストが skip になるため、CI 成功をローカルの実行済み証拠と混同しないでください。
 - actionlint 1.7.12（配布バイナリを SHA-256 で固定）と zizmor は CI の `workflow-audit` で正常系と負例（`tests/fixtures/`）を実行します。zizmor は `zizmorcore/zizmor-action` 経由で、ハッシュ検証済みの wheel を PyPI から取ります。zizmor の版は action の版に同梱される lock で決まるので、Dependabot が action の SHA を更新したときに一緒に上がります。監査条件は通信なし（`online-audits: false`）・`strict-collection`・`min-severity: medium`・`advanced-security: false`（GHAS への SARIF 提出は findings で失敗しないため、findings でジョブを失敗させる）。actionlint のダウンロード/検査失敗、zizmor の wheel 取得失敗はジョブ失敗。

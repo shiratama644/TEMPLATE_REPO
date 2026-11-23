@@ -1,9 +1,12 @@
 import { spawnSync } from "node:child_process"
 import { checkAgents } from "./check-agents.ts"
+import { checkCoverage } from "./check-coverage.ts"
 import { checkLinks } from "./check-doc-links.ts"
+import { checkFunctionLength } from "./check-function-length.ts"
 import { checkIndex } from "./check-index.ts"
 import { checkLanguage } from "./check-language.ts"
 import { checkMermaid } from "./check-mermaid.ts"
+import { checkShell } from "./check-shell.ts"
 
 const commands: Array<[string, () => number]> = [
   ["内部リンク", checkLinks],
@@ -11,9 +14,11 @@ const commands: Array<[string, () => number]> = [
   ["日本語・英語ゲート", () => checkLanguage()],
   ["AGENTS.md", checkAgents],
   ["入口整合", () => checkIndex()],
+  ["POSIX sh", () => checkShell()],
+  ["関数長", () => checkFunctionLength()],
   ["Biome", () => spawnSync("bun", ["x", "biome", "check", "."], { stdio: "inherit" }).status ?? 1],
   ["型検査", () => spawnSync("bun", ["run", "typecheck"], { stdio: "inherit" }).status ?? 1],
-  ["テスト", () => spawnSync("bun", ["test"], { stdio: "inherit" }).status ?? 1],
+  ["テストとカバレッジ", () => checkCoverage()],
 ]
 for (const [name, run] of commands) {
   console.log(`== ${name}`)
