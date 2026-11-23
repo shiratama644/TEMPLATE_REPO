@@ -1,6 +1,6 @@
 # Bun が唯一の依存・検証入口。互換用 make ターゲットは bun run を呼ぶ。
 .DEFAULT_GOAL := help
-.PHONY: help setup check links mermaid agents lang test
+.PHONY: help setup check links mermaid agents index lang test
 BUN ?= bun
 help: ## 利用可能なターゲットを表示
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-8s %s\n", $$1, $$2}'
@@ -14,6 +14,8 @@ mermaid: ## Mermaid 宣言
 	$(BUN) run mermaid
 agents: ## AGENTS.md の品質
 	$(BUN) run agents
+index: ## .agent/ の入口 index と実物の整合
+	$(BUN) run index
 lang: ## ファイル・コミットの言語
 	$(BUN) run lang
 test: ## CLI・検査スクリプトのテスト

@@ -24,17 +24,19 @@ paths:
 | 場所 | 内容 | 形式 |
 |---|---|---|
 | `docs/task-list.md` | 進捗の正本 | 固定名 |
-| `docs/arch/` | 仕様・構成・判断の記録 | `kebab-case.md` |
+| `docs/arch/` | 仕様・構成の記録（判断は `docs/adr/`） | `kebab-case.md` |
 | `docs/planning/` | 個別タスクの計画 | `_TEMPLATE.md` 準拠 |
 | `docs/research/` | 調査結果 | `<TOPIC>_RESEARCH.md` |
-| `docs/audit/` | 差分・問題・活動の記録 | `diff-{context}.md` / `issues-{context}.md` / `activity.md` |
-| `docs/ops/` | 運用手順 | 大文字スネークケース（例: `RELEASE.md`） |
+| `docs/audit/` | 差分・問題・活動の記録 | `index.md`（入口）/ `diff-{context}.md` / `issues-{context}.md` / `activity.md` |
+| `docs/ops/` | 運用手順 | `index.md`（入口）/ 大文字スネークケース（例: `RELEASE.md`） |
 
 計画書の必須セクション: 開始前確認、目的、変更範囲、禁止事項、完了条件、停止条件、実績と証拠。
 
+各ディレクトリ直下の `index.md` は入口として固定名にする（`docs/audit/index.md`・`docs/ops/index.md`）。
+
 ## 3. 命名規約
 
-ハイフンは最大 1 つ。短く、内容が正確に分かる名前にする。
+単語の区切りはハイフン 1 つ（`--` のような連続は使わない）。短く、内容が正確に分かる名前にする。
 
 | 種類 | 命名規則 | 例 |
 |---|---|---|

@@ -111,13 +111,14 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 - [ ] 適切なメッセージで commit が完了している
 - [ ] working tree が clean である（`git status` で確認）
 - [ ] `git push origin <セッション固定ブランチ>` が完了している（§4.4）
+- [ ] `main` 向け PR を作成し、URL を報告している（§4.4）
 
 ## 6. プロジェクト固有の遵守事項（テンプレート利用時に追記する）
 
 > この節だけ**プロジェクトごとに書き換える**。過去に踏んだ地雷・確立した運用ルールの集約場所。計画書と矛盾すれば計画書を優先し、それ以外は本節を厳守する。不要な小節は削除してよい。
 
 ### 6.1 環境・ツールチェーン・検証コマンド（Commands / Setup）
-- **検証の正本**: `bun run check`（TypeScript の文書・言語・指示品質・Biome・型・テスト）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang`。CI も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check` を実行する。
+- **検証の正本**: `bun run check`（文書・言語・指示品質・入口整合・Biome・型・テスト）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang` / `index`。未使用コード・依存は `bun run knip`。CI も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check` と `bun run knip` を実行する。
 - **Git フック**: `bun install` 後に `.githooks` を自動有効化。既存の commit-msg/pre-commit は上書きせず連鎖実行。他の実行可能フックや別の `core.hooksPath` があれば安全のため導入を停止する（詳細は `docs/ops/index.md`）。
 - **セットアップ**: Bun が前提。対話式・非対話式の `bun run setup [引数]`（対話式は計画後に `[y/N]` 承認、`--apply` は不要。非対話式は `--yes --apply` で適用、`--dry-run` は不変更）。OS パッケージは対話式でコマンドごとに承認を要し、文書削除は候補の案内のみ。生成先 Python FastAPI は `.venv` の pip、Rust Axum は `cargo fetch`、Go は標準ライブラリで扱い、`--no-install` は依存導入をスキップする。
 - 初期セットアップ手順 / 言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
@@ -140,7 +141,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 
 ### 6.7 ドキュメント運用
 - 目次と運用ルール `docs/README.md` / 進捗の正本 `docs/task-list.md`（状態定義・証拠記録のルールは冒頭）/ 仕様 `docs/arch/` / 計画 `docs/planning/`（`docs/planning/_TEMPLATE.md` 形式）/ 調査 `docs/research/` / 監査 `docs/audit/` / 運用 `docs/ops/`
-- ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する。ファイル名は短く正確、ハイフン最大 1 つ。
+- ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する。ファイル名は短く正確、単語の区切りはハイフン 1 つ（`--` のような連続は使わない）。
 
 ## 7. コミュニケーション規約（要点）
 
@@ -172,6 +173,7 @@ Agent の**知識・定型手順**を `.agent/` に永続化し、セッショ�
 - **セッション開始時**: `SessionStart` フック（`.agent/hooks/session-start.sh`）が正本の所在・ブランチ・直近 commit・未コミット変更・未完了サマリーを注入する。
 - **タスク開始時**: `.agent/hooks/pre-task.md` の手順で現状把握し、`.agent/skills/index.md` の読み方ガイドから**該当スキルだけ**を読む（全スキルを常時読み込まない）。
 - **ツール実行時**: Bash 前は `.agent/hooks/block-dangerous-git.sh`、編集前は `.agent/hooks/pre-edit-guard.sh`、編集後は `.agent/hooks/post-edit-verify.sh`。トリガー発生時は `.agent/hooks/index.md` の対応表で特定する。
+- **停止時**: `.agent/hooks/stop-verify.sh` が §5 の停止条件（working tree が clean・上流へ push 済み）を確認する。
 
 ### 8.4 記憶の同期（書き込みワークフロー）
 - **タスク完了時**: `.agent/hooks/log-task.md` に従い、`docs/task-list.md` の状態・検証結果・未確認事項を更新する。作業用ログは Git に含めない。

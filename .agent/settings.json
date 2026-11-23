@@ -107,6 +107,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .agent/hooks/stop-verify.sh"
+          }
+        ]
+      }
     ]
   },
   "env": {}

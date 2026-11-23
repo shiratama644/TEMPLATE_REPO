@@ -16,6 +16,7 @@
 | **Bash 実行前**（破壊的 git 操作の直前） | [`block-dangerous-git.sh`](./block-dangerous-git.sh) | スクリプト | `settings.json` → `PreToolUse`（matcher: Bash） |
 | **編集前**（Edit/Write前） | [`pre-edit-guard.sh`](./pre-edit-guard.sh) | スクリプト | `settings.json` → `PreToolUse` |
 | **編集後**（Edit/Write後） | [`post-edit-verify.sh`](./post-edit-verify.sh) | スクリプト | `settings.json` → `PostToolUse` |
+| **停止時**（回答を終える直前） | [`stop-verify.sh`](./stop-verify.sh) | スクリプト | `settings.json` → `Stop` |
 | **commit直前**（§3.1検証） | [`verify-commit.md`](./verify-commit.md) | 手順 | 手動参照 |
 | **タスク完了時**（完了直後） | [`log-task.md`](./log-task.md) | 手順 | 手動参照 |
 | **Sandbox再構築を検知** | [`sandbox-recovery.md`](./sandbox-recovery.md) | 手順 | 手動参照 |
@@ -27,6 +28,7 @@
 | [pre-task.md](./pre-task.md) | タスク開始時 | 現状把握 → 目的・完了条件・不足作業・事前確認が必要な境界を特定 → 必要スキルをピンポイント読込 |
 | [pre-edit-guard.sh](./pre-edit-guard.sh) | PreToolUse | 編集禁止領域（.git/, node_modules/, dist/, build/, coverage/ 等の生成物）への変更をブロック（`permissionDecision: deny` の JSON） |
 | [post-edit-verify.sh](./post-edit-verify.sh) | PostToolUse | 機密ファイル混入（`decision: block` の JSON でモデルに返す）・docs/README 目次の事後検証（警告のみ） |
+| [stop-verify.sh](./stop-verify.sh) | Stop | `AGENTS.md §5` の停止条件（working tree が clean・上流へ push 済み）を確認し、未了なら `decision: block` の JSON でモデルに返す |
 | [verify-commit.md](./verify-commit.md) | commit直前 | プロジェクト検証 + 目的達成・追加の必要作業・未実施検証の確認 |
 | [log-task.md](./log-task.md) | タスク完了時 | タスクリストに検証・未実施事項を記録 → 再利用可能な知見をスキルへ同期 |
 | [sandbox-recovery.md](./sandbox-recovery.md) | Sandbox再構築検知時 | `git fetch` → 全ファイル・未追跡の照合 → 一致時のみ `reset --hard FETCH_HEAD` → §6.1 の環境セットアップ |
@@ -43,6 +45,7 @@
   - 本リポジトリのフックは判定を **JSON で返して `exit 0`** する（exit 2 と JSON は混ぜない。exit 2 のとき JSON は無視される）
     - PreToolUse（[`block-dangerous-git.sh`](./block-dangerous-git.sh) / [`pre-edit-guard.sh`](./pre-edit-guard.sh)）: `hookSpecificOutput.permissionDecision` = `deny`（`allow` / `ask` / `defer` も可）＋ `permissionDecisionReason`。※ PreToolUse の top-level `decision` / `reason` は**非推奨**
     - PostToolUse（[`post-edit-verify.sh`](./post-edit-verify.sh)）: top-level `decision` = `block` ＋ `reason`。理由がモデルに返るのでモデル自身が修正できる
+    - Stop（[`stop-verify.sh`](./stop-verify.sh)）: top-level `decision` = `block` ＋ `reason`。`stop_hook_active` や `STOP_VERIFY=off` のときは再帰しない
   - 手動実行での判定は exit code ではなく**出力の JSON** で見る（`"permissionDecision":"deny"` / `"decision":"block"`）。exit code は常に 0
   - 複数のフックは並列に走り、最も厳しい判定が勝つ（`deny` > `defer` > `ask` > `allow`）。フックの `deny` は bypassPermissions モードでも有効
   - 公式リファレンス: https://code.claude.com/docs/en/hooks （最新の仕様を正とする）
@@ -52,17 +55,17 @@
 ## 公式構成との対応
 
 - 公式 `.claude/settings.json` の `hooks` フィールドに、本ディレクトリの `.sh` スクリプトを登録する形が公式推奨。
-- 本テンプレートでは `settings.json` に `SessionStart`, `PreToolUse`, `PostToolUse` のイベントを登録。
+- 本テンプレートでは `settings.json` に `SessionStart`, `PreToolUse`, `PostToolUse`, `Stop` のイベントを登録。
 - 旧来の手順md（pre-task.md等）は人間の参照用として残し、自動実行は `.sh` + `settings.json` で行うハイブリッド構成。
 
 ## 登録していない公式イベント（必要になったら追加する）
 
-公式のフックイベントは 30 種前後ある。本テンプレートは分野非依存を保つため 3 種だけ登録しているので、プロジェクト固有の必要が出たら次の候補から追加する。
+公式のフックイベントは 30 種前後ある。本テンプレートは分野非依存を保つため 4 種だけ登録しているので、プロジェクト固有の必要が出たら次の候補から追加する。
 
 | イベント | 使い道 |
 | :--- | :--- |
 | `UserPromptSubmit` | 指示にコンテキストを付与する（`additionalContext`）。`session-start.sh` の注入を指示単位で行う |
-| `Stop` / `SubagentStop` | `AGENTS.md §5` の停止条件（検証 PASS・working tree clean・push 済み）を機械的に確認してから止める |
+| `SubagentStop` | サブエージェントの停止時にも停止条件を確認する（親の停止は `Stop` で確認済み） |
 | `PreCompact` / `PostCompact` | 圧縮の前後で正本の所在と未完了タスクを再注入する（長いセッションでの記憶喪失対策） |
 | `InstructionsLoaded` | `AGENTS.md` や `.agent/rules/*.md` が読み込まれた時に検査する |
 | `SessionEnd` | セッション終了時に [`log-task.md`](./log-task.md) によるタスク状態の更新を促す |

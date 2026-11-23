@@ -92,7 +92,7 @@ bun run links
 - 設計の正本は `docs/arch/`（どう作るか）、進捗の正本は `docs/task-list.md`、計画は `docs/planning/`、調査は `docs/research/`、監査は `docs/audit/`、運用は `docs/ops/`
 - 実装テクニックは `.agent/skills/`、作業規約は `AGENTS.md` / `.agent/rules/` を正とする
 - 旧名称が残っていないか `grep -R "旧名称" docs/ --include="*.md"` で確認
-- ファイル名は短く正確、ハイフン最大1つ
+- ファイル名は短く正確、単語の区切りはハイフン 1 つ（`--` のような連続は使わない）
 
 ## 関連
 

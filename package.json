@@ -12,6 +12,7 @@
     "mermaid": "bun scripts/check_mermaid.ts",
     "lang": "bun scripts/check_language.ts",
     "agents": "bun scripts/check_agents.ts",
+    "index": "bun scripts/check_index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "format": "biome check --write .",

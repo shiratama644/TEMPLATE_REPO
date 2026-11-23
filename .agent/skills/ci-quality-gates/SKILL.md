@@ -20,6 +20,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | 文書 | `bun run links`、`bun run mermaid` |
 | 言語 | `bun run lang`（日本語・英語、コミットメッセージは `.githooks/commit-msg`） |
 | 指示 | `bun run agents`（上流 CLI の symlink no-op を避け、実体を起動） |
+| 入口 | `bun run index`（`.agent/` の skills / rules / hooks の index と実物の整合） |
 | コード | `bun x biome check .`、`bun run typecheck` |
 | 回帰 | `bun test`（異常 fixture と CLI の非破壊性を含む） |
 | 秘密情報 | CI の gitleaks ジョブ（ローカルでは秘密情報を commit しない） |
@@ -29,12 +30,13 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | ファイル | 役割 |
 | :--- | :--- |
 | `scripts/check.ts` | すべての検査の入口。失敗時は exit 1 |
-| `scripts/check_*.ts` | 文書・言語・品質の検査（Bun / TypeScript） |
+| `scripts/check_*.ts` | 文書・言語・コミットメッセージ・品質の検査（Bun / TypeScript） |
 | `package.json` / `bun.lock` | ランタイム・依存・検証コマンドの正本 |
 | `.githooks/` | `pre-commit` で `bun run check`、`commit-msg` で言語と Conventional Commits |
-| `.github/workflows/ci.yml` | Bun の check + gitleaks |
+| `.github/workflows/ci.yml` | 4 ジョブ: `check`（`bun run check` + `bun run knip`）/ `secrets`（gitleaks）/ `workflow-audit`（actionlint / zizmor）/ `osv-lockfile`（OSV-Scanner） |
 | `.github/workflows/release.yml` | Bun の check 後にタグ付きリリース |
 | `.github/workflows/dependency-review.yml` | Dependency graph が有効なときの PR 差分検査 |
+| `.github/workflows/osv-scan.yml` | 毎週・手動の `bun.lock` 全体スキャン |
 
 `bun run hooks:install` は Git の `core.hooksPath` を設定する。**既存の commit-msg / pre-commit フックがある場合は停止**し、手動で統合する。この作業環境の trailer フックは上書きしない。
 

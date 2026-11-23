@@ -7,7 +7,7 @@
 <optional body>
 ```
 
-Types: feat, fix, refactor, docs, test, chore, perf, ci
+Types: feat, fix, refactor, docs, test, chore, perf, build, ci
 
 Note: Commit messages and trailers follow `AGENTS.md §4.2` and `.agent/rules/02_git-workflow.md`. Do not add or remove `Co-Authored-By` trailers unless the user asks for it.
 
@@ -18,7 +18,7 @@ When creating PRs:
 2. Use `git diff [base-branch]...HEAD` to see all changes
 3. Draft comprehensive PR summary
 4. Include test plan with TODOs
-5. Push with `-u` flag if new branch
+5. Push to the session-fixed branch with `git push origin <branch>` (no feature branches; see `AGENTS.md §4.4` and `.agent/rules/02_git-workflow.md`)
 
 > For the full development process (planning, TDD, code review) before git operations,
 > see [development-workflow.md](./development-workflow.md).
