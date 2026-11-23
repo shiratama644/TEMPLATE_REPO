@@ -8,9 +8,16 @@ export function* files(base = root): Generator<string> {
       a.name.localeCompare(b.name),
     )) {
       if (
-        [".git", "node_modules", ".setup-backup", ".cache", "dist", "build", "coverage"].includes(
-          entry.name,
-        )
+        [
+          ".git",
+          ".tmp",
+          "node_modules",
+          ".setup-backup",
+          ".cache",
+          "dist",
+          "build",
+          "coverage",
+        ].includes(entry.name)
       )
         continue
       const path = join(dir, entry.name)

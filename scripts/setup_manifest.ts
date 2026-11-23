@@ -359,11 +359,12 @@ export function featureScaffold(features: Feature[], name: string, template: Tem
           {
             version: "0.2",
             ignorePaths: [
-              "node_modules/**",
-              "coverage/**",
-              "dist/**",
-              ".next/**",
-              ".turbo/**",
+              "**/node_modules/**",
+              "**/coverage/**",
+              "**/dist/**",
+              "**/out/**",
+              "**/.next/**",
+              "**/.turbo/**",
               "bun.lock",
             ],
             words: [

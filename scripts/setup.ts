@@ -361,7 +361,7 @@ export async function run(args: string[]): Promise<number> {
       ["plain-ts", "plain-js"].includes(o.template) &&
       (o.preset === "library" || o.features.includes("publint"))
     if (publishable && o.template === "plain-ts" && base.scripts)
-      base.scripts.build = `${base.scripts.build} && bun x tsc --declaration --emitDeclarationOnly --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler src/index.ts`
+      base.scripts.build = `${base.scripts.build} && bun x tsc --ignoreConfig --declaration --emitDeclarationOnly --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler src/index.ts`
     const extra = featureScaffold(o.features, o.name, o.template)
     if (
       o.features.includes("termux") &&

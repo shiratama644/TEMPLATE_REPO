@@ -208,6 +208,33 @@ test("local plain TS build runs only on explicit request and rejects altered scr
   expect(cli(verify, dir, "--template", "plain-ts").status).toBe(1)
 })
 
+test("library build command isolates TypeScript 6 from ancestor tsconfig and verifier recognizes it", () => {
+  const dir = target()
+  const generated = cli(
+    setup,
+    dir,
+    "--yes",
+    "--apply",
+    "--no-install",
+    "--name",
+    "my-project",
+    "--preset",
+    "library",
+  )
+  expect(generated.status).toBe(0)
+  const pkgPath = join(dir, "package.json")
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf8"))
+  expect(pkg.scripts.build).toContain("tsc --ignoreConfig")
+  const accepted = cli(verify, dir, "--template", "plain-ts", "--build")
+  expect(accepted.status).toBe(2)
+  expect(accepted.stdout).toContain("typescript がローカルにありません")
+  pkg.scripts.build = pkg.scripts.build.replace("tsc --ignoreConfig", "tsc")
+  writeFileSync(pkgPath, `${JSON.stringify(pkg)}\n`)
+  const altered = cli(verify, dir, "--template", "plain-ts", "--build")
+  expect(altered.status).toBe(2)
+  expect(altered.stdout).toContain("標準 build スクリプトではありません")
+})
+
 test("static validation detects a mixed JavaScript/TypeScript Web scaffold", () => {
   const dir = target()
   expect(create(dir, "vite-react", "javascript").status).toBe(0)

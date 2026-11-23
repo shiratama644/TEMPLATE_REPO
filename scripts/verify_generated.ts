@@ -142,7 +142,7 @@ function buildProject(root: string, template: Template, pkg: Record<string, unkn
       template === "plain-ts" &&
       typeof scripts.build === "string" &&
       scripts.build ===
-        `${base} && bun x tsc --declaration --emitDeclarationOnly --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler src/index.ts`
+        `${base} && bun x tsc --ignoreConfig --declaration --emitDeclarationOnly --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler src/index.ts`
     if (scripts.build !== base && !libraryBuild)
       return {
         check: "build",

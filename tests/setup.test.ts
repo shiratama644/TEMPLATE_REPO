@@ -9,6 +9,7 @@ import { classify, findIssues, stripCommit } from "../scripts/check_language.ts"
 import { blocks, checkBlock } from "../scripts/check_mermaid.ts"
 import { detectPackageManager, planApproval } from "../scripts/setup.ts"
 import { featureNames, presets, scaffold, templates } from "../scripts/setup_manifest.ts"
+import { files } from "../scripts/walk.ts"
 
 const dirs: string[] = []
 // Git hooks require a POSIX shell. Git Bash on Windows is not guaranteed on PATH.
@@ -28,6 +29,15 @@ function cli(d: string, ...args: string[]) {
     { encoding: "utf8" },
   )
 }
+test("generated .tmp showcase is excluded from source quality scans", () => {
+  const d = dir()
+  const { mkdirSync } = require("node:fs") as typeof import("node:fs")
+  mkdirSync(join(d, ".tmp"))
+  writeFileSync(join(d, ".tmp", "generated.md"), "not a source document")
+  writeFileSync(join(d, "source.md"), "source")
+  expect([...files(d)]).toEqual([join(d, "source.md")])
+})
+
 test("7 presets and 17 features, all templates generate files", () => {
   expect(Object.keys(presets)).toHaveLength(7)
   expect(featureNames).toHaveLength(17)
@@ -272,7 +282,7 @@ test("library preset produces a publishable package with complete validation dep
   expect(pkg.private).toBe(false)
   expect(pkg.exports["."].types).toBe("./dist/index.d.ts")
   expect(pkg.devDependencies["@size-limit/preset-small-lib"]).toBeDefined()
-  expect(pkg.scripts.build).toContain("tsc")
+  expect(pkg.scripts.build).toContain("tsc --ignoreConfig")
   expect(pkg["size-limit"][0].path).toBe("dist/index.js")
 })
 
@@ -504,7 +514,9 @@ test("selected quality tools include runnable scaffolds and scoped configuration
   expect(existsSync(join(d, "src/index.test.ts"))).toBe(true)
   expect(existsSync(join(d, "tests/e2e.ts"))).toBe(true)
   const spell = JSON.parse(readFileSync(join(d, "cspell.json"), "utf8"))
-  expect(spell.ignorePaths).toContain("coverage/**")
+  expect(spell.ignorePaths).toContain("**/coverage/**")
+  expect(spell.ignorePaths).toContain("**/dist/**")
+  expect(spell.ignorePaths).toContain("**/out/**")
   const knip = JSON.parse(readFileSync(join(d, "knip.jsonc"), "utf8"))
   expect(knip.ignoreDependencies).toContain("husky")
   for (const template of ["vite-react", "next", "monorepo", "next-monorepo"]) {
