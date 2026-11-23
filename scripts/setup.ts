@@ -120,7 +120,13 @@ export async function planApproval(
 }
 export function safe(root: string, p: string): string {
   const segments = p.split(/[\\/]/)
-  if (isAbsolute(p) || segments.includes("..") || segments.includes(".git") || !p)
+  if (
+    isAbsolute(p) ||
+    segments.includes("..") ||
+    // Windows/macOS may alias case variants; Windows also ignores trailing dots/spaces.
+    segments.some((segment) => segment.replace(/[. ]+$/g, "").toLowerCase() === ".git") ||
+    !p
+  )
     throw new Error(`不正な生成パス: ${p}`)
   const full = resolve(root, p)
   const rel = relative(root, full)

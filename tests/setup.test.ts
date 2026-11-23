@@ -230,10 +230,19 @@ test("save-config supports nested paths and never writes Git metadata", () => {
   const blocked = dir()
   const { mkdirSync } = require("node:fs") as typeof import("node:fs")
   mkdirSync(join(blocked, ".git"))
-  const result = cli(blocked, "--yes", "--apply", "--no-install", "--save-config", ".git/new.json")
-  expect(result.status).toBe(1)
-  expect(existsSync(join(blocked, ".git/new.json"))).toBe(false)
-  expect(existsSync(join(blocked, "package.json"))).toBe(false)
+  for (const path of [
+    ".git/new.json",
+    ".GIT/new.json",
+    "nested/.Git/new.json",
+    ".git./new.json",
+    ".Git /new.json",
+  ]) {
+    const result = cli(blocked, "--yes", "--apply", "--no-install", "--save-config", path)
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain("不正な生成パス")
+    expect(existsSync(join(blocked, path))).toBe(false)
+    expect(existsSync(join(blocked, "package.json"))).toBe(false)
+  }
 })
 
 test("a symlinked backup directory cannot receive the existing package manifest", () => {
