@@ -45,7 +45,15 @@ test("short functions and non-function files pass", () => {
 })
 
 test("the repository scripts satisfy the limit", () => {
-  expect(checkFunctionLength()).toBe(0)
+  const logs: string[] = []
+  const original = console.log
+  console.log = (message: string) => logs.push(message)
+  try {
+    expect(checkFunctionLength()).toBe(0)
+  } finally {
+    console.log = original
+  }
+  expect(logs.join("\n")).toContain(`上限 ${MAX_LINES} 行`)
 })
 
 test("arrow functions and object methods are measured", async () => {

@@ -20,7 +20,15 @@ function fixture(files: Record<string, string>) {
 }
 
 posix("the repository scripts are POSIX sh without bashisms", () => {
-  expect(checkShell()).toBe(0)
+  const logs: string[] = []
+  const original = console.log
+  console.log = (message: string) => logs.push(message)
+  try {
+    expect(checkShell()).toBe(0)
+  } finally {
+    console.log = original
+  }
+  expect(logs.join("\n")).toContain("9 ファイル")
 })
 
 posix("bashisms and a non-POSIX shebang are rejected", () => {
