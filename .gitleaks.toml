@@ -1,6 +1,8 @@
 # gitleaks 設定（分野を問わない汎用セット）
 # 既定ルールを使い、明らかなダミー値だけを許可リストに入れる。
 # 許可を広げすぎると検出漏れになるため、追加は理由を残して最小限にする。
+# Markdown を paths で丸ごと除外しない（README や docs/ に貼られたトークンを検出するため）。
+# ''' ''' は TOML のリテラル文字列なので、正規表現のエスケープはバックスラッシュ 1 つで書く。
 
 title = "gitleaks config"
 
@@ -11,7 +13,6 @@ useDefault = true
 description = "プレースホルダー・ダミー値・生成物のみ許可"
 paths = [
   '''\.gitleaks\.toml''',
-  '''\.md$''',
   '''\.example$''',
   '''\.template$''',
 ]
