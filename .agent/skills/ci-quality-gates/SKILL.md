@@ -33,10 +33,13 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | `scripts/check_*.ts` | 文書・言語・コミットメッセージ・品質の検査（Bun / TypeScript） |
 | `package.json` / `bun.lock` | ランタイム・依存・検証コマンドの正本 |
 | `.githooks/` | `pre-commit` で `bun run check`、`commit-msg` で言語と Conventional Commits |
-| `.github/workflows/ci.yml` | 4 ジョブ: `check`（`bun run check` + `bun run knip`）/ `secrets`（gitleaks）/ `workflow-audit`（actionlint / zizmor）/ `osv-lockfile`（OSV-Scanner） |
-| `.github/workflows/release.yml` | Bun の check 後にタグ付きリリース |
+| `.github/workflows/ci.yml` | main への push・PR・手動。4 ジョブ: `check`（`bun run check` + `bun run knip`）/ `secrets`（gitleaks）/ `workflow-audit`（actionlint / zizmor-action）/ `osv-pr`（OSV-Scanner の PR 差分・新規脆弱性のみ）。PR の連続 push は前の実行を打ち切る |
+| `.github/workflows/release.yml` | `verify`（CI と同じ check + knip、読み取り専用）→ `release`（`contents: write` はこのジョブだけ）の分離 |
 | `.github/workflows/dependency-review.yml` | Dependency graph が有効なときの PR 差分検査 |
-| `.github/workflows/osv-scan.yml` | 毎週・手動の `bun.lock` 全体スキャン |
+| `.github/workflows/osv-scan.yml` | main への push（`bun.lock` 変更時）・毎週・手動の `bun.lock` 全体スキャン（SARIF を Code scanning へ） |
+| `.github/workflows/dependency-submission.yml` | `bun.lock` を Dependency graph へ提出（推移依存の Dependabot alert 用） |
+| `.github/workflows/dependabot-auto-merge.yml` | Dependabot の PR を全チェック成功後に squash merge |
+| `.github/dependabot.yml` | `github-actions` と `bun` を月次・cooldown 7 日・グループ化して更新 |
 
 `bun run hooks:install` は Git の `core.hooksPath` を設定する。**既存の commit-msg / pre-commit フックがある場合は停止**し、手動で統合する。この作業環境の trailer フックは上書きしない。
 
