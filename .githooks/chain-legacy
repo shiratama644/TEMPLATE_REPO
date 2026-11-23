@@ -1,0 +1,18 @@
+#!/bin/sh
+# Preserve pre-existing hooks in the Git common directory when core.hooksPath points here.
+set -eu
+name="$1"
+shift
+case "$name" in pre-commit|commit-msg) ;; *) echo 'NG: unknown legacy hook' >&2; exit 1 ;; esac
+if [ "${TEMPLATE_LEGACY_HOOK_ACTIVE:-}" = "$name" ]; then
+  echo "NG: recursive legacy $name hook" >&2
+  exit 1
+fi
+common=$(git rev-parse --git-common-dir)
+case "$common" in
+  /*) legacy="$common/hooks/$name" ;;
+  *) legacy="$(git rev-parse --show-toplevel)/$common/hooks/$name" ;;
+esac
+if [ -x "$legacy" ]; then
+  TEMPLATE_LEGACY_HOOK_ACTIVE="$name" "$legacy" "$@"
+fi

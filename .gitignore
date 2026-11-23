@@ -4,11 +4,18 @@
 !.env.example
 !.env.template
 
-# Logs / temp（リポジトリ直下のみ。.agent/logs/ は実行記録として追跡する）
+# Logs / temp（作業用ログは Git に含めない）
 *.log
+.agent/logs/
 /logs/
 /tmp/
 /temp/
+# ローカルの生成サイト・実動作検証（公開テンプレートには含めない）
+/.tmp/
+
+# Python（scripts/ の検証スクリプトを import したときに出る生成物）
+__pycache__/
+*.py[cod]
 
 # OS
 .DS_Store
@@ -28,3 +35,15 @@ Thumbs.db
 # Agent auto memory (if not committed)
 .agent/agent-memory/
 .claude/projects/
+
+# Bun / setup
+node_modules/
+.bun/
+.setup-backup/
+.setup-pkg-*.tmp
+
+# Generated language runtimes and build outputs
+.venv/
+target/
+.next/
+.turbo/

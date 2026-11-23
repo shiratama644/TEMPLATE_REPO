@@ -63,7 +63,7 @@ function expire(item, current_time):
 | Go | `time.Now`、`math/rand` のグローバル関数 |
 | Java | `new Random()`、`System.currentTimeMillis` |
 
-- 検出は `make check` の一段（`PROJECT_CHECKS`）に加えてよい。
+- 検出は `bun run check` の一段（`scripts/check.ts`）に加えてよい。
 - 対象は決定論が必要な層だけに絞る。すべてのファイルに掛けると、正当な用途まで止めてしまう。
 
 ## よくある失敗

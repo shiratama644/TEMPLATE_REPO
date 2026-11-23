@@ -1,2 +1,0 @@
-# Mermaid → PNG（make diagrams）。テンプレート本体の実行時依存ではない。
-mermaidx==0.9.5

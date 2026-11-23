@@ -32,7 +32,9 @@ git log -5 --oneline
 
 ```bash
 git fetch origin <現在のブランチ>
-git reset --hard FETCH_HEAD   # この場合のみ --hard 許可（§4.1.1例外）
+# FETCH_HEAD の全パス・内容・symlink・実行権限と作業ツリーを照合。
+# 余分な未追跡ファイルや未コミット変更があれば停止する。
+git reset --hard FETCH_HEAD   # 全件一致を確認した再構築時のみ
 # 以降は AGENTS.md §6.1 の環境セットアップ手順を実行
 ```
 
@@ -47,6 +49,7 @@ git reset --hard FETCH_HEAD   # この場合のみ --hard 許可（§4.1.1例外
 ## 3. 厳禁なGit操作（明示的指示がない限り禁止）
 
 - `git reset --hard` / `git clean -fd`（例外はSandbox再構築時の `reset --hard FETCH_HEAD` のみ）
+  - 例外は `block-dangerous-git.sh` と `settings.json` に実装済み。`FETCH_HEAD` 形だけを通し、他の `reset --hard` はブロックする
 - `git rebase` / `git commit --amend`
 - `git push --force` / `--force-with-lease`
 

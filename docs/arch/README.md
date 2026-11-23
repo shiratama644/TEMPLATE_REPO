@@ -1,6 +1,6 @@
 # docs/arch — 仕様書
 
-ここは **どう作業するか・どういう構成か** の正本です。進捗は `../task-list.md`、個別の計画は `../planning/`。
+ここはテンプレートの **目的と構成** の説明です。派生先では利用者の仕様に書き換えてください。進捗は `../task-list.md`、個別の計画は `../planning/`。
 
 TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進捗管理・ドキュメントの土台**を提供するテンプレートです。ソフトウェア開発に限らず、文書作成・調査・データ整理・設定作業など、分野を問わず使えることを目指しています。
 
@@ -19,7 +19,7 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 | 構成と読み込みの流れを知りたい | [architecture.md](./architecture.md) |
 | 新規プロジェクトを実プロジェクトへ合わせたい | [`../../.agent/skills/project-init/SKILL.md`](../../.agent/skills/project-init/SKILL.md) |
 | なぜそうなっているか知りたい | [`../adr/`](../adr/README.md) |
-| 今どの段階か知りたい | [milestones.md](./milestones.md) → `../task-list.md` |
+| 派生プロジェクトの進捗を知りたい | [`../task-list.md`](../task-list.md) |
 
 ## 仕様書一覧
 
@@ -27,4 +27,3 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 |---|---|
 | [product.md](./product.md) | テンプレートの目的・対象・用語 |
 | [architecture.md](./architecture.md) | ディレクトリ構成・Agent の読み込みの流れ・責務の分担 |
-| [milestones.md](./milestones.md) | 段階ごとの完了条件 |

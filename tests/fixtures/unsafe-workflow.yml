@@ -1,0 +1,7 @@
+name: Unsafe workflow fixture
+on: issues
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo '${{ github.event.issue.title }}'

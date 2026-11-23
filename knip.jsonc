@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@6.43.0/schema.json",
+  "entry": ["scripts/*.ts", "tests/*.test.ts", ".agent/workflows/*.js"],
+  "ignore": [
+    // External Lace example, not compiled with this repository (imports ~/threads).
+    ".agent/skills/systematic-debugging/condition-based-waiting-example.ts"
+  ],
+  "ignoreDependencies": [
+    // scripts/check_agents.ts invokes the patched CLI via an explicit node_modules path.
+    "agents-md-lint"
+  ],
+  "ignoreBinaries": [
+    // tests/setup.test.ts optionally probes util-linux script(1), not an npm binary.
+    "script"
+  ]
+}

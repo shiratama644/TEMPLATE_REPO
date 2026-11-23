@@ -1,0 +1,9 @@
+name: Invalid workflow fixture
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invalid step
+        unexpected-key: true
+        run: echo test
