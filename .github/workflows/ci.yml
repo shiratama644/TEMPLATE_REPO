@@ -121,6 +121,9 @@ jobs:
     permissions:
       contents: read
       actions: read # reusable workflow uploads the scan artifact
+      # reusable workflow の job が宣言するため呼び出し側も必要（宣言が足りないと起動時に invalid workflow）。
+      # upload-sarif: false なので実際には使われない。
+      security-events: write
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
     with:
       scan-args: |-
