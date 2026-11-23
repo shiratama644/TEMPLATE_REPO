@@ -80,23 +80,41 @@ jobs:
             exit 1
           fi
           grep -q 'unexpected key' /tmp/actionlint-negative.log || { cat /tmp/actionlint-negative.log; exit 1; }
-      - name: Install pinned zizmor
+      # zizmor-action はハッシュ検証済みの wheel を PyPI から取り、版は action の版に同梱される lock で決まる
+      # （Dependabot が action の SHA を更新する）。GHAS (SARIF) モードは findings で失敗しないので off にする。
+      - name: Audit workflows (zizmor, offline, fails on findings)
+        uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3 # v0.9.0
+        with:
+          inputs: .
+          online-audits: false
+          strict-collection: true
+          min-severity: medium
+          advanced-security: false
+          annotations: true
+          color: false
+      - name: zizmor must reject the unsafe fixture (this step is expected to fail)
+        id: zizmor-negative
+        continue-on-error: true
+        uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3 # v0.9.0
+        with:
+          inputs: tests/fixtures/unsafe-workflow.yml
+          online-audits: false
+          min-severity: medium
+          advanced-security: false
+          annotations: false
+          color: false
+          fail-on-no-inputs: false
+      - name: Assert the unsafe fixture was rejected
         shell: bash
-        run: |
-          python3 -m venv "$RUNNER_TEMP/zizmor"
-          "$RUNNER_TEMP/zizmor/bin/pip" install 'zizmor==1.31.1'
-          echo "$RUNNER_TEMP/zizmor/bin" >> "$GITHUB_PATH"
-      - name: Audit workflows and negative fixture (offline)
-        shell: bash
+        env:
+          OUTCOME: ${{ steps.zizmor-negative.outcome }}
         run: |
           set -euo pipefail
-          zizmor --version
-          zizmor --offline --strict-collection --min-severity medium .
-          if zizmor --offline --min-severity medium tests/fixtures/unsafe-workflow.yml > /tmp/zizmor-negative.log 2>&1; then
-            echo '::error::zizmor accepted the unsafe workflow'
+          if [[ "$OUTCOME" != "failure" ]]; then
+            echo '::error::zizmor accepted the unsafe workflow (outcome: '"$OUTCOME"')'
             exit 1
           fi
-          grep -q 'template-injection' /tmp/zizmor-negative.log || { cat /tmp/zizmor-negative.log; exit 1; }
+          echo 'zizmor rejected the unsafe workflow as expected'
   # PR では base との差分で「新規」の脆弱性だけを失敗させる。全体スキャンは osv-scan.yml（main / 毎週）。
   osv-pr:
     name: OSV bun.lock 新規脆弱性（PR 差分）
