@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process"
 import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
-import { safe } from "./setup.ts"
+import { safe } from "./safe-path.ts"
 import { scaffold, type Template, templates } from "./setup-manifest.ts"
 
 type Result = { check: string; status: "passed" | "failed" | "blocked"; detail?: string }
@@ -78,118 +78,135 @@ function runCommand(cmd: string, args: string[], dir: string, env = process.env)
         : (result.stderr || result.error?.message || `exit ${result.status}`).trim().slice(0, 600),
   } as Result
 }
+/** Go / Rust / Python のビルド。対象外のテンプレートでは undefined を返す。 */
+function buildNative(root: string, template: Template, temp: string): Result | undefined {
+  if (template === "go-cli" || template === "go-http") {
+    if (!Bun.which("go")) return { check: "build", status: "blocked", detail: "go がありません" }
+    return runCommand("go", ["build", "-o", join(temp, "app"), "."], root, {
+      ...process.env,
+      GOPROXY: "off",
+      GOSUMDB: "off",
+    })
+  }
+  if (template === "rust-cli" || template === "rust-axum") {
+    if (!Bun.which("cargo"))
+      return { check: "build", status: "blocked", detail: "cargo がありません" }
+    const result = runCommand("cargo", ["check", "--offline"], root, {
+      ...process.env,
+      CARGO_TARGET_DIR: join(temp, "target"),
+    })
+    if (
+      result.status === "failed" &&
+      /offline mode|no matching package named|attempting to make an HTTP request/.test(
+        result.detail || "",
+      )
+    )
+      return {
+        check: "build",
+        status: "blocked",
+        detail: "必要な Rust 依存がローカルにありません",
+      }
+    return result
+  }
+  if (template === "python-cli" || template === "python-fastapi") {
+    const executable = process.platform === "win32" ? "python" : "python3"
+    if (!Bun.which(executable))
+      return { check: "build", status: "blocked", detail: `${executable} がありません` }
+    if (template === "python-cli") return runCommand(executable, ["-B", "main.py"], root)
+    const venv = join(
+      root,
+      ".venv",
+      process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
+    )
+    if (
+      lstatSync(join(root, ".venv"), { throwIfNoEntry: false })?.isSymbolicLink() ||
+      !existsSync(venv)
+    )
+      return {
+        check: "build",
+        status: "blocked",
+        detail: ".venv の Python がありません（依存は自動導入しません）",
+      }
+    return runCommand(venv, ["-B", "-c", "from app import app; assert app is not None"], root)
+  }
+  return undefined
+}
+/** 生成時の標準 build スクリプトかどうか。任意のスクリプトは実行しない。 */
+function checkBuildScripts(
+  root: string,
+  template: Template,
+  pkg: Record<string, unknown>,
+): Result | undefined {
+  const scripts = (pkg.scripts || {}) as Record<string, unknown>
+  if ("prebuild" in scripts || "postbuild" in scripts)
+    return {
+      check: "build",
+      status: "blocked",
+      detail: "追加の build ライフサイクルスクリプトは実行しません",
+    }
+  const base = scaffold(template, "verify-project").scripts?.build
+  const libraryBuild =
+    template === "plain-ts" &&
+    typeof scripts.build === "string" &&
+    scripts.build ===
+      `${base} && bun x tsc --ignoreConfig --declaration --emitDeclarationOnly --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler src/index.ts`
+  if (scripts.build !== base && !libraryBuild)
+    return {
+      check: "build",
+      status: "blocked",
+      detail: "生成時の標準 build スクリプトではありません。任意のスクリプトは実行しません",
+    }
+  const tool =
+    template === "vite-react" || template === "monorepo"
+      ? "vite"
+      : template === "next" || template === "next-monorepo"
+        ? "next"
+        : undefined
+  const dependency = template.includes("monorepo") ? "turbo" : tool
+  if (dependency && !existsSync(join(root, "node_modules", dependency)))
+    return {
+      check: "build",
+      status: "blocked",
+      detail: `${dependency} がローカルにありません（依存は自動導入しません）`,
+    }
+  if (template.includes("monorepo")) {
+    const nested = JSON.parse(readFileSync(join(root, "apps/web/package.json"), "utf8")) as Record<
+      string,
+      unknown
+    >
+    const expected = scaffold(template === "monorepo" ? "vite-react" : "next", "verify-project")
+      .scripts?.build
+    const nestedScripts = nested.scripts as Record<string, unknown> | undefined
+    if (nestedScripts && ("prebuild" in nestedScripts || "postbuild" in nestedScripts))
+      return {
+        check: "build",
+        status: "blocked",
+        detail: "apps/web の追加 build スクリプトは実行しません",
+      }
+    if (nestedScripts?.build !== expected)
+      return {
+        check: "build",
+        status: "blocked",
+        detail: "apps/web の build スクリプトが標準と異なります",
+      }
+    if (
+      tool &&
+      !existsSync(join(root, "node_modules", tool)) &&
+      !existsSync(join(root, "apps/web/node_modules", tool))
+    )
+      return { check: "build", status: "blocked", detail: `${tool} がローカルにありません` }
+  }
+  if (libraryBuild && !existsSync(join(root, "node_modules", "typescript")))
+    return { check: "build", status: "blocked", detail: "typescript がローカルにありません" }
+  return undefined
+}
 function buildProject(root: string, template: Template, pkg: Record<string, unknown>): Result {
   const temp = mkdtempSync(join(tmpdir(), "verify-generated-"))
   try {
-    if (template === "go-cli" || template === "go-http") {
-      if (!Bun.which("go")) return { check: "build", status: "blocked", detail: "go がありません" }
-      return runCommand("go", ["build", "-o", join(temp, "app"), "."], root, {
-        ...process.env,
-        GOPROXY: "off",
-        GOSUMDB: "off",
-      })
-    }
-    if (template === "rust-cli" || template === "rust-axum") {
-      if (!Bun.which("cargo"))
-        return { check: "build", status: "blocked", detail: "cargo がありません" }
-      const result = runCommand("cargo", ["check", "--offline"], root, {
-        ...process.env,
-        CARGO_TARGET_DIR: join(temp, "target"),
-      })
-      if (
-        result.status === "failed" &&
-        /offline mode|no matching package named|attempting to make an HTTP request/.test(
-          result.detail || "",
-        )
-      )
-        return {
-          check: "build",
-          status: "blocked",
-          detail: "必要な Rust 依存がローカルにありません",
-        }
-      return result
-    }
-    if (template === "python-cli" || template === "python-fastapi") {
-      const executable = process.platform === "win32" ? "python" : "python3"
-      if (!Bun.which(executable))
-        return { check: "build", status: "blocked", detail: `${executable} がありません` }
-      if (template === "python-cli") return runCommand(executable, ["-B", "main.py"], root)
-      const venv = join(
-        root,
-        ".venv",
-        process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
-      )
-      if (
-        lstatSync(join(root, ".venv"), { throwIfNoEntry: false })?.isSymbolicLink() ||
-        !existsSync(venv)
-      )
-        return {
-          check: "build",
-          status: "blocked",
-          detail: ".venv の Python がありません（依存は自動導入しません）",
-        }
-      return runCommand(venv, ["-B", "-c", "from app import app; assert app is not None"], root)
-    }
-    const scripts = (pkg.scripts || {}) as Record<string, unknown>
-    if ("prebuild" in scripts || "postbuild" in scripts)
-      return {
-        check: "build",
-        status: "blocked",
-        detail: "追加の build ライフサイクルスクリプトは実行しません",
-      }
-    const base = scaffold(template, "verify-project").scripts?.build
-    const libraryBuild =
-      template === "plain-ts" &&
-      typeof scripts.build === "string" &&
-      scripts.build ===
-        `${base} && bun x tsc --ignoreConfig --declaration --emitDeclarationOnly --outDir dist --target ES2022 --module ESNext --moduleResolution Bundler src/index.ts`
-    if (scripts.build !== base && !libraryBuild)
-      return {
-        check: "build",
-        status: "blocked",
-        detail: "生成時の標準 build スクリプトではありません。任意のスクリプトは実行しません",
-      }
-    const tool =
-      template === "vite-react" || template === "monorepo"
-        ? "vite"
-        : template === "next" || template === "next-monorepo"
-          ? "next"
-          : undefined
-    const dependency = template.includes("monorepo") ? "turbo" : tool
-    if (dependency && !existsSync(join(root, "node_modules", dependency)))
-      return {
-        check: "build",
-        status: "blocked",
-        detail: `${dependency} がローカルにありません（依存は自動導入しません）`,
-      }
-    if (template.includes("monorepo")) {
-      const nested = JSON.parse(
-        readFileSync(join(root, "apps/web/package.json"), "utf8"),
-      ) as Record<string, unknown>
-      const expected = scaffold(template === "monorepo" ? "vite-react" : "next", "verify-project")
-        .scripts?.build
-      const nestedScripts = nested.scripts as Record<string, unknown> | undefined
-      if (nestedScripts && ("prebuild" in nestedScripts || "postbuild" in nestedScripts))
-        return {
-          check: "build",
-          status: "blocked",
-          detail: "apps/web の追加 build スクリプトは実行しません",
-        }
-      if (nestedScripts?.build !== expected)
-        return {
-          check: "build",
-          status: "blocked",
-          detail: "apps/web の build スクリプトが標準と異なります",
-        }
-      if (
-        tool &&
-        !existsSync(join(root, "node_modules", tool)) &&
-        !existsSync(join(root, "apps/web/node_modules", tool))
-      )
-        return { check: "build", status: "blocked", detail: `${tool} がローカルにありません` }
-    }
-    if (libraryBuild && !existsSync(join(root, "node_modules", "typescript")))
-      return { check: "build", status: "blocked", detail: "typescript がローカルにありません" }
+    const native = buildNative(root, template, temp)
+    if (native) return native
+    const blocked = checkBuildScripts(root, template, pkg)
+    if (blocked) return blocked
     return runCommand("bun", ["run", "build"], root)
   } finally {
     rmSync(temp, { recursive: true, force: true })

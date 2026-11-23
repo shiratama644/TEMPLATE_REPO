@@ -7,8 +7,9 @@ import { CANCEL_SYMBOL } from "@clack/prompts"
 import { brokenLinks } from "../scripts/check-doc-links.ts"
 import { classify, findIssues, stripCommit } from "../scripts/check-language.ts"
 import { blocks, checkBlock } from "../scripts/check-mermaid.ts"
-import { detectPackageManager, planApproval } from "../scripts/setup.ts"
+import { detectPackageManager } from "../scripts/setup-env.ts"
 import { featureNames, presets, scaffold, templates } from "../scripts/setup-manifest.ts"
+import { planApproval } from "../scripts/setup-options.ts"
 import { files } from "../scripts/walk.ts"
 
 const dirs: string[] = []
@@ -308,7 +309,7 @@ test("incompatible feature choices cannot silently become no-ops", () => {
 
 test("native installation plans are isolated and remain platform-aware", () => {
   const { nativeInstallSteps } =
-    require("../scripts/setup.ts") as typeof import("../scripts/setup.ts")
+    require("../scripts/setup-env.ts") as typeof import("../scripts/setup-env.ts")
   const d = dir()
   const posix = nativeInstallSteps("python-fastapi", d, "linux")
   expect(posix[0]).toEqual(["python3", "-m", "venv", ".venv"])

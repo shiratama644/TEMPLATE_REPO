@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import { tmpdir } from "node:os"
 import { relative, resolve, sep } from "node:path"
 import fc from "fast-check"
-import { safe } from "../scripts/setup.ts"
+import { safe } from "../scripts/safe-path.ts"
 import { nameSchema, validateChoices } from "../scripts/setup-schema.ts"
 
 const root = resolve(tmpdir(), "setup-check-root")
