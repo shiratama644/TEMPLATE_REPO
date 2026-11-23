@@ -79,7 +79,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 `git status` / `git branch --show-current` / `git log -5 --oneline` を必ず実行する。未コミット変更を勝手に破棄・上書き・混入させない。
 
 #### 4.1.1 サンドボックス再構築時の復旧手順
-`git log --oneline` が起点 1 件しか返さず `git status` が大量の削除＋未追跡を示すなら再構築（**ファイルは破損していない**）。`git fetch origin <現在のブランチ>` → `git reset --hard FETCH_HEAD`（§4.3 の唯一の例外・初回のみ）→ §6.1 の手順で環境を再構築 → `git log` と検証で健全性を確認。判定ヒントは `.agent/hooks/sandbox-recovery.md`。
+`git log --oneline` が起点 1 件しか返さず `git status` が大量の削除＋未追跡を示すなら再構築の疑い。`git fetch origin <現在のブランチ>` 後にリモートの全パス・内容・symlink・実行権限と現物を照合し、余分な未追跡ファイルも無い場合だけ `git reset --hard FETCH_HEAD`（§4.3 の例外・初回のみ）を実行する。不一致なら停止し、未コミット作業を保護する。§6.1 の手順で環境を再構築し、`git log` と検証で健全性を確認。詳細は `.agent/hooks/sandbox-recovery.md`。
 
 ### 4.2 コミットルール
 - §6.1 の検証がすべて PASS した状態でのみ commit する。事前に `git status` と `git diff` で意図しないファイルの混入を確認する。

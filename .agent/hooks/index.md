@@ -29,7 +29,7 @@
 | [post-edit-verify.sh](./post-edit-verify.sh) | PostToolUse | 機密ファイル混入（`decision: block` の JSON でモデルに返す）・docs/README 目次の事後検証（警告のみ） |
 | [verify-commit.md](./verify-commit.md) | commit直前 | プロジェクト検証 + 目的達成・追加の必要作業・未実施検証の確認 |
 | [log-task.md](./log-task.md) | タスク完了時 | タスクリストに検証・未実施事項を記録 → 再利用可能な知見をスキルへ同期 |
-| [sandbox-recovery.md](./sandbox-recovery.md) | Sandbox再構築検知時 | `git fetch` → `reset --hard FETCH_HEAD`（例外的許可）→ §6.1 の環境セットアップ → 健全性確認 |
+| [sandbox-recovery.md](./sandbox-recovery.md) | Sandbox再構築検知時 | `git fetch` → 全ファイル・未追跡の照合 → 一致時のみ `reset --hard FETCH_HEAD` → §6.1 の環境セットアップ |
 
 ## 運用ルール
 

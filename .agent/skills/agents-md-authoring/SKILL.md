@@ -98,7 +98,6 @@ bun -e 'const t=await Bun.file("AGENTS.md").text(); console.log([...t].length)' 
 ```bash
 bun run agents                               # Bun 管理の版を使用
 make check                                    # 全ゲート（CI と同じ入口）
-SKIP=agents-md-lint git commit                # Node が無い環境で一時的に外す
 ```
 
 - 既定では **error のみで失敗**する（warn では失敗しない）。`--strict` は付けない。理由は日本語文書に対する英語キーワード照合の限界と、Windsurf 固有の字数上限を常に満たせるとは限らないため

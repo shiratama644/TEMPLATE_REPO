@@ -713,8 +713,12 @@ test("published docs start without the template author's completed tasks or plan
   expect(readFileSync(join(base, "task-list.md"), "utf8")).toContain(
     "現在、登録済みのタスクはありません",
   )
-  expect(readFileSync(join(base, "task-list.md"), "utf8")).not.toMatch(
-    /PUBLICPREP-1|BUGLOOP-1|PR #5/,
-  )
+  const tasks = readFileSync(join(base, "task-list.md"), "utf8")
+  const taskRows = tasks
+    .split("## タスク一覧")[1]
+    ?.split("\n")
+    .filter((line) => /^\| [A-Z][A-Z\d-]*-\d+ \|/.test(line))
+  expect(taskRows).toEqual([])
+  expect(tasks).not.toMatch(/\bPR #\d+\b/)
   expect(readdirSync(join(base, "arch"))).not.toContain("milestones.md")
 })
