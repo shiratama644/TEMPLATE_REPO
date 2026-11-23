@@ -18,14 +18,14 @@ TEMPLATE_REPO/
 ├── .gitleaks.toml         # 秘密情報検出の許可リスト
 ├── .gitignore
 ├── scripts/               # Bun の TypeScript CLI と検査
-│   ├── setup.ts / setup_manifest.ts / setup_schema.ts # 初期設定・選択肢・Zod スキーマ
-│   ├── verify_generated.ts # 生成物の静的検査・明示ビルド
-│   ├── check.ts / check_agents.ts / check_index.ts / walk.ts # 全ゲート・指示ファイル・入口整合・ファイル列挙
-│   ├── install_hooks.ts # Git フックの安全な導入
-│   ├── check_doc_links.ts # Markdown の内部リンク
-│   ├── check_mermaid.ts   # Mermaid 図の宣言
-│   ├── check_language.ts  # 日本語・英語ゲート
-│   └── check_commit.ts / conventional_commit.ts / git_report.ts # コミット形式・読み取り専用レポート
+│   ├── setup.ts / setup-manifest.ts / setup-schema.ts # 初期設定・選択肢・Zod スキーマ
+│   ├── verify-generated.ts # 生成物の静的検査・明示ビルド
+│   ├── check.ts / check-agents.ts / check-index.ts / walk.ts # 全ゲート・指示ファイル・入口整合・ファイル列挙
+│   ├── install-hooks.ts # Git フックの安全な導入
+│   ├── check-doc-links.ts # Markdown の内部リンク
+│   ├── check-mermaid.ts   # Mermaid 図の宣言
+│   ├── check-language.ts  # 日本語・英語ゲート
+│   └── check-commit.ts / conventional-commit.ts / git-report.ts # コミット形式・読み取り専用レポート
 ├── tests/                 # セットアップ・スキーマ・npm bin・CI 負例の回帰テスト
 │   └── fixtures/          # CI の負例（invalid / unsafe workflow）
 ├── .github/               # CI・リリース・依存関係レビュー・OSV スキャン・dependabot

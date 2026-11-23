@@ -2,9 +2,9 @@
 
 import { Octokit } from "@octokit/rest"
 import { simpleGit } from "simple-git"
-import { classifyCommit } from "./conventional_commit.ts"
+import { classifyCommit } from "./conventional-commit.ts"
 
-export { classifyCommit } from "./conventional_commit.ts"
+export { classifyCommit } from "./conventional-commit.ts"
 
 type Verdict = "pass" | "fail" | "unknown"
 export interface Report {

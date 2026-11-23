@@ -6,7 +6,7 @@
     ".agent/skills/systematic-debugging/condition-based-waiting-example.ts"
   ],
   "ignoreDependencies": [
-    // scripts/check_agents.ts invokes the patched CLI via an explicit node_modules path.
+    // scripts/check-agents.ts invokes the patched CLI via an explicit node_modules path.
     "agents-md-lint"
   ],
   "ignoreBinaries": [

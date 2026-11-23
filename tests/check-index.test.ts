@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
-import { checkIndex } from "../scripts/check_index.ts"
+import { checkIndex } from "../scripts/check-index.ts"
 
 const dirs: string[] = []
 afterEach(() => {

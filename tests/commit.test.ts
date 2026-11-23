@@ -11,8 +11,8 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { checkCommitFile } from "../scripts/check_commit.ts"
-import { classifyCommit, validateCommitMessage } from "../scripts/conventional_commit.ts"
+import { checkCommitFile } from "../scripts/check-commit.ts"
+import { classifyCommit, validateCommitMessage } from "../scripts/conventional-commit.ts"
 
 const dirs: string[] = []
 afterEach(() => {

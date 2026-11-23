@@ -6,7 +6,7 @@ import {
   presets,
   type Template,
   templates,
-} from "./setup_manifest.ts"
+} from "./setup-manifest.ts"
 
 const preset = z.enum(Object.keys(presets) as [Preset, ...Preset[]])
 const language = z.enum(Object.keys(templates) as [Language, ...Language[]])

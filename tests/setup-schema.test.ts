@@ -3,7 +3,7 @@ import { tmpdir } from "node:os"
 import { relative, resolve, sep } from "node:path"
 import fc from "fast-check"
 import { safe } from "../scripts/setup.ts"
-import { nameSchema, validateChoices } from "../scripts/setup_schema.ts"
+import { nameSchema, validateChoices } from "../scripts/setup-schema.ts"
 
 const root = resolve(tmpdir(), "setup-check-root")
 const segment = fc.stringMatching(/^[a-z][a-z0-9]{0,6}$/)

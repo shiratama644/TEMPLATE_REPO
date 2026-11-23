@@ -5,7 +5,7 @@ import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, statSync } fr
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { safe } from "./setup.ts"
-import { scaffold, type Template, templates } from "./setup_manifest.ts"
+import { scaffold, type Template, templates } from "./setup-manifest.ts"
 
 type Result = { check: string; status: "passed" | "failed" | "blocked"; detail?: string }
 const known = new Set<Template>(Object.values(templates).flat())

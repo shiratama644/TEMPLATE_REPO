@@ -13,8 +13,8 @@ paths:
 
 - 本文は**日本語**。コード識別子・技術固有名詞は英語のまま。
 - 使える言語は**日本語と英語のみ**（コミットメッセージも同じ）。簡体字・ハングル・キリルなどは
-  `bun run lang`（`scripts/check_language.ts`）が error で止める。日本語の表外漢字は warn として報告される。
-  判定の詳細は `scripts/check_language.ts` と `tests/setup.test.ts` の負例を参照する。
+  `bun run lang`（`scripts/check-language.ts`）が error で止める。日本語の表外漢字は warn として報告される。
+  判定の詳細は `scripts/check-language.ts` と `tests/setup.test.ts` の負例を参照する。
 - **違反例を文書に書くときはコードポイントで書く**（`U+52A8` のように）。字面で書くとその文書自身がゲートに止まる。
 - 「〜です/ます」調。計画書の完了条件などは断定形「〜する」。
 - 絵文字は既存ファイルのパターンに従う。新規の飾り絵文字は増やさない（可読性優先）。
@@ -49,6 +49,8 @@ paths:
 | ルール | `NN_kebab-case.md` または `kebab-case.md` | `project-template.md` |
 | フック手順 | `kebab-case.md` | `verify-commit.md` |
 | フックスクリプト | `kebab-case.sh` | `post-edit-verify.sh` |
+| 検査スクリプト | `kebab-case.ts` | `check-language.ts` |
+| テスト | 対象と同じ名前の `kebab-case.test.ts` | `git-report.test.ts` |
 
 ## 4. リンク規約
 

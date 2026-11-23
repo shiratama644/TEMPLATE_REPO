@@ -1,5 +1,5 @@
 import { CommitParser } from "conventional-commits-parser"
-import { stripCommit } from "./check_language.ts"
+import { stripCommit } from "./check-language.ts"
 
 // Keep this allowlist aligned with AGENTS.md §4.2 and the commit-msg hook.
 const headerPattern =

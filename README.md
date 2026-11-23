@@ -9,7 +9,7 @@ Agent の作業規約・記憶・進捗を備えた **Bun ベースのプロジ�
 | `AGENTS.md` / `.agent/` | 作業規約・スキル・フック（`.claude` / `CLAUDE.md` は symlink） |
 | `docs/` | 進捗・仕様・計画・監査の正本 |
 | `package.json` / `bun.lock` | Bun の依存とコマンド（`bun run setup`、`bun run verify:generated`、`bun run check`） |
-| `scripts/setup.ts` / `scripts/setup_manifest.ts` / `scripts/setup_schema.ts` | Clack 対話 UI、Zod 設定検証、プリセット・機能の選択、OS 導入案内 |
+| `scripts/setup.ts` / `scripts/setup-manifest.ts` / `scripts/setup-schema.ts` | Clack 対話 UI、Zod 設定検証、プリセット・機能の選択、OS 導入案内 |
 | `scripts/check_*.ts` | 文書リンク・Mermaid・日本語/英語・AGENTS.md・コミットメッセージの品質チェック |
 | `.githooks/` | Bun の検証・コミットメッセージの検査。対応する既存フックは維持して連鎖実行 |
 | `.github/workflows/` | Bun の CI（check・gitleaks・actionlint/zizmor・OSV-Scanner の PR 差分）、依存差分レビュー、`bun.lock` の依存提出、Dependabot PR の自動マージ、リリース |

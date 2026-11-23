@@ -4,11 +4,11 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { CANCEL_SYMBOL } from "@clack/prompts"
-import { brokenLinks } from "../scripts/check_doc_links.ts"
-import { classify, findIssues, stripCommit } from "../scripts/check_language.ts"
-import { blocks, checkBlock } from "../scripts/check_mermaid.ts"
+import { brokenLinks } from "../scripts/check-doc-links.ts"
+import { classify, findIssues, stripCommit } from "../scripts/check-language.ts"
+import { blocks, checkBlock } from "../scripts/check-mermaid.ts"
 import { detectPackageManager, planApproval } from "../scripts/setup.ts"
-import { featureNames, presets, scaffold, templates } from "../scripts/setup_manifest.ts"
+import { featureNames, presets, scaffold, templates } from "../scripts/setup-manifest.ts"
 import { files } from "../scripts/walk.ts"
 
 const dirs: string[] = []
@@ -363,7 +363,7 @@ test("link checker handles encoded paths, query strings and root-relative links"
 
 test("Mermaid checker reports an unclosed fenced diagram", () => {
   const { checkMermaid } =
-    require("../scripts/check_mermaid.ts") as typeof import("../scripts/check_mermaid.ts")
+    require("../scripts/check-mermaid.ts") as typeof import("../scripts/check-mermaid.ts")
   const d = dir()
   writeFileSync(join(d, "broken.md"), "```mermaid\nflowchart TD\n  A --> B\n")
   expect(checkMermaid(d)).toBe(1)

@@ -12,7 +12,7 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { installHooks } from "../scripts/install_hooks.ts"
+import { installHooks } from "../scripts/install-hooks.ts"
 
 const dirs: string[] = []
 afterEach(() => {

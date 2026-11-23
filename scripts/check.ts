@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process"
-import { checkAgents } from "./check_agents.ts"
-import { checkLinks } from "./check_doc_links.ts"
-import { checkIndex } from "./check_index.ts"
-import { checkLanguage } from "./check_language.ts"
-import { checkMermaid } from "./check_mermaid.ts"
+import { checkAgents } from "./check-agents.ts"
+import { checkLinks } from "./check-doc-links.ts"
+import { checkIndex } from "./check-index.ts"
+import { checkLanguage } from "./check-language.ts"
+import { checkMermaid } from "./check-mermaid.ts"
 
 const commands: Array<[string, () => number]> = [
   ["内部リンク", checkLinks],

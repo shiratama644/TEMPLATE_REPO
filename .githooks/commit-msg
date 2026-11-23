@@ -1,5 +1,5 @@
 #!/bin/sh
 set -eu
-bun scripts/check_language.ts --commit-msg "$1"
-bun scripts/check_commit.ts "$1"
+bun scripts/check-language.ts --commit-msg "$1"
+bun scripts/check-commit.ts "$1"
 .githooks/chain-legacy commit-msg "$@"

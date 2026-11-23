@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { assessPR, buildReport, classifyCommit, localReport } from "../scripts/git_report.ts"
+import { assessPR, buildReport, classifyCommit, localReport } from "../scripts/git-report.ts"
 
 const dirs: string[] = []
 afterEach(() => {

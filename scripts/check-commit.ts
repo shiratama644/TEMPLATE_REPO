@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs"
-import { validateCommitMessage } from "./conventional_commit.ts"
+import { validateCommitMessage } from "./conventional-commit.ts"
 
 export function checkCommitFile(path: string): number {
   try {
@@ -20,7 +20,7 @@ export function checkCommitFile(path: string): number {
 
 if (import.meta.main) {
   if (process.argv.length !== 3 || !process.argv[2]) {
-    console.error("使用方法: bun scripts/check_commit.ts <commit-message-file>")
+    console.error("使用方法: bun scripts/check-commit.ts <commit-message-file>")
     process.exitCode = 1
   } else process.exitCode = checkCommitFile(process.argv[2])
 }

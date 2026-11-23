@@ -14,7 +14,7 @@ afterEach(() => {
   for (const path of dirs.splice(0)) rmSync(path, { recursive: true, force: true })
 })
 const setup = join(import.meta.dir, "../scripts/setup.ts")
-const verify = join(import.meta.dir, "../scripts/verify_generated.ts")
+const verify = join(import.meta.dir, "../scripts/verify-generated.ts")
 const cli = (script: string, dir: string, ...args: string[]) =>
   spawnSync(process.execPath, [script, "--dir", dir, ...args], { encoding: "utf8" })
 const create = (dir: string, template: string, language: string) =>

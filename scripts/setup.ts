@@ -26,8 +26,8 @@ import {
   scaffold,
   type Template,
   templates,
-} from "./setup_manifest.ts"
-import { nameSchema, validateChoices, validateConfig } from "./setup_schema.ts"
+} from "./setup-manifest.ts"
+import { nameSchema, validateChoices, validateConfig } from "./setup-schema.ts"
 
 type Options = {
   name?: string
