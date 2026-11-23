@@ -41,7 +41,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | `.github/workflows/dependabot-auto-merge.yml` | Dependabot の PR を全チェック成功後に squash merge |
 | `.github/dependabot.yml` | `github-actions` と `bun` を月次・cooldown 7 日・グループ化して更新 |
 | `.github/SECURITY.md` | 脆弱性の報告窓口（Security タブの Report a vulnerability）。派生プロジェクトでは書き換える |
-| `docs/ops/main-ruleset.json` | `main` の ruleset 雛形（削除・force push 禁止、PR 必須、CI チェック必須）。適用は管理者 token で `gh api -X POST .../rulesets --input` （手順は `docs/ops/index.md`） |
+| `docs/ops/main-ruleset.json` | `main` の ruleset 雛形（削除・force push 禁止、PR 必須、CI チェック必須）。適用は管理者 token で `gh api -X POST .../rulesets --input`（手順は `docs/ops/index.md`）、画面で同じ内容を設定するなら `docs/ops/GITHUB_SETTINGS.md` |
 
 `bun run hooks:install` は Git の `core.hooksPath` を設定する。**既存の commit-msg / pre-commit フックがある場合は停止**し、手動で統合する。この作業環境の trailer フックは上書きしない。
 

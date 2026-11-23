@@ -28,7 +28,9 @@
 
 ## GitHub リポジトリ設定（手動で有効化）
 
-workflow だけでは担保できない設定です。管理者権限を持つアカウントで **Settings → Code security and analysis** から有効化するか、管理者 token の `gh api` で行います。Agent の token に管理者権限が無い場合は変更できず、確認だけを行って報告します。
+workflow だけでは担保できない設定です。管理者権限を持つアカウントで **Settings → Code security**（旧画面では Code security and analysis）から有効化するか、管理者 token の `gh api` で行います。Agent の token に管理者権限が無い場合は変更できず、確認だけを行って報告します。
+
+**画面から設定する場合は [GITHUB_SETTINGS.md](./GITHUB_SETTINGS.md) にクリック先・設定値・確認方法をまとめてあります。** 下の表は API で同じことをする場合の一覧です。
 
 | 設定 | 有効にするもの | 管理者 token でのコマンド |
 | :--- | :--- | :--- |
