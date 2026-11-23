@@ -172,7 +172,7 @@ Agent の**知識・定型手順**を `.agent/` に永続化し、セッショ�
 ### 8.3 入口起点のピンポイント読込（核心ワークフロー）
 - **セッション開始時**: `SessionStart` フック（`.agent/hooks/session-start.sh`）が正本の所在・ブランチ・直近 commit・未コミット変更・未完了サマリーを注入する。
 - **タスク開始時**: `.agent/hooks/pre-task.md` の手順で現状把握し、`.agent/skills/index.md` の読み方ガイドから**該当スキルだけ**を読む（全スキルを常時読み込まない）。
-- **ツール実行時**: Bash 前は `.agent/hooks/block-dangerous-git.sh`、編集前は `.agent/hooks/pre-edit-guard.sh`、編集後は `.agent/hooks/post-edit-verify.sh`。トリガー発生時は `.agent/hooks/index.md` の対応表で特定する。
+- **ツール実行時**: Bash 前は `.agent/hooks/block-dangerous-git.sh` と `.agent/hooks/block-secret-read.sh`（`.env` / `secrets` へのアクセス・再帰 `rm`）、編集前は `.agent/hooks/pre-edit-guard.sh`、編集後は `.agent/hooks/post-edit-verify.sh`。トリガー発生時は `.agent/hooks/index.md` の対応表で特定する。
 - **停止時**: `.agent/hooks/stop-verify.sh` が §5 の停止条件（working tree が clean・上流へ push 済み）を確認する。
 
 ### 8.4 記憶の同期（書き込みワークフロー）

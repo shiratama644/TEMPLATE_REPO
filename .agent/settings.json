@@ -45,7 +45,12 @@
       "WebSearch"
     ],
     "deny": [
+      "Bash(rm -r*)",
+      "Bash(rm -R*)",
+      "Bash(rm -fr*)",
+      "Bash(rm -fR*)",
       "Bash(rm -rf *)",
+      "Bash(rm --recursive*)",
       "Bash(git reset --hard)",
       "Bash(git clean -f*)",
       "Bash(git rebase)",
@@ -84,6 +89,10 @@
           {
             "type": "command",
             "command": "sh .agent/hooks/block-dangerous-git.sh"
+          },
+          {
+            "type": "command",
+            "command": "sh .agent/hooks/block-secret-read.sh"
           }
         ]
       },

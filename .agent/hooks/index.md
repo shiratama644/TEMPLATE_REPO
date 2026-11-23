@@ -14,6 +14,7 @@
 | **セッション開始時**（startup / resume / clear / compact） | [`session-start.sh`](./session-start.sh) | スクリプト（自律ルールも注入） | `settings.json` → `SessionStart` |
 | **タスク開始時**（ユーザー指示を受けた直後） | [`pre-task.md`](./pre-task.md) | 手順 | 手動（現状把握の手順） |
 | **Bash 実行前**（破壊的 git 操作の直前） | [`block-dangerous-git.sh`](./block-dangerous-git.sh) | スクリプト | `settings.json` → `PreToolUse`（matcher: Bash） |
+| **Bash 実行前**（`.env` / `secrets` へのアクセス・`rm` の再帰削除の直前） | [`block-secret-read.sh`](./block-secret-read.sh) | スクリプト | `settings.json` → `PreToolUse`（matcher: Bash） |
 | **編集前**（Edit/Write前） | [`pre-edit-guard.sh`](./pre-edit-guard.sh) | スクリプト | `settings.json` → `PreToolUse` |
 | **編集後**（Edit/Write後） | [`post-edit-verify.sh`](./post-edit-verify.sh) | スクリプト | `settings.json` → `PostToolUse` |
 | **停止時**（回答を終える直前） | [`stop-verify.sh`](./stop-verify.sh) | スクリプト | `settings.json` → `Stop` |
@@ -26,6 +27,7 @@
 | ファイル | 実行トリガー | 対象 / 内容 |
 | :--- | :--- | :--- |
 | [pre-task.md](./pre-task.md) | タスク開始時 | 現状把握 → 目的・完了条件・不足作業・事前確認が必要な境界を特定 → 必要スキルをピンポイント読込 |
+| [block-secret-read.sh](./block-secret-read.sh) | PreToolUse | Bash で `.env` / `.env.*`（雛形を除く）や `secrets` を参照するコマンド、`rm` の再帰フラグ（`git rm -r` は除く）をブロック（`permissionDecision: deny` の JSON）。`Read(.env)` / `Read(**/secrets/**)` の deny を Bash 経由で迂回させない |
 | [pre-edit-guard.sh](./pre-edit-guard.sh) | PreToolUse | 編集禁止領域（.git/, node_modules/, dist/, build/, coverage/ 等の生成物）への変更をブロック（`permissionDecision: deny` の JSON） |
 | [post-edit-verify.sh](./post-edit-verify.sh) | PostToolUse | 機密ファイル混入（`decision: block` の JSON でモデルに返す）・docs/README 目次の事後検証（警告のみ） |
 | [stop-verify.sh](./stop-verify.sh) | Stop | `AGENTS.md §5` の停止条件（working tree が clean・上流へ push 済み）を確認し、未了なら `decision: block` の JSON でモデルに返す |
@@ -43,7 +45,7 @@
   - `exit 2` = **ブロッキングエラー**。stderr がモデルに返る（PreToolUse だけでなく PostToolUse・Stop 等でも意味を持つ）
   - その他の非 0 = **非ブロッキングエラー**。stderr はユーザーにしか表示されず、モデルには届かない
   - 本リポジトリのフックは判定を **JSON で返して `exit 0`** する（exit 2 と JSON は混ぜない。exit 2 のとき JSON は無視される）
-    - PreToolUse（[`block-dangerous-git.sh`](./block-dangerous-git.sh) / [`pre-edit-guard.sh`](./pre-edit-guard.sh)）: `hookSpecificOutput.permissionDecision` = `deny`（`allow` / `ask` / `defer` も可）＋ `permissionDecisionReason`。※ PreToolUse の top-level `decision` / `reason` は**非推奨**
+    - PreToolUse（[`block-dangerous-git.sh`](./block-dangerous-git.sh) / [`block-secret-read.sh`](./block-secret-read.sh) / [`pre-edit-guard.sh`](./pre-edit-guard.sh)）: `hookSpecificOutput.permissionDecision` = `deny`（`allow` / `ask` / `defer` も可）＋ `permissionDecisionReason`。※ PreToolUse の top-level `decision` / `reason` は**非推奨**
     - PostToolUse（[`post-edit-verify.sh`](./post-edit-verify.sh)）: top-level `decision` = `block` ＋ `reason`。理由がモデルに返るのでモデル自身が修正できる
     - Stop（[`stop-verify.sh`](./stop-verify.sh)）: top-level `decision` = `block` ＋ `reason`。`stop_hook_active` や `STOP_VERIFY=off` のときは再帰しない
   - 手動実行での判定は exit code ではなく**出力の JSON** で見る（`"permissionDecision":"deny"` / `"decision":"block"`）。exit code は常に 0

@@ -23,6 +23,7 @@
 │   ├── index.md
 │   ├── session-start.sh       # SessionStart: 作業状態の注入
 │   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
+│   ├── block-secret-read.sh   # PreToolUse(Bash): .env / secrets へのアクセスと再帰 rm のブロック
 │   ├── pre-edit-guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
 │   ├── post-edit-verify.sh    # PostToolUse: 事後検証
 │   └── stop-verify.sh         # Stop: §5 の停止条件（clean・push 済み）を確認
@@ -65,6 +66,7 @@
 |---|---|---|---|
 | `SessionStart` | `startup\|resume\|clear\|compact` | `hooks/session-start.sh` | 正本と自律ルール（目的・安全境界・報告）、ブランチ・直近コミット・未コミット変更・未完了サマリーを注入 |
 | `PreToolUse` | `Bash` | `hooks/block-dangerous-git.sh` | force push・`reset --hard`・main への push 等をブロック（`permissionDecision: deny` の JSON） |
+| `PreToolUse` | `Bash` | `hooks/block-secret-read.sh` | `cat .env` 等、`.env` / `secrets` を参照するコマンドと `rm` の再帰削除をブロック（`Read(.env)` の deny を Bash で迂回させない） |
 | `PreToolUse` | `Edit\|MultiEdit\|Write` | `hooks/pre-edit-guard.sh` | 編集禁止領域（`.git/`・依存・生成物）をブロック |
 | `PostToolUse` | `Edit\|MultiEdit\|Write` | `hooks/post-edit-verify.sh` | 編集後の事後検証 |
 | `Stop` | — | `hooks/stop-verify.sh` | `AGENTS.md §5` の停止条件（working tree が clean・上流へ push 済み）を確認 |
