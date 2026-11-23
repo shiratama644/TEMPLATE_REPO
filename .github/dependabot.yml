@@ -1,10 +1,31 @@
-# GitHub Actions の版を定期的に更新する（ecosystem を問わない）。
-# パッケージ依存の更新は、プロジェクトの技術選定後に AGENTS.md §6.1 を見て追加する。
+# GitHub Actions の版と Bun の依存を月次で更新する。リリースから 7 日は待つ（cooldown）。
+# groups で 1 PR にまとめる。security 更新は cooldown の対象外（即時）なので別グループにする。
+# Bun は version 更新のみ対応（security 更新 PR は出ない）。推移依存の alert は
+# dependency-submission.yml が bun.lock を Dependency graph へ提出して担保する。
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     cooldown:
       default-days: 7
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
+      github-actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      bun:
+        patterns:
+          - "*"
