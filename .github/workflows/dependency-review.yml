@@ -10,6 +10,11 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # 同じ PR の連続 push は前の実行を打ち切る
+  group: dependency-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   dependency-review:
     name: 依存関係の差分レビュー

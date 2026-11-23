@@ -1,13 +1,16 @@
 name: CI
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # PR は番号ごとに 1 実行（push と PR で同じ commit が競合しない）。main への push は打ち切らない。
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   check:
     name: bun run check（全ゲート）
@@ -51,6 +54,8 @@ jobs:
     name: actionlint / zizmor
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -92,18 +97,15 @@ jobs:
             exit 1
           fi
           grep -q 'template-injection' /tmp/zizmor-negative.log || { cat /tmp/zizmor-negative.log; exit 1; }
-  osv-lockfile:
-    name: OSV bun.lock full scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  # PR では base との差分で「新規」の脆弱性だけを失敗させる。全体スキャンは osv-scan.yml（main / 毎週）。
+  osv-pr:
+    name: OSV bun.lock 新規脆弱性（PR 差分）
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - name: Scan bun.lock with OSV-Scanner v2.7.0
-        uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
-        with:
-          scan-args: |-
-            --lockfile=bun.lock
+      actions: read # reusable workflow uploads the scan artifact
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+    with:
+      scan-args: |-
+        --lockfile=bun.lock
+      upload-sarif: false
+      fail-on-vuln: true
