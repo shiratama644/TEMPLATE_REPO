@@ -126,7 +126,7 @@ export function scaffold(template: Template, name: string): Scaffold {
         typescript: "^6.0.0",
         "@types/react": "^19.0.0",
         "@types/react-dom": "^19.0.0",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
       },
       scripts: { dev: "bun x vite", build: "bun x vite build", preview: "bun x vite preview" },
     }
@@ -143,7 +143,7 @@ export function scaffold(template: Template, name: string): Scaffold {
         typescript: "^6.0.0",
         "@types/react": "^19.0.0",
         "@types/react-dom": "^19.0.0",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
       },
       scripts: { dev: "bun x next dev", build: "bun x next build", start: "bun x next start" },
     }

@@ -33,7 +33,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | `scripts/check_*.ts` | 文書・言語・コミットメッセージ・品質の検査（Bun / TypeScript） |
 | `package.json` / `bun.lock` | ランタイム・依存・検証コマンドの正本 |
 | `.githooks/` | `pre-commit` で `bun run check`、`commit-msg` で言語と Conventional Commits |
-| `.github/workflows/ci.yml` | main への push・PR・手動。4 ジョブ: `check`（`bun run check` + `bun run knip`）/ `secrets`（gitleaks）/ `workflow-audit`（actionlint / zizmor-action）/ `osv-pr`（OSV-Scanner の PR 差分・新規脆弱性のみ）。PR の連続 push は前の実行を打ち切る |
+| `.github/workflows/ci.yml` | main への push・PR・merge queue・手動。4 ジョブ: `check`（`bun run check` + `bun run knip`）/ `secrets`（gitleaks）/ `workflow-audit`（actionlint / zizmor-action）/ `osv-pr`（OSV-Scanner の PR 差分・新規脆弱性のみ）。PR の連続 push は前の実行を打ち切る |
 | `.github/workflows/release.yml` | `verify`（CI と同じ check + knip、読み取り専用）→ `release`（`contents: write` はこのジョブだけ）の分離 |
 | `.github/workflows/dependency-review.yml` | Dependency graph が有効なときの PR 差分検査 |
 | `.github/workflows/osv-scan.yml` | main への push（`bun.lock` 変更時）・毎週・手動の `bun.lock` 全体スキャン（SARIF を Code scanning へ） |

@@ -18,7 +18,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: "22" # npm bin の Node 実行経路を回帰テストする
+          node-version: "24" # npm bin の Node 実行経路を回帰テストする
           package-manager-cache: false # リリースではキャッシュに依存しない（setup-bun の no-cache と同じ）
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
@@ -50,4 +50,9 @@ jobs:
       - name: GitHub Release を作成
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+        # タグにハイフンが入る版（v1.2.3-rc.1 など）は pre-release として作成する。
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then args+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes ${args[@]+"${args[@]}"}
