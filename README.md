@@ -77,6 +77,7 @@ bun run check                                 # CI と同じ入口（型・単�
 - `fast-check` は開発用依存で、名前・パス保護の再現可能な生成テストに使います（生成先アプリへ自動追加はしません）。
 - `agents-md-lint@1.0.1` は npm bin の無出力成功を防ぐ依存パッチを Bun の `patchedDependencies` で適用します。`bun install --frozen-lockfile` 後に利用してください。`bun run check` の回帰テストでは Node.js 18 以降で npm bin を起動します（上流の npm パッケージ自体には未反映）。
 - 進捗の正本は `docs/task-list.md`。検証結果と成果物の証拠を残します。
+- 脆弱性の報告窓口は [`.github/SECURITY.md`](.github/SECURITY.md)（派生プロジェクトでは書き換える）。Dependabot alerts・secret scanning・`main` の ruleset など GitHub 側の手動設定は [`docs/ops/index.md`](docs/ops/index.md) に手順と雛形があります。Agent は `.env` / `secrets/**` を読み取らず、再帰的な `rm` も実行しません（`.agent/hooks/block-secret-read.sh`）。
 - このテンプレートの使い方は [`.agent/skills/project-init/SKILL.md`](.agent/skills/project-init/SKILL.md) も参照してください。
 
 ## ドキュメントの探し方

@@ -10,7 +10,7 @@
 
 ## 現在の内容
 
-品質ゲートと読み取り専用レポートの実行方法を以下に記載します。
+品質ゲートと読み取り専用レポートの実行方法、GitHub 側の手動設定（`main` の ruleset 雛形 [`main-ruleset.json`](./main-ruleset.json) を含む）を以下に記載します。
 
 ## 品質ゲートと読み取り専用レポート
 
@@ -19,9 +19,23 @@
 - CI（`ci.yml`）は main への push・PR・手動で実行します。PR の連続 push は前の実行を打ち切り、main への push は打ち切りません。`check` ジョブは `bun run check`（`CI_REQUIRE_NATIVE=1`）と `bun run knip` を実行し、Go/Cargo を必須として実ビルドのスキップを禁止します。ローカルでは両ツールがなければ 2 テストが skip になるため、CI 成功をローカルの実行済み証拠と混同しないでください。
 - actionlint 1.7.12（配布バイナリを SHA-256 で固定）と zizmor は CI の `workflow-audit` で正常系と負例（`tests/fixtures/`）を実行します。zizmor は `zizmorcore/zizmor-action` 経由で、ハッシュ検証済みの wheel を PyPI から取ります。zizmor の版は action の版に同梱される lock で決まるので、Dependabot が action の SHA を更新したときに一緒に上がります。監査条件は通信なし（`online-audits: false`）・`strict-collection`・`min-severity: medium`・`advanced-security: false`（GHAS への SARIF 提出は findings で失敗しないため、findings でジョブを失敗させる）。actionlint のダウンロード/検査失敗、zizmor の wheel 取得失敗はジョブ失敗。
 - OSV-Scanner v2.7.0 は 2 つの役割に分かれます。PR では CI の `osv-pr`（`osv-scanner-reusable-pr.yml`）が base との差分で**新規**の脆弱性だけを失敗させます（SARIF なし）。`bun.lock` 全体は `osv-scan.yml` が main への push（`bun.lock` / `package.json` の変更時）・毎週月曜 04:23 UTC・手動で走査し、SARIF を Code scanning へ提出します（`security-events: write`。GHAS の無い private repository では `upload-sarif: false` に変えてください）。PR の dependency-review は Dependency graph 上の差分を検査する別の役割です。DB 通信不能・スキャン失敗を「脆弱性 0 件」と読まない。定期/手動 workflow はデフォルトブランチに反映された後に実行を確認すること。
-- `dependency-submission.yml` は main への push（`bun.lock` / `package.json` の変更時）・手動で `charpeni/bun-lock-submission` に `bun.lock` を Dependency graph へ提出させます。GitHub は `bun.lock` を解析しないため、推移依存の Dependabot alert はこれが出します。`contents: write` はスナップショット API に必要で、提出ジョブだけに渡します。paths フィルタ付き workflow は新規 repository の最初の push では動かないので、導入直後に 1 回は手動実行してください。Dependabot は Bun に security 更新 PR を出さないので、alert は人手または月次の version 更新で対処します。
+- `dependency-submission.yml` は main への push（`bun.lock` / `package.json` の変更時）・手動で `charpeni/bun-lock-submission` に `bun.lock` を Dependency graph へ提出させます。GitHub は `bun.lock` を解析しないため、推移依存の Dependabot alert はこれが出します。**前提**: Settings → Code security and analysis の Dependabot alerts が有効であること（無効なら提出しても alert は出ません。下の「GitHub リポジトリ設定」参照）。`contents: write` はスナップショット API に必要で、提出ジョブだけに渡します。paths フィルタ付き workflow は新規 repository の最初の push では動かないので、導入直後に 1 回は手動実行してください。Dependabot は Bun に security 更新 PR を出さないので、alert は人手または月次の version 更新で対処します。
 - `dependabot.yml` は `github-actions`（version 更新と security 更新をそれぞれ 1 グループ）と `bun`（version 更新のみ）を月次で更新し、cooldown 7 日でリリース直後の版を避けます（security 更新は cooldown の対象外）。`dependabot-auto-merge.yml` は Dependabot の PR で `CI` が成功したあと、全チェックの完了を待って squash merge します（`workflow_run` は main のこの workflow を書き込み権限で動かしますが、PR のコードを checkout も実行もしません。失敗するチェックがあれば何もせず終わります）。`main` の保護規則で必須チェックを設定している場合は、ジョブ名の変更（`OSV bun.lock full scan` → `OSV bun.lock 新規脆弱性（PR 差分）`）を反映してください。Renovate は未導入です（Bun の security 更新 PR など Dependabot で足りなくなった機能が出たら移行を検討）。
 - `release.yml` はタグ `v*.*.*` で `verify`（CI と同じ check + knip。`contents: read`）→ `release`（`gh release create --verify-tag --generate-notes`。`contents: write` はこのジョブだけ）の順に実行します。
+
+## GitHub リポジトリ設定（手動で有効化）
+
+workflow だけでは担保できない設定です。管理者権限を持つアカウントで **Settings → Code security and analysis** から有効化するか、管理者 token の `gh api` で行います。Agent の token に管理者権限が無い場合は変更できず、確認だけを行って報告します。
+
+| 設定 | 有効にするもの | 管理者 token でのコマンド |
+| :--- | :--- | :--- |
+| Dependabot alerts | `dependency-submission.yml` の提出と OSV の結果を alert として受け取る。これが無いと提出しても何も起きない | `gh api -X PUT repos/<owner>/<repo>/vulnerability-alerts` |
+| Dependabot security updates | `dependabot.yml` の `github-actions-security` group が security 更新 PR を出す | `gh api -X PUT repos/<owner>/<repo>/automated-security-fixes` |
+| Secret scanning + Push protection | 公開 repository は無料。commit / push の時点で秘密情報を止める | `gh api -X PATCH repos/<owner>/<repo> -f 'security_and_analysis[secret_scanning][status]=enabled' -f 'security_and_analysis[secret_scanning_push_protection][status]=enabled'` |
+| Private vulnerability reporting | Security タブの「Report a vulnerability」（`.github/SECURITY.md` の窓口） | `gh api -X PUT repos/<owner>/<repo>/private-vulnerability-reporting` |
+| `main` の ruleset | 削除・force push の禁止、PR の必須化、CI チェックの必須化。`AGENTS.md §2` の「main 直接 push 禁止」を GitHub 側でも強制する | `gh api -X POST repos/<owner>/<repo>/rulesets --input docs/ops/main-ruleset.json` |
+
+`main-ruleset.json` の必須チェック名は CI のジョブ名と一致させます（reusable workflow を呼ぶ job は ` / <job>` が付く）。ジョブ名を変えたら同じ変更で更新してください。`strict_required_status_checks_policy` は `false` です（Dependabot の自動マージは `gh pr checks --watch` で全チェックを待つため、branch を最新に保つ要件は設けません）。merge queue を使うときは `ci.yml` に `merge_group` トリガーを追加してください。
 
 ## コミットメッセージの形式ゲート
 
