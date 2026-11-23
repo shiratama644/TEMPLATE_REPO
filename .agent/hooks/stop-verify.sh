@@ -29,9 +29,15 @@ block() {
   block "working tree が clean ではありません（AGENTS.md §5）。commit するか、意図しない差分を取り除いてください。"
 
 UPSTREAM="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
-[ -z "$UPSTREAM" ] && block "上流ブランチが設定されていません（AGENTS.md §5 の push が未了です）。"
+if [ -z "$UPSTREAM" ]; then
+  BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [ -z "$BRANCH" ] || ! git rev-parse --verify --quiet "origin/$BRANCH" >/dev/null 2>&1; then
+    block "上流ブランチが設定されておらず、origin/${BRANCH:-?} もありません（AGENTS.md §5 の push が未了です）。"
+  fi
+  UPSTREAM="origin/$BRANCH"
+fi
 
-AHEAD="$(git rev-list --count '@{u}..HEAD' 2>/dev/null || echo 1)"
+AHEAD="$(git rev-list --count "$UPSTREAM..HEAD" 2>/dev/null || echo 1)"
 [ "$AHEAD" != "0" ] && block "未 push の commit が ${AHEAD} 件あります（AGENTS.md §5）。"
 
 if [ "${STOP_VERIFY_CHECK:-0}" = "1" ]; then
