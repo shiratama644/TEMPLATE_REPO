@@ -297,7 +297,7 @@ export function featureScaffold(features: Feature[], name: string, template: Tem
       files[".github/ISSUE_TEMPLATE/bug.md"] = "# Bug report\n\n## Reproduction\n\n## Expected\n"
     if (f === "stale-bot")
       files[".github/workflows/stale.yml"] =
-        "name: Stale\non:\n  schedule:\n    - cron: '0 0 * * 0'\npermissions:\n  issues: write\n  pull-requests: write\njobs:\n  stale:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/stale@v10\n"
+        "name: Stale\non:\n  schedule:\n    - cron: '0 0 * * 0'\npermissions:\n  issues: write\n  pull-requests: write\njobs:\n  stale:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/stale@1e223db275d687790206a7acac4d1a11bd6fe629 # v10\n"
     if (!js && f === "changesets") continue
     if (f === "changesets") {
       dev["@changesets/cli"] = "^3.0.0"
@@ -322,7 +322,7 @@ export function featureScaffold(features: Feature[], name: string, template: Tem
     }
     if (!js) continue
     if (f === "vitest") {
-      dev.vitest = "^3.0.0"
+      dev.vitest = "^4.1.12"
       scripts.test = "bun x vitest run"
     }
     if (f === "playwright") {
@@ -347,8 +347,8 @@ export function featureScaffold(features: Feature[], name: string, template: Tem
       }
     }
     if (f === "coverage") {
-      dev["@vitest/coverage-v8"] = "^3.0.0"
-      dev.vitest ??= "^3.0.0"
+      dev["@vitest/coverage-v8"] = "^4.1.12"
+      dev.vitest ??= "^4.1.12"
       scripts.coverage = "bun x vitest run --coverage"
     }
     if (f === "cspell") {
