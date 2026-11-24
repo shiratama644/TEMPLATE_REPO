@@ -61,13 +61,16 @@ export function defaultAnswers(o: Options, d: Detected): InitAnswers {
   const display = o.initName || detectedName || defaultName(d.dir)
   const year = o.licenseYear || String(new Date().getFullYear())
   const detectedDescription = ownValue(d.description)
+  // `--owner octocat/hello-world` のようにリポジトリ名を含めてもよい。所有者だけを取り出す
+  const [ownerArg, repoArg] = (o.owner ?? "").split("/")
+  const owner = ownerArg || d.owner
   return {
     name: display,
     slug: o.name || kebab(display),
     description: o.description || detectedDescription,
-    owner: o.owner ? o.owner.split("/")[0] : d.owner,
-    repo: o.owner?.includes("/") ? o.owner.split("/")[1] : o.repo || d.repo || kebab(display),
-    licenseHolder: o.licenseHolder || o.owner || d.owner,
+    owner,
+    repo: repoArg || o.repo || d.repo || kebab(display),
+    licenseHolder: o.licenseHolder || owner || d.owner,
     licenseYear: year,
     purpose: o.purpose || "",
     audience: o.audience || "",

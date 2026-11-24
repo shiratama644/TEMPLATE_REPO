@@ -117,6 +117,21 @@ test("detect finds the template, its gates and the author traces", () => {
   expect(ownValue("my-project")).toBe("my-project")
 })
 
+test("--owner accepts owner/repo without leaking the repository name into the license", () => {
+  const d = detect(fixture())
+  const a = defaultAnswers({ ...minimalOptions(d.dir), owner: "octocat/hello-world" }, d)
+  expect(a.owner).toBe("octocat")
+  expect(a.repo).toBe("hello-world")
+  expect(a.licenseHolder).toBe("octocat")
+
+  const kept = defaultAnswers(
+    { ...minimalOptions(d.dir), owner: "octocat/hello-world", licenseHolder: "Octocat" },
+    d,
+  )
+  expect(kept.licenseHolder).toBe("Octocat")
+  expect(kept.repo).toBe("hello-world")
+})
+
 test("a non-template directory is not an init target", () => {
   const dir = mkdtempSync(join(tmpdir(), "setup-init-empty-"))
   dirs.push(dir)
