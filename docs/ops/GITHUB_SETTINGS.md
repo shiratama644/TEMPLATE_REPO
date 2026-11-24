@@ -38,7 +38,14 @@ Dependency graph は public repository では常に有効なので設定は不�
 
 ### 設定後に一度だけやること
 
-`dependency-submission.yml` は `paths` フィルタ付きなので、workflow を追加した直後の push では動きません。**Actions → 「Dependency submission」→ Run workflow** を手動で 1 回実行してください。GitHub は `bun.lock` を解析しないため、これが通ると推移依存の alert が出るようになります（出ない場合は alert 0 件です）。
+**「Dependency submission」が Actions の一覧に出ないのは、workflow ファイルがまだデフォルトブランチ（`main`）に無いからです。** GitHub はデフォルトブランチに存在する workflow だけを登録するため、PR ブランチにしか無い間はメニューも CLI dispatch（`gh workflow run`）も 404 になります（2026-11-23 に実測）。
+
+`main` へ反映されれば登録され、その push で `bun.lock` / `package.json` が変わっていれば自動で実行されます。出ない場合だけ手動で実行してください。
+
+- 画面: **Actions → 「Dependency submission」→ Run workflow**（Branch は `main`）
+- CLI: `gh workflow run "Dependency Submission"` → `gh run list --workflow "Dependency Submission" --limit 1`
+
+GitHub は `bun.lock` を解析しないため、これが通ると推移依存の alert が出るようになります（出ない場合は alert 0 件です）。
 
 ## 5. `main` の ruleset
 

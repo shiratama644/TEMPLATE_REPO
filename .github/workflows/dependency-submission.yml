@@ -1,7 +1,8 @@
 # bun.lock の解決済み依存を GitHub の Dependency graph へ提出する。GitHub は bun.lock を解析しないため、
 # 提出しないと推移依存に Dependabot alert が出ない。alert はデフォルトブランチ基準なので main の push
 # （依存ファイルの変更時）と手動だけで十分。contents: write はスナップショット API に必要（このジョブだけ）。
-# paths フィルタ付き workflow は新規 repository の最初の push では動かないので、導入直後に 1 回は手動実行する。
+# workflow はデフォルトブランチに反映されて初めて登録される（PR ブランチだけの間は dispatch も 404）。
+# main への push で bun.lock / package.json が変われば自動実行。出ないときだけ手動で 1 回実行する。
 name: Dependency Submission
 on:
   push:
