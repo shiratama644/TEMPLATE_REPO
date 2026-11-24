@@ -2,7 +2,13 @@ import { afterEach, expect, test } from "bun:test"
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { parseArgs, plan, printChecks, repoFromRemote } from "../scripts/github-settings.ts"
+import {
+  parseArgs,
+  plan,
+  printChecks,
+  repoFromRemote,
+  secretVerdict,
+} from "../scripts/github-settings.ts"
 
 const dirs: string[] = []
 afterEach(() => {
@@ -24,7 +30,7 @@ function fakeGh(rulesets = "[]") {
       '  *"/rules/branches/main")',
       '    printf \'[{"type":"deletion"},{"type":"non_fast_forward"},{"type":"pull_request"},{"type":"required_status_checks"}]\\n\' ;;',
       '  *"security_and_analysis"*)',
-      '    printf \'{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}\\n\' ;;',
+      '    printf \'{"private":false,"analysis":{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}}\\n\' ;;',
       '  *"private-vulnerability-reporting"*) printf \'{"enabled":true}\\n\' ;;',
       `  *"rulesets"*) printf '${rulesets}\\n' ;;`,
       "esac",
@@ -121,7 +127,7 @@ test("--check reports a repository that is not configured yet", () => {
   })
   expect(r.exitCode).toBe(1)
   expect(r.stdout.toString()).toContain("管理者権限が必要です")
-  expect(r.stdout.toString()).toContain("未達成")
+  expect(r.stdout.toString()).toContain("確認できませんでした")
 })
 
 test("plan chooses create or update from the existing ruleset", () => {
@@ -152,6 +158,27 @@ test("printChecks reports the number of unmet items", () => {
     console.log = original
   }
   expect(logs.join("\n")).toContain("OK  A: 有効")
-  expect(logs.join("\n")).toContain("NG  B: 取得できませんでした")
-  expect(logs.at(-1)).toContain("1 件が未達成です")
+  expect(logs.join("\n")).toContain("??  B: 取得できませんでした")
+  expect(logs.at(-1)).toContain("1 件は確認できませんでした")
+})
+
+test("secret scanning verdict accounts for public repositories", () => {
+  expect(secretVerdict({ private: false })).toEqual({
+    verdict: "pass",
+    detail: expect.stringContaining("公開リポジトリでは既定で有効"),
+  })
+  expect(
+    secretVerdict({
+      private: true,
+      analysis: {
+        secret_scanning: { status: "enabled" },
+        secret_scanning_push_protection: { status: "enabled" },
+      },
+    }),
+  ).toEqual({ verdict: "pass", detail: "secret_scanning=enabled, push_protection=enabled" })
+  expect(secretVerdict({ analysis: { secret_scanning: { status: "disabled" } } }).verdict).toBe(
+    "fail",
+  )
+  expect(secretVerdict({ private: true }).verdict).toBe("unknown")
+  expect(secretVerdict(null).verdict).toBe("unknown")
 })

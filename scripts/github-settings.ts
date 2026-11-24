@@ -9,6 +9,35 @@ import { join, relative } from "node:path"
 import { root } from "./walk.ts"
 
 type Verdict = "pass" | "fail" | "unknown"
+/** `GET repos/{owner}/{repo}` から Secret scanning の判定に必要な部分だけを取り出す。 */
+export type SecurityState = {
+  private?: boolean
+  analysis?: {
+    secret_scanning?: { status?: string }
+    secret_scanning_push_protection?: { status?: string }
+  }
+}
+/** 公開リポジトリでは Secret scanning と Push protection が既定で有効（`security_and_analysis` は null）。 */
+export function secretVerdict(security: SecurityState | null): Pick<Check, "verdict" | "detail"> {
+  if (!security) return { verdict: "unknown", detail: "取得できませんでした" }
+  const status = security.analysis?.secret_scanning?.status
+  if (status) {
+    const push = security.analysis?.secret_scanning_push_protection?.status ?? "-"
+    return {
+      verdict: status === "enabled" ? "pass" : "fail",
+      detail: `secret_scanning=${status}, push_protection=${push}`,
+    }
+  }
+  if (security.private === false)
+    return {
+      verdict: "pass",
+      detail: "公開リポジトリでは既定で有効（API の security_and_analysis は null）",
+    }
+  return {
+    verdict: "unknown",
+    detail: "security_and_analysis が null（private では GitHub Advanced Security が必要）",
+  }
+}
 export type Check = { id: string; label: string; verdict: Verdict; detail: string }
 export type Options = { repo: string; apply: boolean; check: boolean; help: boolean }
 export type Action = { id: string; label: string; commands: () => string[][] }
@@ -154,17 +183,19 @@ export function verify(repo: string): Check[] {
     verdict: pvr ? (pvr.enabled ? "pass" : "fail") : "unknown",
     detail: pvr ? (pvr.enabled ? "有効" : "無効") : "取得できませんでした",
   })
-  const analysis = json<{ secret_scanning?: { status?: string } }>(
-    gh(["-X", "GET", `repos/${repo}`, "--jq", ".security_and_analysis"]),
+  const security = json<SecurityState>(
+    gh([
+      "-X",
+      "GET",
+      `repos/${repo}`,
+      "--jq",
+      "{private: .private, analysis: .security_and_analysis}",
+    ]),
   )
-  const secret = analysis?.secret_scanning?.status === "enabled"
   checks.push({
     id: "secret-scanning",
     label: "Secret scanning + Push protection",
-    verdict: analysis ? (secret ? "pass" : "fail") : "unknown",
-    detail: analysis
-      ? `secret_scanning=${analysis.secret_scanning?.status ?? "-"}`
-      : "取得できませんでした",
+    ...secretVerdict(security),
   })
   const rules = json<Array<{ type: string }>>(
     gh(["-X", "GET", `repos/${repo}/rules/branches/main`]),
@@ -184,11 +215,19 @@ export function verify(repo: string): Check[] {
   })
   return checks
 }
+/** pass は OK、fail は NG、unknown（読めなかった）は ?? として分けて表示する。 */
 export function printChecks(checks: Check[]): void {
-  for (const c of checks)
-    console.log(`${c.verdict === "pass" ? "OK" : "NG"}  ${c.label}: ${c.detail}`)
-  const bad = checks.filter((c) => c.verdict !== "pass").length
-  console.log(bad ? `\n${bad} 件が未達成です` : "\nすべて確認できました")
+  for (const c of checks) {
+    const mark = c.verdict === "pass" ? "OK" : c.verdict === "fail" ? "NG" : "??"
+    console.log(`${mark}  ${c.label}: ${c.detail}`)
+  }
+  const fail = checks.filter((c) => c.verdict === "fail").length
+  const unknown = checks.filter((c) => c.verdict === "unknown").length
+  const parts = [
+    fail ? `${fail} 件が未達成です` : "",
+    unknown ? `${unknown} 件は確認できませんでした（管理者権限の token で再実行してください）` : "",
+  ].filter(Boolean)
+  console.log(parts.length ? `\n${parts.join("、")}` : "\nすべて確認できました")
 }
 export function main(argv: string[]): number {
   const o = parseArgs(argv)

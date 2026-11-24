@@ -45,7 +45,7 @@ gh で一括設定するなら `bun run github:settings` を使います（管�
 | :--- | :--- | :--- |
 | Dependabot alerts | `dependency-submission.yml` の提出と OSV の結果を alert として受け取る。これが無いと提出しても何も起きない | `gh api -X PUT repos/<owner>/<repo>/vulnerability-alerts` |
 | Dependabot security updates | `dependabot.yml` の `github-actions-security` group が security 更新 PR を出す | `gh api -X PUT repos/<owner>/<repo>/automated-security-fixes` |
-| Secret scanning + Push protection | 公開 repository は無料。commit / push の時点で秘密情報を止める | `gh api -X PATCH repos/<owner>/<repo> -f 'security_and_analysis[secret_scanning][status]=enabled' -f 'security_and_analysis[secret_scanning_push_protection][status]=enabled'` |
+| Secret scanning + Push protection | 公開 repository は無料で**既定で有効**。commit / push の時点で秘密情報を止める。`GET /repos/<owner>/<repo>` の `security_and_analysis` は公開 repository では `null` のままなので API では確認できない（2026-11-23 実測） | `gh api -X PATCH repos/<owner>/<repo> -f 'security_and_analysis[secret_scanning][status]=enabled' -f 'security_and_analysis[secret_scanning_push_protection][status]=enabled'` |
 | Private vulnerability reporting | Security タブの「Report a vulnerability」（`.github/SECURITY.md` の窓口） | `gh api -X PUT repos/<owner>/<repo>/private-vulnerability-reporting` |
 | `main` の ruleset | 削除・force push の禁止、PR の必須化、CI チェックの必須化。`AGENTS.md §2` の「main 直接 push 禁止」を GitHub 側でも強制する | `gh api -X POST repos/<owner>/<repo>/rulesets --input docs/ops/main-ruleset.json` |
 

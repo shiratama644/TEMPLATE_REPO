@@ -13,7 +13,7 @@ workflow や `.github/dependabot.yml` など**ファイルでは完了しない*
 | :--- | :--- | :--- | :--- |
 | 1 | Dependabot alerts | Settings → Code security | `dependency-submission.yml` の提出結果が alert になる。**これが無いと依存提出の効果がありません** |
 | 2 | Dependabot security updates | Settings → Code security | `dependabot.yml` の security group が更新 PR を出す |
-| 3 | Secret scanning + Push protection | Settings → Code security | commit / push の時点で秘密情報を止める |
+| 3 | Secret scanning + Push protection | Settings → Code security | commit / push の時点で秘密情報を止める。**公開リポジトリでは既定で有効** |
 | 4 | Private vulnerability reporting | Settings → Code security | Security タブに「Report a vulnerability」が出る（`.github/SECURITY.md` の窓口） |
 | 5 | `main` の ruleset | Settings → Rules → Rulesets | 削除・force push の禁止、PR の必須化、CI チェックの必須化 |
 
@@ -25,7 +25,7 @@ Dependency graph は public repository では常に有効なので設定は不�
 
 1. **Dependabot alerts** の「Enable」を押します。
 2. 同じページの **Dependabot security updates** の「Enable」を押します（1 が有効だと出ます）。
-3. **Secret scanning** の「Enable」を押し、続けて **Push protection** の「Enable」を押します。
+3. **Secret scanning** の「Enable」を押し、続けて **Push protection** の「Enable」を押します（公開リポジトリでは最初から「Enabled」のことがあります。その場合は変更不要です）。
 4. **Private vulnerability reporting** の「Enable」を押します。
 
 「Dependabot version updates」は `.github/dependabot.yml` で制御しているため、画面では「Configured」などと表示されるだけで変更不要です。
@@ -33,6 +33,7 @@ Dependency graph は public repository では常に有効なので設定は不�
 ### 確認
 
 - 4 つとも「Enabled」と表示されること。
+- 3 は API では確認できません。公開リポジトリでは `GET /repos/{owner}/{repo}` の `security_and_analysis` が `null` のままなので、`bun run github:settings --check` は「公開リポジトリでは既定で有効」と表示します（2026-11-23 に実測）。
 - リポジトリの **Security** タブを開き、「Dependabot alerts are disabled」のような案内が消えていること。
 - Security タブの左メニューに「Private vulnerability reporting」があれば 4 は有効です。
 
