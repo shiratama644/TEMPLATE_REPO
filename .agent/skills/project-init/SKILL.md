@@ -9,7 +9,7 @@ description: テンプレートから作った新規リポジトリの初回、A
 > 流れは **事実確認 → 要件確定 → 計画承認 → 実行 → 検証**。混ぜない。
 > 製品機能は実装しない。
 
-**Bun CLI 入口**: 人間が初期設定するなら `bun run setup --help`、対話式 `bun run setup`、自動化は `bun run setup --yes --apply ...`。CLI は OS 導入を毎回確認し、文書は削除せず整理候補を案内する。Agent と進める場合は以下の計画承認ワークフローを使う。
+**書き換えの正本は TUI**: `bun run init`（= `bun run setup --init-only`）が対話で答えを集め、`README.md`・`LICENSE`・`package.json`・`AGENTS.md §6`・`docs/`（`README` / `task-list` / `arch/` / `ops/` / `planning/_TEMPLATE`）・`project-overview`・`project-template`・`.github/SECURITY.md` を生成し、作者の痕跡と初期化ログ（`INIT_PLAN.md` / `INIT_STATE.md`）を除く。**Agent はこれらの文書を手で書き換えない。** 役割は (1) 下のワークフローで答え（目的・対象・非目標・制約）を集め、(2) `--yes --apply --init-name ... --owner ... --purpose ...`（または `--config` の `init`）で TUI に渡し、(3) 出力の検証結果と `git diff` を確認すること。`--dry-run` は読み取り専用、`--plan-json` は計画の単一 JSON。プロジェクトのコード雛形まで作るなら `bun run setup`（初期化の後にプリセット・言語・機能を聞く）。CLI は OS 導入を毎回確認する。
 
 ## いつ使うか
 
@@ -281,6 +281,7 @@ flowchart TD
 | 確認 | 未初期化の目安 |
 | :--- | :--- |
 | `README.md` 先頭 | `# TEMPLATE_REPO` のまま |
+| `bun run init -- --dry-run` | 「作者の作業痕跡 N 件」と計画が出る（0 件なら初期化済み） |
 | `AGENTS.md §6.1` | 「（例）」や空の検証コマンド |
 | `project-overview/SKILL.md` | 「汎用エージェント作業テンプレート」 |
 | `docs/planning/INIT_PLAN.md` | 無い |
@@ -437,6 +438,8 @@ flowchart TD
 5. 再実行で skill を消すのは、計画に「削除」と書いてあり、かつユーザーが再承認した場合だけ。
 
 順:
+
+次の表は初期化で内容が変わるファイルの一覧です。**実際には `bun run init`（TUI）が生成するので、Agent は手で書かない**（表は生成範囲の確認用）。
 
 | 順 | ファイル | 書くこと |
 | ---: | :--- | :--- |

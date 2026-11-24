@@ -3,7 +3,10 @@
 import { existsSync, statSync } from "node:fs"
 import { join, resolve } from "node:path"
 import { cancel, confirm, select, text } from "@clack/prompts"
+import type { SectionId } from "./init-detect.ts"
+import { isTemplate } from "./init-detect.ts"
 import { applyPlan } from "./setup-apply.ts"
+import { type InitOutcome, initPhase, printInitPlanJson } from "./setup-init.ts"
 import { installDependencies, installNative, installOsPackages } from "./setup-install.ts"
 import {
   compatibleFeatures,
@@ -31,6 +34,22 @@ import { applyLanguageVariants, buildPackage, readJson } from "./setup-package.t
 import { buildSetupPlan, printPlan, printPlanJson } from "./setup-plan.ts"
 import { nameSchema, validateConfig } from "./setup-schema.ts"
 
+/** `--config` の `init`（Zod で検証済み）。 */
+type InitConfig = {
+  name?: string
+  slug?: string
+  description?: string
+  owner?: string
+  repo?: string
+  licenseHolder?: string
+  licenseYear?: string
+  purpose?: string
+  audience?: string
+  nonGoals?: string
+  firstTask?: string
+  sections?: SectionId[]
+  sectionText?: Record<string, string>
+}
 type Selection = {
   resolved: Resolved
   generated: Record<string, string>
@@ -49,6 +68,31 @@ function loadConfig(o: Options): void {
   for (const k of keys)
     if (config[k] !== undefined && o[k] === undefined)
       (o as unknown as Record<string, unknown>)[k] = config[k]
+  applyInitConfig(o, config.init as InitConfig | undefined)
+}
+/** `--config` の `init` を CLI 引数より弱い優先度で反映する。 */
+function applyInitConfig(o: Options, init: InitConfig | undefined): void {
+  if (!init) return
+  const map: Array<[keyof InitConfig, keyof Options]> = [
+    ["name", "initName"],
+    ["description", "description"],
+    ["owner", "owner"],
+    ["repo", "repo"],
+    ["licenseHolder", "licenseHolder"],
+    ["licenseYear", "licenseYear"],
+    ["purpose", "purpose"],
+    ["audience", "audience"],
+    ["nonGoals", "nonGoals"],
+    ["firstTask", "firstTask"],
+    ["slug", "name"],
+  ]
+  const target = o as unknown as Record<string, string | undefined>
+  for (const [from, to] of map) {
+    const value = init[from] as string | undefined
+    if (value !== undefined && target[to as string] === undefined) target[to as string] = value
+  }
+  if (init.sections && o.keepSections === undefined) o.keepSections = init.sections
+  if (init.sectionText && o.initSections === undefined) o.initSections = init.sectionText
 }
 const decisionMessages = {
   "dry-run": "dry-run: 変更・インストールは行いません",
@@ -83,12 +127,20 @@ export async function run(args: string[]): Promise<number> {
   const tty = Boolean(process.stdin.isTTY && process.stdout.isTTY)
   if (!tty && !o.yes && !o.dryRun)
     throw new Error("非対話式には --yes を指定してください（書き込みには --apply も必要）")
+  const init = await maybeInit(o, tty)
+  if (o.initOnly) return init?.code ?? 0
   let filesApplied = false
   try {
     const selection = await collectSelection(o, tty)
     const plan = buildSetupPlan(selection.resolved, selection.generated, selection.pkg)
     if (o.planJson) {
-      printPlanJson(selection.resolved, plan.files, selection.requires, selection.incompatible)
+      printPlanJson(
+        selection.resolved,
+        plan.files,
+        selection.requires,
+        selection.incompatible,
+        init,
+      )
       return 0
     }
     printPlan(selection.resolved, plan.files, selection.requires)
@@ -136,6 +188,13 @@ export async function run(args: string[]): Promise<number> {
     }
     throw e
   }
+}
+/** テンプレート初期化が必要なら実行する。`--no-init` とテンプレート以外では何もしない。 */
+async function maybeInit(o: Options, tty: boolean): Promise<InitOutcome | null> {
+  if (o.noInit || (!o.initOnly && !isTemplate(o.dir))) return null
+  const outcome = await initPhase(o, tty)
+  if (o.planJson && o.initOnly) printInitPlanJson(outcome)
+  return outcome
 }
 /** 引数・対話で選択を確定し、生成物と package.json を組み立てる。 */
 async function collectSelection(o: Options, tty: boolean): Promise<Selection> {

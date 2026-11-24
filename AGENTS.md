@@ -120,7 +120,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 ### 6.1 環境・ツールチェーン・検証コマンド（Commands / Setup）
 - **検証の正本**: `bun run check`（文書・言語・指示品質・入口整合・POSIX sh・関数長・Biome・型・テストとカバレッジの 10 ゲート）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang` / `index` / `shell` / `length` / `coverage`。未使用コード・依存は `bun run knip`。CI と Release の検証も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check`（`CI_REQUIRE_NATIVE=1`）と `bun run knip` を実行する。CI 専用ゲート（actionlint / zizmor・OSV-Scanner・gitleaks）と Dependabot の運用は `docs/ops/index.md` を参照。
 - **Git フック**: `bun install` 後に `.githooks` を自動有効化。既存の commit-msg/pre-commit は上書きせず連鎖実行。他の実行可能フックや別の `core.hooksPath` があれば安全のため導入を停止する（詳細は `docs/ops/index.md`）。
-- **セットアップ**: Bun が前提。対話式・非対話式の `bun run setup [引数]`（対話式は計画後に `[y/N]` 承認、`--apply` は不要。非対話式は `--yes --apply` で適用、`--dry-run` は不変更）。OS パッケージは対話式でコマンドごとに承認を要し、文書削除は候補の案内のみ。生成先 Python FastAPI は `.venv` の pip、Rust Axum は `cargo fetch`、Go は標準ライブラリで扱い、`--no-install` は依存導入をスキップする。
+- **セットアップ**: Bun が前提。対話式・非対話式の `bun run setup [引数]`（対話式は計画後に `[y/N]` 承認、`--apply` は不要。非対話式は `--yes --apply` で適用、`--dry-run` は不変更）。**テンプレート初期化**は `bun run setup --init-only`（`bun run init`）で、README・LICENSE・`package.json`・本節・`docs/`・`project-overview` を答えから生成し、作者の痕跡と初期化ログ（`docs/planning/INIT_*.md`）を除く。対象がテンプレートのときは `bun run setup` の最初に自動で走り、`--no-init` でスキップする。上書き前の本文は setup のバックアップ先（Git 管理外）に退避され、初期化ログの削除は Git 管理下のときだけ行う。OS パッケージは対話式でコマンドごとに承認を要し、文書削除は候補の案内のみ。生成先 Python FastAPI は `.venv` の pip、Rust Axum は `cargo fetch`、Go は標準ライブラリで扱い、`--no-install` は依存導入をスキップする。
 - 初期セットアップ手順 / 言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
 - **検証コマンド**（§3.1 の正本。例: 型チェック `tsc --noEmit`・Lint `biome check`・テスト `vitest run`・ビルド `npm run build` を実物に置き換えて記入）
 

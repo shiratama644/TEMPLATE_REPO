@@ -2,6 +2,7 @@
 import { existsSync, lstatSync, readFileSync } from "node:fs"
 import { safe } from "./safe-path.ts"
 import { available, detectPackageManager, osCommand } from "./setup-env.ts"
+import type { InitOutcome } from "./setup-init.ts"
 import type { Resolved } from "./setup-options.ts"
 import { suggestions } from "./setup-options.ts"
 import { json } from "./setup-package.ts"
@@ -43,6 +44,7 @@ export function printPlanJson(
   files: PlanFile[],
   requires: string[],
   incompatible: string[],
+  init?: InitOutcome | null,
 ): void {
   const manager = detectPackageManager()
   console.log(
@@ -75,6 +77,20 @@ export function printPlanJson(
         osPackagesRequireIndividualApproval: true,
       },
       dependencies: { wouldInstallOnApply: !o.noInstall, executed: false },
+      ...(init?.plan
+        ? {
+            init: {
+              answers: init.answers,
+              writes: init.plan.writes.map((f) => f.path),
+              unchanged: init.plan.unchanged,
+              skipped: init.plan.skipped,
+              deletes: init.plan.deletes,
+              blocked: init.plan.blocked,
+              missing: init.plan.missing,
+              notes: init.plan.notes,
+            },
+          }
+        : {}),
       manualReview: suggestions,
     }),
   )

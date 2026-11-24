@@ -6,6 +6,7 @@
   "packageManager": "bun@1.4.4",
   "scripts": {
     "setup": "bun scripts/setup.ts",
+    "init": "bun scripts/setup.ts --init-only",
     "verify:generated": "bun scripts/verify-generated.ts",
     "check": "bun scripts/check.ts",
     "links": "bun scripts/check-doc-links.ts",

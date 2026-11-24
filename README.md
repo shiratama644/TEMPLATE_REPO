@@ -35,6 +35,8 @@ GitHub の公開リポジトリで **Use this template** → **Create a new repo
 
 このリポジトリは GitHub テンプレートで、npm パッケージではありません（`package.json` は `private: true`）。公開ブランチにまだ反映されていない変更は、GitHub のテンプレート作成ボタンには含まれません。
 
+新しいリポジトリでは **`bun run setup --init-only`**（対話式 TUI）を実行してください。数問に答えると `README.md`・`LICENSE`・`package.json`・`AGENTS.md §6`・`docs/`（`README` / `task-list` / `arch/` / `ops/` / `planning/_TEMPLATE`）・`.agent/skills/project-overview/`・`.agent/rules/project-template.md`・`.github/SECURITY.md` が**生成され**、テンプレート作者の痕跡（`TEMPLATE_REPO`・著作権者名・実測日付・出典リンク・`（例）` のプレースホルダ）と初期化ログ（`docs/planning/INIT_PLAN.md` / `INIT_STATE.md`）が消えます。**手で書き換えるファイルはありません。** 目的・対象・非目標を Agent と掘り下げてから決めたい場合は [`.agent/skills/project-init/SKILL.md`](.agent/skills/project-init/SKILL.md) の手順を使い、答えをこのコマンドに渡します。
+
 ## 使い方
 
 ```bash
@@ -42,6 +44,10 @@ bun install --frozen-lockfile
 bun run setup --help
 bun run setup --list-presets
 bun run setup                                 # 対話式。計画を表示し [y/N] で適用を確認
+bun run init                                  # テンプレート初期化だけ（= setup --init-only）
+bun run init -- --dry-run                     # 生成する内容を確認するだけ（読み取り専用）
+bun run setup --init-only --plan-json         # 計画を単一 JSON で出す（書き込みなし）
+bun run setup --init-only --yes --apply --init-name my-app --owner octocat/my-app --purpose "問い合わせ対応を自動化する"
 bun run setup --preset vite-app --name my-app --dry-run
 bun run setup --plan-json --dir . --preset vite-app --name my-app
 bun run setup --yes --apply --preset next-app --name my-app
@@ -50,6 +56,8 @@ bun run verify:generated --dir . --template next
 bun run verify:generated --dir . --template next --build # 明示した場合だけ実行
 bun run check                                 # CI と同じ入口（型・単体テスト含む）
 ```
+
+**初期化フェーズ**は、対象ディレクトリがテンプレート（`AGENTS.md` と `docs/arch/product.md` と `.agent/skills/project-init/` がある）のとき自動的に先に走り、それ以外では何もしません（`--no-init` で明示的にスキップ）。計画（`~` 書き換え / `=` 変更なし / `-` 削除 / `!` 触らない）を表示し、`[y/N]` の承認後に適用します。退避ディレクトリは作らず、復元は Git（`git restore`）が担います。初期化ログの削除は Git 管理下のときだけ行います（Git 管理外では `!` と表示して残します）。同じ答えで再実行すると「初期化済みです」となり、ファイルは変わりません。非対話式は `--yes --apply` と `--init-name` / `--owner` / `--license-holder` / `--purpose` など、または `--config` の `init`（Zod で検証）で答えを渡します。
 
 対話式は `@clack/prompts` で選択・入力し、Zod で CLI/JSON 設定を検証します。入力名の既定値は出力先フォルダ名を kebab-case に正規化します。計画の提示後に `[y/N]` を尋ね、`y` / `yes` を入力したときだけ適用します。`N` または Enter のみなら変更しません。`--apply` は対話式では不要で、指定しても確認を省略しません。`--yes` のみではファイルを変更しません。非対話式の適用には **`--yes --apply` の両方**が必要です。`--dry-run` は常に読み取り専用です。既存の生成対象ファイルは保持し、変更する `package.json` は `.setup-backup/` に退避します。OS パッケージは対話式で**コマンドごとに yes と入力したときだけ**実行し、非対話式では手順の表示のみです。**文書やスキルの削除は自動では行わず、候補だけ案内します**。
 

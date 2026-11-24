@@ -21,6 +21,7 @@ TEMPLATE_REPO/
 │   ├── setup.ts # 初期設定の入口（引数・対話・承認・適用の指揮）
 │   ├── setup-options.ts / setup-manifest.ts / setup-schema.ts # 引数と承認・雛形・Zod スキーマ
 │   ├── setup-package.ts / setup-plan.ts / setup-apply.ts / setup-install.ts # package.json・計画・書き込み・導入
+│   ├── setup-init.ts / init-detect.ts / init-docs.ts / init-agents.ts / init-arch.ts # テンプレート初期化（痕跡の検出と文書の生成）
 │   ├── setup-env.ts / safe-path.ts # OS パッケージと言語別の手順・生成パスの検証
 │   ├── verify-generated.ts # 生成物の静的検査・明示ビルド
 │   ├── check.ts / check-agents.ts / check-index.ts / walk.ts # 全ゲート・指示ファイル・入口整合・ファイル列挙
@@ -86,5 +87,6 @@ TEMPLATE_REPO/
 - `make setup` は `bun run hooks:install` の互換入口で、`bun run setup`（`scripts/setup.ts` の初期設定 CLI）とは別物。
 - フックのスクリプトは POSIX `sh` で書き、判定は JSON を stdout へ出して `exit 0` で返す（PreToolUse は `hookSpecificOutput.permissionDecision`、PostToolUse と Stop は top-level `decision`）。exit code の意味は公式リファレンスに従い、`.agent/hooks/index.md` に規約を記録する。
 - 環境に依存する設定（OS・ランタイム・外部サービス）はテンプレート本体に入れず、`AGENTS.md §6` に書く。
+- `bun run init`（`setup --init-only`）が生成する文書は、実物（`package.json` のコマンド・`scripts/check.ts` のゲート・`docs/` の構成・Git remote）から作る。手で直した内容は次の生成で上書きされるので、恒久的な事実は `AGENTS.md §6` か本ディレクトリの生成元に書く。
 - 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない。図の検証は `make mermaid`。
 - `scripts/` の検証スクリプトは TypeScript / Bun を前提とする。日本語判定には Bun 管理の `iconv-lite` を用いる。

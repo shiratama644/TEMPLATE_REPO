@@ -7,10 +7,11 @@ import { CANCEL_SYMBOL } from "@clack/prompts"
 import { brokenLinks } from "../scripts/check-doc-links.ts"
 import { classify, findIssues, stripCommit } from "../scripts/check-language.ts"
 import { blocks, checkBlock } from "../scripts/check-mermaid.ts"
+import { detect } from "../scripts/init-detect.ts"
 import { detectPackageManager } from "../scripts/setup-env.ts"
 import { featureNames, presets, scaffold, templates } from "../scripts/setup-manifest.ts"
 import { planApproval } from "../scripts/setup-options.ts"
-import { files } from "../scripts/walk.ts"
+import { files, root } from "../scripts/walk.ts"
 
 const dirs: string[] = []
 // Git hooks require a POSIX shell. Git Bash on Windows is not guaranteed on PATH.
@@ -734,20 +735,25 @@ linuxPtyTest("Clack interactive choices reach a dry-run plan without any writes"
   expect(readdirSync(d)).toEqual([])
 })
 
-test("published docs start without the template author's completed tasks or plans", () => {
-  const base = join(import.meta.dir, "../docs")
-  expect(readdirSync(join(base, "planning")).sort()).toEqual(["README.md", "_TEMPLATE.md"])
-  expect(readdirSync(join(base, "adr")).sort()).toEqual(["README.md"])
-  expect(readdirSync(join(base, "audit")).sort()).toEqual(["index.md"])
-  expect(readFileSync(join(base, "task-list.md"), "utf8")).toContain(
-    "現在、登録済みのタスクはありません",
-  )
-  const tasks = readFileSync(join(base, "task-list.md"), "utf8")
-  const taskRows = tasks
-    .split("## タスク一覧")[1]
-    ?.split("\n")
-    .filter((line) => /^\| [A-Z][A-Z\d-]*-\d+ \|/.test(line))
-  expect(taskRows).toEqual([])
-  expect(tasks).not.toMatch(/\bPR #\d+\b/)
-  expect(readdirSync(join(base, "arch"))).not.toContain("milestones.md")
-})
+// 初期化済み（派生プロジェクト）では task-list に最初のタスクが入るので、テンプレート本体だけを検査する
+const repoState = detect(root)
+test.skipIf(!repoState.template || repoState.initialized)(
+  "published docs start without the template author's completed tasks or plans",
+  () => {
+    const base = join(import.meta.dir, "../docs")
+    expect(readdirSync(join(base, "planning")).sort()).toEqual(["README.md", "_TEMPLATE.md"])
+    expect(readdirSync(join(base, "adr")).sort()).toEqual(["README.md"])
+    expect(readdirSync(join(base, "audit")).sort()).toEqual(["index.md"])
+    expect(readFileSync(join(base, "task-list.md"), "utf8")).toContain(
+      "現在、登録済みのタスクはありません",
+    )
+    const tasks = readFileSync(join(base, "task-list.md"), "utf8")
+    const taskRows = tasks
+      .split("## タスク一覧")[1]
+      ?.split("\n")
+      .filter((line) => /^\| [A-Z][A-Z\d-]*-\d+ \|/.test(line))
+    expect(taskRows).toEqual([])
+    expect(tasks).not.toMatch(/\bPR #\d+\b/)
+    expect(readdirSync(join(base, "arch"))).not.toContain("milestones.md")
+  },
+)

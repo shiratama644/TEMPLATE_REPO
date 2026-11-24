@@ -16,6 +16,25 @@ export const nameSchema = z
   .string()
   .max(64)
   .regex(/^[a-z](?:[a-z0-9]|-(?=[a-z0-9]))*$/)
+/** 初期化（`bun run setup --init-only`）の答え。すべて任意で、未指定は検出値を使う。 */
+const initSchema = z.strictObject({
+  name: z.string().min(1).optional(),
+  slug: nameSchema.optional(),
+  description: z.string().optional(),
+  owner: z.string().optional(),
+  repo: z.string().optional(),
+  licenseHolder: z.string().optional(),
+  licenseYear: z
+    .string()
+    .regex(/^\d{4}$/)
+    .optional(),
+  purpose: z.string().optional(),
+  audience: z.string().optional(),
+  nonGoals: z.string().optional(),
+  firstTask: z.string().optional(),
+  sections: z.array(z.enum(["sandbox", "git", "impl", "style", "output"])).optional(),
+  sectionText: z.record(z.string(), z.string()).optional(),
+})
 const configSchema = z.strictObject({
   preset: preset.optional(),
   language: language.optional(),
@@ -23,6 +42,7 @@ const configSchema = z.strictObject({
   name: nameSchema.optional(),
   description: z.string().optional(),
   features: z.array(feature).optional(),
+  init: initSchema.optional(),
 })
 const choicesSchema = configSchema.superRefine((o, ctx) => {
   if (o.language && o.template && !templates[o.language].includes(o.template))
@@ -57,5 +77,6 @@ function validateSchema(input: unknown, schema: typeof configSchema | typeof cho
   if (key === "name")
     throw new Error("プロジェクト名は英小文字で始まる kebab-case（最大 64 文字）にしてください")
   if (key === "description") throw new Error("説明は文字列で指定してください")
+  if (key === "init") throw new Error(`init の指定が不正です: ${issue.message}`)
   throw new Error(`設定ファイルが不正です: ${issue.message}`)
 }
