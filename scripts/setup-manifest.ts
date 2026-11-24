@@ -99,6 +99,42 @@ export type Scaffold = {
   package?: Record<string, unknown>
   requires?: string[]
 }
+/**
+ * Biome の JSON 整形に合わせた出力を作る。
+ * Biome は「値だけの配列」を行幅（`biome.json` の lineWidth = 100）に収まるかぎり 1 行にまとめるが、
+ * `JSON.stringify(value, null, 2)` は常に展開する。放っておくと生成した直後のプロジェクトが
+ * `biome check --write` を要求する状態になり、利用者が手で直すファイルが増える。
+ */
+export function biomeJson(value: unknown, lineWidth = 100): string {
+  const scalar = /^[ \t]*(?:"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|null),?$/u
+  const opens = /^.*\[[ \t]*$/u
+  const closes = /^[ \t]*\],?$/u
+  const lines = JSON.stringify(value, null, 2).split("\n")
+  const out: string[] = []
+  for (let i = 0; i < lines.length; i++) {
+    const head = opens.exec(lines[i])?.[0].trimEnd()
+    if (!head) {
+      out.push(lines[i])
+      continue
+    }
+    const items: string[] = []
+    let j = i + 1
+    while (j < lines.length && scalar.test(lines[j])) {
+      items.push(lines[j].trim().replace(/,$/u, ""))
+      j++
+    }
+    const tail = closes.exec(lines[j] ?? "")?.[0].trim()
+    const oneLine = tail && items.length > 0 ? `${head}${items.join(", ")}${tail}` : ""
+    if (oneLine && oneLine.length <= lineWidth) {
+      out.push(oneLine)
+      i = j
+    } else {
+      out.push(lines[i])
+    }
+  }
+  return `${out.join("\n")}\n`
+}
+
 type TemplateBuilder = (name: string, safe: string, template: Template) => Scaffold
 const plainTs: TemplateBuilder = (name) => ({
   files: { "src/index.ts": `export const name = "${name}"\n` },
@@ -112,8 +148,8 @@ const plainJs: TemplateBuilder = (name) => ({
 const viteReact: TemplateBuilder = (name) => ({
   files: {
     "index.html": `<!doctype html>\n<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${name}</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>\n`,
-    "src/main.tsx": `import React from "react"\nimport { createRoot } from "react-dom/client"\ncreateRoot(document.getElementById("root")!).render(<h1>${name}</h1>)\n`,
-    "vite.config.ts": `import { defineConfig } from "vite"\nimport react from "@vitejs/plugin-react"\nexport default defineConfig({ plugins: [react()] })\n`,
+    "src/main.tsx": `import React from "react"\nimport { createRoot } from "react-dom/client"\n\ncreateRoot(document.getElementById("root")!).render(<h1>${name}</h1>)\n`,
+    "vite.config.ts": `import react from "@vitejs/plugin-react"\nimport { defineConfig } from "vite"\nexport default defineConfig({ plugins: [react()] })\n`,
   },
   deps: { react: "^19.0.0", "react-dom": "^19.0.0" },
   dev: {
@@ -128,10 +164,10 @@ const viteReact: TemplateBuilder = (name) => ({
 })
 const next: TemplateBuilder = (name) => ({
   files: {
-    "app/layout.tsx": `export const metadata = { title: "${name}" }\nexport default function Layout({ children }: { children: React.ReactNode }) { return <html lang="en"><body>{children}</body></html> }\n`,
-    "app/page.tsx": `export default function Page() { return <main><h1>${name}</h1></main> }\n`,
+    "app/layout.tsx": `export const metadata = { title: "${name}" }\nexport default function Layout({ children }: { children: React.ReactNode }) {\n  return (\n    <html lang="en">\n      <body>{children}</body>\n    </html>\n  )\n}\n`,
+    "app/page.tsx": `export default function Page() {\n  return (\n    <main>\n      <h1>${name}</h1>\n    </main>\n  )\n}\n`,
     "next.config.ts":
-      'import type { NextConfig } from "next"\nconst config: NextConfig = {}\nexport default config\n',
+      'import type { NextConfig } from "next"\n\nconst config: NextConfig = {}\nexport default config\n',
   },
   deps: { next: "^16.0.0", react: "^19.0.0", "react-dom": "^19.0.0" },
   dev: {
@@ -147,17 +183,13 @@ const monorepo: TemplateBuilder = (name, safe, template) => {
     template === "next-monorepo" ? scaffold("next", name) : scaffold("vite-react", name)
   return {
     files: {
-      "turbo.json": `${JSON.stringify(
-        {
-          tasks: {
-            build: { dependsOn: ["^build"], outputs: ["dist/**", ".next/**"] },
-            dev: { cache: false, persistent: true },
-            test: {},
-          },
+      "turbo.json": biomeJson({
+        tasks: {
+          build: { dependsOn: ["^build"], outputs: ["dist/**", ".next/**"] },
+          dev: { cache: false, persistent: true },
+          test: {},
         },
-        null,
-        2,
-      )}\n`,
+      }),
       "apps/web/package.json": `${JSON.stringify(
         {
           name: `${safe}-web`,
@@ -303,14 +335,10 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
       `${JSON.stringify({ name: c.name, image, postCreateCommand }, null, 2)}\n`
   },
   renovate(c) {
-    c.files["renovate.json"] = `${JSON.stringify(
-      {
-        extends: ["config:recommended"],
-        packageRules: [{ matchManagers: ["bun"], groupName: "Bun dependencies" }],
-      },
-      null,
-      2,
-    )}\n`
+    c.files["renovate.json"] = biomeJson({
+      extends: ["config:recommended"],
+      packageRules: [{ matchManagers: ["bun"], groupName: "Bun dependencies" }],
+    })
   },
   "github-templates"(c) {
     c.files[".github/ISSUE_TEMPLATE/bug.md"] = "# Bug report\n\n## Reproduction\n\n## Expected\n"
@@ -354,14 +382,14 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
         ? "bun x next dev --hostname 127.0.0.1 --port 4173"
         : "bun x vite --host 127.0.0.1 --port 4173 --strictPort"
       c.files["playwright.config.ts"] =
-        `import { defineConfig } from "@playwright/test"\nexport default defineConfig({ testMatch: "**/e2e.ts", webServer: { command: "${command}", cwd: "${appDir}", url: "http://127.0.0.1:4173", reuseExistingServer: false, timeout: 60_000 } })\n`
+        `import { defineConfig } from "@playwright/test"\nexport default defineConfig({\n  testMatch: "**/e2e.ts",\n  webServer: {\n    command: "${command}",\n    cwd: "${appDir}",\n    url: "http://127.0.0.1:4173",\n    reuseExistingServer: false,\n    timeout: 60_000,\n  },\n})\n`
       c.files["tests/e2e.ts"] =
-        `import { test, expect } from "@playwright/test"\ntest("serves the generated page", async ({ request }) => { const response = await request.get("http://127.0.0.1:4173/"); expect(response.ok()).toBe(true); expect(await response.text()).toContain("${c.name}") })\n`
+        `import { expect, test } from "@playwright/test"\n\ntest("serves the generated page", async ({ request }) => {\n  const response = await request.get("http://127.0.0.1:4173/")\n  expect(response.ok()).toBe(true)\n  expect(await response.text()).toContain("${c.name}")\n})\n`
     } else {
       c.files["playwright.config.ts"] =
         'import { defineConfig } from "@playwright/test"\nexport default defineConfig({ testMatch: "**/e2e.ts" })\n'
       c.files["tests/e2e.ts"] =
-        'import { test, expect } from "@playwright/test"\nimport { spawnSync } from "node:child_process"\ntest("builds the generated package", () => { expect(spawnSync("bun", ["run", "build"], { stdio: "inherit" }).status).toBe(0) })\n'
+        'import { spawnSync } from "node:child_process"\nimport { expect, test } from "@playwright/test"\n\ntest("builds the generated package", () => {\n  expect(spawnSync("bun", ["run", "build"], { stdio: "inherit" }).status).toBe(0)\n})\n'
     }
   },
   coverage(c) {
@@ -405,17 +433,13 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
   knip(c) {
     c.dev.knip = "^5.0.0"
     c.scripts.knip = "bun x knip"
-    c.files["knip.jsonc"] = `${JSON.stringify(
-      {
-        ignore: c.features.includes("coverage") ? ["coverage/**"] : [],
-        ignoreDependencies: [
-          ...(c.features.includes("coverage") ? ["@vitest/coverage-v8"] : []),
-          ...(c.features.includes("husky") ? ["husky"] : []),
-        ],
-      },
-      null,
-      2,
-    )}\n`
+    c.files["knip.jsonc"] = biomeJson({
+      ignore: c.features.includes("coverage") ? ["coverage/**"] : [],
+      ignoreDependencies: [
+        ...(c.features.includes("coverage") ? ["@vitest/coverage-v8"] : []),
+        ...(c.features.includes("husky") ? ["husky"] : []),
+      ],
+    })
   },
   publint(c) {
     c.dev.publint = "^0.3.0"
@@ -435,15 +459,18 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
         'import { spawnSync } from "node:child_process"',
         'import { existsSync, lstatSync } from "node:fs"',
         'import { resolve } from "node:path"',
+        "",
         'const git = (args: string[]) => spawnSync("git", args, { encoding: "utf8" })',
         'const path = git(["rev-parse", "--git-path", "hooks"])',
         'if (path.status !== 0) throw new Error("Git リポジトリが必要です")',
         'const current = git(["config", "--get", "core.hooksPath"]).stdout.trim()',
         'if (current && current !== ".husky/_") throw new Error(`既存の hooksPath を保持します: ${current}`)',
-        'if (!current) for (const name of ["pre-commit", "commit-msg"]) {',
-        "  const target = resolve(path.stdout.trim(), name)",
-        "  if (existsSync(target) || lstatSync(target, { throwIfNoEntry: false }))",
-        "    throw new Error(`既存の Git フックを上書きしません: ${name}`)",
+        "if (!current) {",
+        '  for (const name of ["pre-commit", "commit-msg"]) {',
+        "    const target = resolve(path.stdout.trim(), name)",
+        "    if (existsSync(target) || lstatSync(target, { throwIfNoEntry: false }))",
+        "      throw new Error(`既存の Git フックを上書きしません: ${name}`)",
+        "  }",
         "}",
         "if (!current) {",
         '  const result = spawnSync("bun", ["x", "husky"], { stdio: "inherit" })',
@@ -456,7 +483,7 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
     c.dev["@commitlint/cli"] = "^19.0.0"
     c.dev["@commitlint/config-conventional"] = "^19.0.0"
     c.files["commitlint.config.mjs"] =
-      "export default { extends: ['@commitlint/config-conventional'] }\n"
+      'export default { extends: ["@commitlint/config-conventional"] }\n'
     c.scripts["lint:commit"] = "bun x commitlint --edit"
   },
   determinism(c) {
@@ -473,7 +500,7 @@ function addTestFiles(c: FeatureContext): void {
   if (c.template === "plain-ts" || c.template === "plain-js") {
     const ext = c.template === "plain-ts" ? "ts" : "js"
     c.files[`src/index.test.${ext}`] =
-      `import { expect, test } from "vitest"\nimport { name } from "./index"\ntest("generated package name", () => expect(name).toBe("${c.name}"))\n`
+      `import { expect, test } from "vitest"\nimport { name } from "./index"\n\ntest("generated package name", () => expect(name).toBe("${c.name}"))\n`
     return
   }
   const source =
@@ -485,7 +512,7 @@ function addTestFiles(c: FeatureContext): void {
           ? "apps/web/src/main"
           : "src/main"
   c.files["tests/scaffold.test.ts"] =
-    `import { expect, test } from "vitest"\nimport { existsSync, readFileSync } from "node:fs"\nconst path = ["${source}.tsx", "${source}.jsx"].find(existsSync)\ntest("generated project name is present", () => { if (!path) throw new Error("Entry file is missing"); expect(readFileSync(path, "utf8")).toContain("${c.name}") })\n`
+    `import { existsSync, readFileSync } from "node:fs"\nimport { expect, test } from "vitest"\n\nconst path = ["${source}.tsx", "${source}.jsx"].find(existsSync)\ntest("generated project name is present", () => {\n  if (!path) throw new Error("Entry file is missing")\n  expect(readFileSync(path, "utf8")).toContain("${c.name}")\n})\n`
 }
 export function featureScaffold(features: Feature[], name: string, template: Template): Scaffold {
   const c: FeatureContext = {

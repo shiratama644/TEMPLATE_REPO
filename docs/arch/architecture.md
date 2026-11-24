@@ -88,5 +88,6 @@ TEMPLATE_REPO/
 - フックのスクリプトは POSIX `sh` で書き、判定は JSON を stdout へ出して `exit 0` で返す（PreToolUse は `hookSpecificOutput.permissionDecision`、PostToolUse と Stop は top-level `decision`）。exit code の意味は公式リファレンスに従い、`.agent/hooks/index.md` に規約を記録する。
 - 環境に依存する設定（OS・ランタイム・外部サービス）はテンプレート本体に入れず、`AGENTS.md §6` に書く。
 - `bun run init`（`setup --init-only`）が生成する文書は、実物（`package.json` のコマンド・`scripts/check.ts` のゲート・`docs/` の構成・Git remote）から作る。手で直した内容は次の生成で上書きされるので、恒久的な事実は `AGENTS.md §6` か本ディレクトリの生成元に書く。
+- `bun run setup` が生成するコードは、生成した直後の状態で Biome のゲートを通らなければならない（`biome check --write` を利用者に要求しない）。雛形は `scripts/setup-manifest.ts` に整形済みの形で書き、JSON は `biomeJson()` 経由で出す（Biome は行幅に収まる「値だけの配列」を 1 行にまとめるため、`JSON.stringify(value, null, 2)` の出力とは一致しない）。回帰は `tests/setup-format.test.ts` が全 preset で確認する。
 - 図の正本は `.md` 内の Mermaid ソースで、生成物の画像をリポジトリに置かない。図の検証は `make mermaid`。
 - `scripts/` の検証スクリプトは TypeScript / Bun を前提とする。日本語判定には Bun 管理の `iconv-lite` を用いる。
