@@ -1,11 +1,13 @@
 # Bun が唯一の依存・検証入口。互換用 make ターゲットは bun run を呼ぶ。
 .DEFAULT_GOAL := help
-.PHONY: help setup check links mermaid agents index shell length coverage lang test
+.PHONY: help setup github-settings check links mermaid agents index shell length coverage lang test
 BUN ?= bun
 help: ## 利用可能なターゲットを表示
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-8s %s\n", $$1, $$2}'
 setup: ## 安全に Git フックを登録（既存フックがある場合は停止）
 	$(BUN) run hooks:install
+github-settings: ## GitHub の repository 設定を gh で一括設定（dry-run。--apply で適用）
+	$(BUN) run github:settings
 check: ## Bun の全検証（CI と同じ入口）
 	$(BUN) run check
 links: ## Markdown 内部リンク

@@ -21,6 +21,7 @@
     "format": "biome check --write .",
     "build": "bun run typecheck",
     "hooks:install": "bun scripts/install-hooks.ts",
+    "github:settings": "bun scripts/github-settings.ts",
     "knip": "KNIP_DISABLE_RAW_TRANSFER=1 knip --reporter compact",
     "git:report": "bun scripts/git-report.ts",
     "commit:check": "bun scripts/check-commit.ts",

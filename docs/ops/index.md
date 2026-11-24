@@ -30,7 +30,16 @@
 
 workflow だけでは担保できない設定です。管理者権限を持つアカウントで **Settings → Code security**（旧画面では Code security and analysis）から有効化するか、管理者 token の `gh api` で行います。Agent の token に管理者権限が無い場合は変更できず、確認だけを行って報告します。
 
-**画面から設定する場合は [GITHUB_SETTINGS.md](./GITHUB_SETTINGS.md) にクリック先・設定値・確認方法をまとめてあります。** 下の表は API で同じことをする場合の一覧です。
+**画面から設定する場合は [GITHUB_SETTINGS.md](./GITHUB_SETTINGS.md) にクリック先・設定値・確認方法をまとめてあります。**
+
+gh で一括設定するなら `bun run github:settings` を使います（管理者権限のあるアカウントで `gh auth login` 済みであること）。
+
+- 既定は dry-run で、実行する 5 コマンドを表示するだけです。
+- `--apply` で適用し、続けて現在の状態を検証します（`pass` / `fail` / `unknown` を表示、未達成なら exit 1）。
+- `--check` は書き込まずに現在の状態だけを確認します。
+- `--repo owner/name` で対象を指定（既定は `git remote get-url origin` から判定）。ruleset は同名（`main-protection`）が既にあれば更新（PUT）、無ければ作成（POST）します。
+
+下の表は API で同じことをする場合の一覧です。
 
 | 設定 | 有効にするもの | 管理者 token でのコマンド |
 | :--- | :--- | :--- |

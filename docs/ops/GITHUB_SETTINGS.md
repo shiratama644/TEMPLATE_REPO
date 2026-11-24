@@ -2,6 +2,7 @@
 
 workflow や `.github/dependabot.yml` など**ファイルでは完了しない**設定の一覧です。管理者権限（Admin）を持つアカウントで GitHub の画面から行います。API で同じことをする場合の手順と `main-ruleset.json`（雛形）は [index.md](./index.md) にあります。
 
+- **gh で一括設定する場合**: `bun run github:settings --apply` で 5 つすべてを適用し、検証まで行います（`--check` は状態確認のみ、`--repo owner/name` で対象指定）。以下は画面で 1 つずつ設定する場合の手順です。
 - 画面の項目名は 2026 年 11 月時点です。GitHub は改名することがあるので、日本語の説明と括弧内の英語名（API のキー名）の両方で探してください。
 - この repository は **public** なので、以下はすべて無料で使えます（private repository では Secret scanning などに GitHub Advanced Security が必要です）。
 - すでに設定済みの項目は「Enabled」や「Configured」と表示されます。その場合は読み飛ばして構いません。
