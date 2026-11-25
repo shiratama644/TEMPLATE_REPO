@@ -22,6 +22,7 @@ TEMPLATE_REPO/
 │   ├── setup-options.ts / setup-manifest.ts / setup-schema.ts # 引数と承認・雛形・Zod スキーマ
 │   ├── setup-package.ts / setup-plan.ts / setup-apply.ts / setup-install.ts # package.json・計画・書き込み・導入
 │   ├── setup-init.ts / init-detect.ts / init-docs.ts / init-agents.ts / init-arch.ts # テンプレート初期化（痕跡の検出と文書の生成）
+│   ├── init-cleanup.ts # 初期化の選択的削除（候補・保護・連動する書き換え）
 │   ├── setup-env.ts / safe-path.ts # OS パッケージと言語別の手順・生成パスの検証
 │   ├── verify-generated.ts # 生成物の静的検査・明示ビルド
 │   ├── check.ts / check-agents.ts / check-index.ts / walk.ts # 全ゲート・指示ファイル・入口整合・ファイル列挙

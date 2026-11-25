@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { CANCEL_SYMBOL } from "@clack/prompts"
+import { cleanupIds } from "../scripts/init-cleanup.ts"
 import { featureNames, presets, templates } from "../scripts/setup-manifest.ts"
 import {
   assertChoices,
@@ -130,6 +131,16 @@ test("parseSections accepts none, all and known ids only", () => {
   expect(() => parseSections("nope")).toThrow("不明な節: nope")
   expect(() => option(["--keep-sections", "nope"])).toThrow("不明な節")
   expect(option(["--keep-sections", "all"]).keepSections?.length).toBeGreaterThan(1)
+})
+
+test("--cleanup accepts none, all and known ids only", () => {
+  expect(option([]).cleanup).toBeUndefined()
+  expect(option(["--cleanup", "none"]).cleanup).toEqual([])
+  expect(option(["--cleanup", "all"]).cleanup).toEqual(cleanupIds)
+  expect(option(["--cleanup", "tests, gates"]).cleanup).toEqual(["tests", "gates"])
+  expect(() => option(["--cleanup", "agents"])).toThrow("不明な削除候補: agents")
+  expect(() => option(["--cleanup"])).toThrow("--cleanup に値が必要です")
+  expect(usage).toContain("--cleanup <ids>")
 })
 
 test("assertChoices validates the CLI pair before anything is written", () => {

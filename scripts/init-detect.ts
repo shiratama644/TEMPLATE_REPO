@@ -102,6 +102,8 @@ export type Detected = {
   git: boolean
   logs: string[]
   traces: Trace[]
+  /** 初期化の削除で消えるパス（`withoutCleanup` が入れ、文書の生成が参照する） */
+  deleted?: string[]
 }
 
 const read = (dir: string, path: string): string | null => {

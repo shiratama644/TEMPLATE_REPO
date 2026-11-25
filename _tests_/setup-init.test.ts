@@ -1,12 +1,27 @@
 import { afterEach, expect, test } from "bun:test"
 import { spawnSync } from "node:child_process"
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { CANCEL_SYMBOL, type MultiSelectOptions } from "@clack/prompts"
 import { checkLinks } from "../scripts/check-doc-links.ts"
 import { findIssues } from "../scripts/check-language.ts"
 import { spliceAgents } from "../scripts/init-agents.ts"
+import {
+  type CleanupId,
+  cleanupGroups,
+  defaultCleanupIds,
+  noCleanup,
+  planCleanup,
+} from "../scripts/init-cleanup.ts"
 import type { Detected, InitAnswers } from "../scripts/init-detect.ts"
 import {
   describeDetected,
@@ -22,6 +37,7 @@ import { renderPlanningTemplate, renderTaskList } from "../scripts/init-docs.ts"
 import {
   answersFromOptions,
   applyInitPlan,
+  askCleanup,
   buildInitPlan,
   type ClackUi,
   defaultAnswers,
@@ -30,6 +46,7 @@ import {
   kebab,
   makeClackPrompter,
   type Prompter,
+  printCleanup,
   printInitPlanJson,
   sectionLabel,
 } from "../scripts/setup-init.ts"
@@ -354,7 +371,7 @@ test("--plan-json previews the init plan without writing", () => {
 })
 
 /** 対話の偽物。メッセージごとに決まった答えを返す。 */
-function fakePrompter(log: string[], approve: boolean): Prompter {
+function fakePrompter(log: string[], approve: boolean, cleanup: CleanupId[] = []): Prompter {
   const answers: Record<string, string> = {
     "プロジェクト名（表示名）": "Demo App",
     "package.json の name": "demo-app",
@@ -374,6 +391,10 @@ function fakePrompter(log: string[], approve: boolean): Prompter {
     },
     async pick() {
       return ["git"]
+    },
+    async choose(message, groups) {
+      log.push(`${message}: ${groups.map((g) => g.id).join(",")}`)
+      return cleanup
     },
     async confirm() {
       log.push("approve")
@@ -545,8 +566,26 @@ test("the clack adapter trims answers, marks optional questions and refuses to g
   const picked = seen[2] as { options: Array<{ value: string; label: string }> }
   expect(picked.options).toHaveLength(sectionIds.length)
   expect(picked.options[0]).toEqual({ value: "sandbox", label: sectionLabel("sandbox") })
+  // 削除の選択。実在しない候補は初期値から落ちる（ choices はディレクトリ次第で減る）
+  const offered = cleanupGroups.filter((g) => g.id !== "workspace")
+  const chosenIds: unknown = await prompter.choose("削除する候補", offered, defaultCleanupIds())
+  expect(chosenIds).toEqual(["git"])
+  const choice = seen[3] as {
+    message: string
+    initialValues: string[]
+    required: boolean
+    options: Array<{ value: string; label: string; hint: string }>
+  }
+  expect(choice.message).toBe("削除する候補")
+  expect(choice.required).toBe(false)
+  expect(choice.initialValues).toEqual(["template-tools", "tests"])
+  expect(choice.options[0]).toEqual({
+    value: "template-tools",
+    label: cleanupGroups[0].label,
+    hint: cleanupGroups[0].hint,
+  })
   expect(await prompter.confirm("適用しますか？")).toBe(true)
-  expect(seen[3]).toEqual({
+  expect(seen[4]).toEqual({
     message: "適用しますか？",
     initialValue: false,
     active: "y",
@@ -567,6 +606,7 @@ test("the clack adapter trims answers, marks optional questions and refuses to g
   })
   await expect(cancelled.text("プロジェクト名", "", false)).rejects.toThrow(SetupCancelled)
   await expect(cancelled.pick("節", sectionIds, [])).rejects.toThrow(SetupCancelled)
+  await expect(cancelled.choose("削除する候補", cleanupGroups, [])).rejects.toThrow(SetupCancelled)
   await expect(cancelled.confirm("適用しますか？")).rejects.toThrow(SetupCancelled)
 })
 
@@ -680,4 +720,89 @@ test("initPhase fails when the answers would leave an author trace behind", asyn
   expect(result.out).toMatch(/NG {2}\S+:\d+ author-repo/u)
   expect(result.out).toContain("作者の痕跡が")
   expect(result.out).not.toContain("OK: 作者の作業痕跡は残っていません")
+})
+
+test("printCleanup shows every symbol the plan needs, and says nothing when nothing is chosen", async () => {
+  const dir = fixture(true)
+  expect((await captured(() => printCleanup(noCleanup))).out).toBe("")
+
+  // ゲートだけを選ぶと、残すスクリプトが import する物は「保持」として出る
+  const plan = planCleanup(dir, ["gates"], true)
+  expect(plan.protectedPaths).toContain("scripts/walk.ts")
+  expect(plan.paths).toContain("scripts/check.ts")
+  const shown = (await captured(() => printCleanup(plan))).out
+  expect(shown).toContain("- scripts/check.ts （テンプレート専用ファイルを削除）")
+  expect(shown).toContain("~ .github/workflows/ci.yml （削除に合わせて書き換え）")
+  expect(shown).toContain("= scripts/walk.ts （残すスクリプトが import するため保持）")
+  expect(shown).toContain("! AGENTS.md （削除後に手で確認してください）")
+
+  const blocked = (await captured(() => printCleanup({ ...plan, blocked: ["Makefile"] }))).out
+  expect(blocked).toContain("! Makefile （Git 管理外のため削除しません）")
+})
+
+test("askCleanup offers only what exists and keeps the defaults preselected", async () => {
+  const empty = mkdtempSync(join(tmpdir(), "setup-init-cleanup-empty-"))
+  dirs.push(empty)
+  const log: string[] = []
+  expect(await askCleanup(empty, fakePrompter(log, true))).toEqual([])
+  expect(log).toEqual([])
+
+  // 一時ディレクトリが無ければ workspace は候補に出ない（消す物が無い選択肢は出さない）
+  const dir = fixture(true)
+  const chosen = await askCleanup(dir, fakePrompter(log, true, ["tests"]))
+  expect(chosen).toEqual(["tests"])
+  expect(log.at(-1)).toBe(
+    "削除する候補（スペースで選択、Enter で確定）: template-tools,tests,gates,repo-ops,ci",
+  )
+
+  mkdirSync(join(dir, ".tmp/coverage"), { recursive: true })
+  writeFileSync(join(dir, ".tmp/coverage/lcov.info"), "TN:\n")
+  const withScratch = await askCleanup(dir, fakePrompter(log, true))
+  expect(withScratch).toEqual([])
+  expect(log.at(-1)).toContain("ci,workspace")
+})
+
+test("--cleanup deletes the chosen candidates without asking again", async () => {
+  const dir = fixture(true)
+  const log: string[] = []
+  const outcome = await captured(() =>
+    initPhase(
+      { ...minimalOptions(dir), initOnly: true, yes: true, apply: true, cleanup: ["tests"] },
+      false,
+      fakePrompter(log, true),
+    ),
+  )
+  expect(log).toEqual([])
+  expect((outcome.value as InitOutcome).code).toBe(0)
+  expect(outcome.out).toContain("- _tests_ （テンプレート専用ファイルを削除）")
+  expect(outcome.out).toContain("~ scripts/check.ts （削除に合わせて書き換え）")
+  expect(outcome.out).toContain("! AGENTS.md （削除後に手で確認してください）")
+  expect(outcome.out).toContain("削除 5 件。戻すときは git restore")
+  expect(existsSync(join(dir, "_tests_"))).toBe(false)
+  expect(existsSync(join(dir, "knip.jsonc"))).toBe(false)
+  expect(existsSync(join(dir, "scripts/check-coverage.ts"))).toBe(false)
+  // 選ばなかった物は残る（テンプレートの機械も Agent の資産も）
+  expect(existsSync(join(dir, "scripts/setup.ts"))).toBe(true)
+  expect(existsSync(join(dir, "AGENTS.md"))).toBe(true)
+  expect(existsSync(join(dir, ".agent/commands/test.md"))).toBe(true)
+  expect(readFileSync(join(dir, "scripts/check.ts"), "utf8")).not.toContain("check-coverage")
+  const readme = readFileSync(join(dir, "README.md"), "utf8")
+  expect(readme).not.toContain("bun run knip")
+  expect(readme).toContain("bun run check")
+  expect(JSON.parse(readFileSync(join(dir, "package.json"), "utf8")).scripts.test).toBeUndefined()
+
+  // --cleanup none（空の選択）は何も消さない
+  const keep = fixture(true)
+  const none = await captured(() =>
+    initPhase(
+      { ...minimalOptions(keep), initOnly: true, yes: true, apply: true, cleanup: [] },
+      false,
+      fakePrompter(log, true),
+    ),
+  )
+  expect((none.value as InitOutcome).code).toBe(0)
+  expect(none.out).not.toContain("テンプレート専用ファイルを削除")
+  expect(existsSync(join(keep, "_tests_"))).toBe(true)
+  expect(existsSync(join(keep, "scripts/setup.ts"))).toBe(true)
+  expect(readFileSync(join(keep, "scripts/check.ts"), "utf8")).toContain("check-coverage")
 })

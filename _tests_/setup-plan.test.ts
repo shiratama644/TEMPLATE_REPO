@@ -10,6 +10,7 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { noCleanup } from "../scripts/init-cleanup.ts"
 import { applyPlan } from "../scripts/setup-apply.ts"
 import { option, type Resolved, suggestions } from "../scripts/setup-options.ts"
 import { buildSetupPlan, type PlanEnv, printPlan, printPlanJson } from "../scripts/setup-plan.ts"
@@ -176,6 +177,7 @@ test("the JSON plan is a single document that reports prerequisites without inst
           blocked: [],
           missing: [],
           notes: ["task-list は触りません"],
+          cleanup: noCleanup,
         },
         answers: null,
         detected: null,

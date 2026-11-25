@@ -1,4 +1,5 @@
 /** 初期化で生成する文書のうち、README・ライセンス・package.json・運用文書を作る。 */
+import { gone } from "./init-cleanup.ts"
 import type { Detected, InitAnswers } from "./init-detect.ts"
 
 /** `package.json` の scripts のうち README に載せるものと、その説明。 */
@@ -28,6 +29,44 @@ export const gateCommands = [
   "coverage",
 ]
 
+/** 検証の正本。`check` が消えていれば `test`、`typecheck` の順に探し、無ければ null。 */
+export function canonicalVerification(d: Detected): { command: string; note: string } | null {
+  const gateNote = `（${d.gates.length} ゲート: ${d.gates.join(" / ")}）`
+  if ("check" in d.scripts)
+    return { command: "bun run check", note: d.gates.length ? gateNote : "" }
+  if ("test" in d.scripts) return { command: "bun run test", note: "" }
+  if ("typecheck" in d.scripts)
+    return { command: "bun run typecheck", note: "（型検査だけが残っています）" }
+  return null
+}
+/** 始め方のコードブロック。正本コマンドが無ければ依存の導入だけを書く。 */
+export function gettingStarted(d: Detected): string[] {
+  const canonical = canonicalVerification(d)
+  return [
+    "```bash",
+    `bun install --frozen-lockfile   # 依存の導入${
+      gone(d, ".githooks") ? "" : "と Git フックの有効化"
+    }`,
+    canonical
+      ? `${canonical.command}${" ".repeat(Math.max(2, 32 - canonical.command.length))}# 検証の正本${canonical.note}`
+      : "# 検証の正本はありません（テンプレート由来のゲートを削除したため）",
+    "```",
+  ]
+}
+/** 検証手段の説明文（README・AGENTS.md・docs/arch が共有する）。 */
+export function verificationNote(d: Detected): string {
+  const canonical = canonicalVerification(d)
+  if (!canonical) return "検証の正本はありません（テンプレート由来のゲートを削除しました）。"
+  const gates = gateCommands.filter((g) => g in d.scripts)
+  const details = gates.length
+    ? `個別の検査は \`bun run ${gates.join("` / `bun run ")}\` です。`
+    : d.gates.length
+      ? "個別のゲートは `bun run check` の中にあります。"
+      : "個別の検査はありません。"
+  const knip = "knip" in d.scripts ? "未使用コード・依存は `bun run knip`。" : ""
+  return `検証は \`${canonical.command}\`${canonical.note}が正本で、${details}${knip}`
+}
+
 /** 実在するコマンドだけを表の行にする。 */
 export function commandRows(d: Detected): string[] {
   return Object.entries(commandDocs)
@@ -36,21 +75,18 @@ export function commandRows(d: Detected): string[] {
 }
 
 export function renderReadme(a: InitAnswers, d: Detected): string {
-  const gates = d.gates.length || gateCommands.filter((g) => g in d.scripts).length + 1
   const lines = [`# ${a.name}`, "", a.description, "", "## 目的", "", a.purpose, ""]
   if (a.audience) lines.push(`**対象**: ${a.audience}`, "")
   if (a.nonGoals) lines.push(`**対象外**: ${a.nonGoals}`, "")
   lines.push(
     "## 始め方",
     "",
-    "```bash",
-    "bun install --frozen-lockfile   # 依存の導入と Git フックの有効化",
-    "bun run check                   # 検証の正本（全ゲート）",
-    "```",
+    ...gettingStarted(d),
     "",
-    `Bun ${d.packageManager} を前提とします。検証は \`bun run check\`（${gates} ゲート）が正本で、`,
-    `個別の検査は \`bun run ${gateCommands.filter((g) => g in d.scripts).join("` / `bun run ")}\` です。`,
-    "CI と Dependabot の運用は [`docs/ops/index.md`](docs/ops/index.md) にあります。",
+    `Bun ${d.packageManager} を前提とします。${verificationNote(d)}`,
+    d.workflows.length
+      ? "CI と Dependabot の運用は [`docs/ops/index.md`](docs/ops/index.md) にあります。"
+      : "CI は削除済みです。運用のメモは [`docs/ops/index.md`](docs/ops/index.md) にあります。",
     "",
     "## コマンド",
     "",
@@ -67,16 +103,34 @@ export function renderReadme(a: InitAnswers, d: Detected): string {
     "- 文書の目次: [`docs/README.md`](docs/README.md)",
     "- 脆弱性の報告: [`.github/SECURITY.md`](.github/SECURITY.md)",
     "",
-    "## GitHub 側の設定",
-    "",
-    "Dependabot alerts・secret scanning・`main` の ruleset はファイルだけでは有効になりません。",
-    "管理者権限で `gh auth login` したあと `bun run github:settings --apply` を実行するか、",
-    "[`docs/ops/GITHUB_SETTINGS.md`](docs/ops/GITHUB_SETTINGS.md) の手順を画面で行ってください。",
-    "",
+    ...("github:settings" in d.scripts
+      ? [
+          "## GitHub 側の設定",
+          "",
+          "Dependabot alerts・secret scanning・`main` の ruleset はファイルだけでは有効になりません。",
+          "管理者権限で `gh auth login` したあと `bun run github:settings --apply` を実行するか、",
+          "[`docs/ops/GITHUB_SETTINGS.md`](docs/ops/GITHUB_SETTINGS.md) の手順を画面で行ってください。",
+          "",
+        ]
+      : gone(d, "docs/ops/GITHUB_SETTINGS.md")
+        ? []
+        : [
+            "## GitHub 側の設定",
+            "",
+            "Dependabot alerts・secret scanning・`main` の ruleset はファイルだけでは有効になりません。",
+            "[`docs/ops/GITHUB_SETTINGS.md`](docs/ops/GITHUB_SETTINGS.md) の手順を画面で行ってください。",
+            "",
+          ]),
     "## 初期化の再実行",
     "",
-    "`bun run setup --init-only` は対話式 TUI で本ファイル・`AGENTS.md §6`・`docs/` を生成し直します。",
-    "`--dry-run` は読み取り専用、非対話式は `--yes --apply` が必要です。",
+    ...("init" in d.scripts
+      ? [
+          "`bun run init` は対話式 TUI で本ファイル・`AGENTS.md §6`・`docs/` を生成し直します。",
+          "`--dry-run` は読み取り専用、非対話式は `--yes --apply` が必要です。",
+        ]
+      : [
+          "初期化 CLI は削除済みです（テンプレート専用だったため）。本ファイルは手で更新してください。",
+        ]),
     "",
     "## ライセンス",
     "",

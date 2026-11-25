@@ -1,5 +1,7 @@
 /** 初期化で生成する仕様文書（docs/arch/ と docs/README.md の目次）。 */
+import { gone } from "./init-cleanup.ts"
 import type { Detected, InitAnswers } from "./init-detect.ts"
+import { verificationNote } from "./init-docs.ts"
 
 export function renderProduct(a: InitAnswers, d: Detected): string {
   const lines = [
@@ -24,7 +26,7 @@ export function renderProduct(a: InitAnswers, d: Detected): string {
     "",
     "## 3. 検証手段",
     "",
-    `- 正本は \`bun run check\`（${d.gates.length} ゲート: ${d.gates.join(" / ") || "検査"}）と \`bun run knip\`。`,
+    `- ${verificationNote(d)}`,
     `- CI は ${d.workflows.map((w) => `\`${w}\``).join(" / ") || "未設定"}。`,
     "- 詳細な運用手順は [`../ops/index.md`](../ops/index.md)。",
     "",
@@ -57,27 +59,74 @@ function docsBranch(d: Detected): string[] {
   return rows.map((row, i) => `    ${i === rows.length - 1 ? "└──" : "├──"} ${row}`)
 }
 
+export type TreeRow = { path: string; label: string; comment?: string }
+/** 削除で消えた物は木に出さない。ラベルは 23 桁に揃える（長い物は 1 空白を足す）。 */
+export function treeRows(d: Detected): TreeRow[] {
+  const knip = !gone(d, "knip.jsonc")
+  const gitleaks = !gone(d, ".gitleaks.toml")
+  const github = [
+    d.workflows.length ? `workflows ${d.workflows.length} 本` : "",
+    gone(d, ".github/dependabot.yml") ? "" : "dependabot.yml",
+    "SECURITY.md",
+    gone(d, ".github/fixtures") ? "" : "CI の負例",
+  ]
+    .filter(Boolean)
+    .join("・")
+  return [
+    { path: "AGENTS.md", label: "AGENTS.md", comment: "作業規約（§6 がプロジェクト固有）" },
+    { path: "CLAUDE.md", label: "CLAUDE.md", comment: "AGENTS.md への symlink" },
+    { path: "README.md", label: "README.md", comment: "概要・始め方・コマンド" },
+    { path: "LICENSE", label: "LICENSE" },
+    { path: "Makefile", label: "Makefile", comment: "make check などの互換入口" },
+    { path: "package.json", label: "package.json / bun.lock", comment: "Bun の依存とコマンド" },
+    {
+      path: "tsconfig.json",
+      label: `tsconfig.json / biome.json${knip ? " / knip.jsonc" : ""}`,
+      comment: `型・整形${knip ? "・未使用コード" : ""}の設定`,
+    },
+    {
+      path: ".gitignore",
+      label: `.editorconfig${gitleaks ? " / .gitleaks.toml" : ""} / .gitignore`,
+    },
+    {
+      path: ".githooks",
+      label: ".githooks/",
+      comment: "pre-commit（検証）と commit-msg（形式）",
+    },
+    { path: ".github", label: ".github/", comment: github },
+    { path: ".claude", label: ".claude", comment: ".agent/ への symlink" },
+    {
+      path: ".agent",
+      label: ".agent/",
+      comment: `rules・skills ${d.skills.length} 件・hooks ${d.hooks.length} 件・agents ${d.agents.length} 件`,
+    },
+    {
+      path: "scripts",
+      label: "scripts/",
+      comment: `${gone(d, "scripts/setup.ts") ? "検証の" : "検証と初期化の"} CLI${
+        Object.keys(d.scripts).length
+          ? `（bun run の ${Object.keys(d.scripts).length} コマンド）`
+          : "（bun run のコマンドは残っていません）"
+      }`,
+    },
+    { path: "_tests_", label: "_tests_/", comment: "回帰テスト" },
+    { path: "docs", label: "docs/", comment: "文書（目次は docs/README.md）" },
+  ]
+}
+const renderRow = (row: TreeRow): string =>
+  row.comment
+    ? `${row.label.padEnd(23)}${row.label.length >= 23 ? " " : ""}# ${row.comment}`
+    : row.label
+
 /** 実在するファイルからディレクトリ木を作る（記述と実物のずれを防ぐ）。 */
 export function renderTree(a: InitAnswers, d: Detected): string[] {
+  const rows = treeRows(d).filter((row) => !gone(d, row.path))
+  const docs = rows.some((row) => row.path === "docs")
   return [
     "```",
     `${a.name}/`,
-    "├── AGENTS.md              # 作業規約（§6 がプロジェクト固有）",
-    "├── CLAUDE.md              # AGENTS.md への symlink",
-    "├── README.md              # 概要・始め方・コマンド",
-    "├── LICENSE",
-    "├── Makefile               # make check などの互換入口",
-    "├── package.json / bun.lock # Bun の依存とコマンド",
-    "├── tsconfig.json / biome.json / knip.jsonc # 型・整形・未使用コードの設定",
-    "├── .editorconfig / .gitleaks.toml / .gitignore",
-    "├── .githooks/             # pre-commit（検証）と commit-msg（形式）",
-    `├── .github/               # workflows ${d.workflows.length} 本・dependabot.yml・SECURITY.md・CI の負例`,
-    "├── .claude                # .agent/ への symlink",
-    `├── .agent/                # rules・skills ${d.skills.length} 件・hooks ${d.hooks.length} 件・agents ${d.agents.length} 件`,
-    `├── scripts/               # 検証と初期化の CLI（bun run の ${Object.keys(d.scripts).length} コマンド）`,
-    "├── _tests_/               # 回帰テスト",
-    "└── docs/                  # 文書（目次は docs/README.md）",
-    ...docsBranch(d),
+    ...rows.map((row, i) => `${i === rows.length - 1 ? "└──" : "├──"} ${renderRow(row)}`),
+    ...(docs ? docsBranch(d) : []),
     "```",
   ]
 }
@@ -86,8 +135,15 @@ export function renderArchitecture(a: InitAnswers, d: Detected): string {
   const lines = [
     "# アーキテクチャ（構成と読み込みの流れ）",
     "",
-    `> \`bun run setup --init-only\` が実在するファイルから生成した（${a.name}）。`,
-    "> 構成を変えたら同じコマンドで生成し直すか、本ファイルを手で更新する。",
+    ...(gone(d, "scripts/setup.ts")
+      ? [
+          `> 初期化 CLI（テンプレート専用だったため削除済み）が実在するファイルから生成した（${a.name}）。`,
+          "> 構成を変えたら本ファイルを手で更新する。",
+        ]
+      : [
+          `> \`bun run setup --init-only\` が実在するファイルから生成した（${a.name}）。`,
+          "> 構成を変えたら同じコマンドで生成し直すか、本ファイルを手で更新する。",
+        ]),
     "",
     "## 1. ディレクトリ構成",
     "",

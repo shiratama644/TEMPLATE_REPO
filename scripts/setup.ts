@@ -140,7 +140,15 @@ export function loadConfig(o: Options): void {
   if (!config || typeof config !== "object" || Array.isArray(config))
     throw new Error("設定ファイルは JSON オブジェクトで指定してください")
   validateConfig(config)
-  const keys = ["name", "description", "language", "template", "preset", "features"] as const
+  const keys = [
+    "name",
+    "description",
+    "language",
+    "template",
+    "preset",
+    "features",
+    "cleanup",
+  ] as const
   for (const k of keys)
     if (config[k] !== undefined && o[k] === undefined)
       (o as unknown as Record<string, unknown>)[k] = config[k]

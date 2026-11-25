@@ -1,6 +1,7 @@
 /** 初期化で生成する指示ファイル（AGENTS.md §6・ルール・project-overview）。 */
+import { gone } from "./init-cleanup.ts"
 import type { Detected, InitAnswers, SectionId } from "./init-detect.ts"
-import { gateCommands } from "./init-docs.ts"
+import { canonicalVerification, gateCommands, verificationNote } from "./init-docs.ts"
 
 /** §6.2〜§6.6 に対応する小節。番号は公開 API なので変えない（AGENTS.md §8.4）。 */
 export const sectionHeadings: Record<SectionId, string> = {
@@ -24,21 +25,44 @@ const emptySection = "- 固有の事項はまだ無い。事実が分かった�
 /** §6.1 を実在するコマンドから作る。 */
 export function renderCommandsSection(a: InitAnswers, d: Detected): string[] {
   const gates = gateCommands.filter((g) => g in d.scripts)
+  const canonical = canonicalVerification(d)
   const lines = [
     "### 6.1 環境・ツールチェーン・検証コマンド（Commands / Setup）",
-    `- **検証の正本**: \`bun run check\`（${d.gates.length || gates.length + 1} ゲート: ${
-      d.gates.join(" / ") || "検査"
-    }）。` + "`make check` は同じ入口。未使用コード・依存は `bun run knip`。",
-    `- **個別の検査**: \`bun run ${gates.join("` / `bun run ")}\` / \`bun run test\`。`,
+    canonical
+      ? `- **検証の正本**: \`${canonical.command}\`${canonical.note}。` +
+        (canonical.command === "bun run check" ? "`make check` は同じ入口。" : "") +
+        ("knip" in d.scripts ? "未使用コード・依存は `bun run knip`。" : "")
+      : "- **検証の正本**: なし（テンプレート由来のゲートを削除しました）。",
+    ...(gates.length ? [`- **個別の検査**: \`bun run ${gates.join("` / `bun run ")}\`。`] : []),
     `- **ランタイム**: Bun ${d.packageManager}（\`package.json\` の \`packageManager\`）。` +
       "依存は `bun install --frozen-lockfile` で固定する。",
-    "- **Git フック**: `bun install` の postinstall が `.githooks` を有効化する。" +
-      "既存の commit-msg / pre-commit は上書きせず連鎖実行し、再実行は `bun run hooks:install`。",
-    "- **初期化**: `bun run init`（= `bun run setup --init-only`）。対話式 TUI が本節・README・docs/ を実物から生成し直す。`--dry-run` は読み取り専用、`--plan-json` は計画の JSON だけ。",
-    `- **CI**: ${d.workflows.map((w) => `\`.github/workflows/${w}\``).join(" / ") || "なし"}。` +
-      "運用は `docs/ops/index.md`。",
-    `- **GitHub 側の設定**: \`bun run github:settings --apply\`（gh が必要）。` +
-      "画面で行う場合の手順は `docs/ops/GITHUB_SETTINGS.md`。",
+    ...(gone(d, ".githooks")
+      ? []
+      : [
+          "- **Git フック**: `bun install` の postinstall が `.githooks` を有効化する。" +
+            "既存の commit-msg / pre-commit は上書きせず連鎖実行し、再実行は `bun run hooks:install`。",
+        ]),
+    ...("init" in d.scripts
+      ? [
+          "- **初期化**: `bun run init`（= `bun run setup --init-only`）。対話式 TUI が本節・README・docs/ を実物から生成し直す。`--dry-run` は読み取り専用、`--cleanup` は削除の選択、`--plan-json` は計画の JSON だけ。",
+        ]
+      : [
+          "- **初期化**: CLI は削除済みです（テンプレート専用だったため）。本節は手で更新してください。",
+        ]),
+    gone(d, ".github/workflows")
+      ? "- **CI**: ワークフローは削除済みです。運用のメモは `docs/ops/index.md`。"
+      : `- **CI**: ${d.workflows.map((w) => `\`.github/workflows/${w}\``).join(" / ") || "なし"}。` +
+        "運用は `docs/ops/index.md`。",
+    ...("github:settings" in d.scripts
+      ? [
+          `- **GitHub 側の設定**: \`bun run github:settings --apply\`（gh が必要）。` +
+            "画面で行う場合の手順は `docs/ops/GITHUB_SETTINGS.md`。",
+        ]
+      : gone(d, "docs/ops/GITHUB_SETTINGS.md")
+        ? []
+        : [
+            "- **GitHub 側の設定**: CLI は削除済みです。`docs/ops/GITHUB_SETTINGS.md` の手順を画面で行ってください。",
+          ]),
   ]
   // パスらしき文字列を backtick で囲むと AGENTS.md のゲート（AMC-PATH）が実在チェックするため URL で書く
   if (a.owner)
@@ -62,7 +86,11 @@ export function renderAgentsSection(a: InitAnswers, d: Detected): string[] {
     `## 6. プロジェクト固有の遵守事項（${a.name}）`,
     "",
     "> この節だけプロジェクト固有の内容。計画書と矛盾すれば計画書を優先し、それ以外は本節を厳守する。",
-    "> `bun run setup --init-only` で生成した。事実が変わったら同じコマンドで生成し直す。",
+    `> ${
+      "init" in d.scripts
+        ? "`bun run setup --init-only` で生成した。事実が変わったら同じコマンドで生成し直す。"
+        : "初期化 CLI（テンプレート専用だったため削除済み）で生成した。事実が変わったら本節を手で更新する。"
+    }`,
     "",
     ...renderCommandsSection(a, d),
     "",
@@ -108,13 +136,17 @@ export function renderProjectTemplateRule(a: InitAnswers, d: Detected): string {
     "",
     "> 優先度: **HIGH** — `AGENTS.md §6` と対応するチェックリスト",
     ">",
-    `> \`bun run setup --init-only\` で生成した（${a.name}）。§6 と食い違ったら §6 を正とする。`,
+    `> ${"init" in d.scripts ? "`bun run init` で" : "初期化 CLI（削除済み）で"}生成した（${a.name}）。§6 と食い違ったら §6 を正とする。`,
     "",
     "## 1. 環境・ツールチェーン（§6.1相当）",
     "",
     `- ランタイム: Bun ${d.packageManager}。依存は \`bun install --frozen-lockfile\` で固定`,
-    `- 検証の正本: \`bun run check\`（${d.gates.length || gateCommands.filter((g) => g in d.scripts).length + 1} ゲート）と \`bun run knip\``,
-    "- 個別の検査: `bun run links` / `mermaid` / `lang` / `agents` / `index` / `shell` / `length` / `coverage` / `test`",
+    `- ${verificationNote(d)}`,
+    ...(gateCommands.filter((g) => g in d.scripts).length
+      ? [
+          `- 個別の検査: \`bun run ${gateCommands.filter((g) => g in d.scripts).join("` / `bun run ")}\``,
+        ]
+      : []),
     "",
     "## 2. 記入済みと未記入の節（§6.2〜§6.6相当）",
     "",
@@ -154,7 +186,9 @@ export function renderProjectOverview(a: InitAnswers, d: Detected): string {
     "",
     "- **速く大量に作ることではなく、常に復旧可能で、壊れた状態を長時間維持しないこと**を最優先とする。",
     "- 小さく実行 → 検証 → 修正 → 記録 → 次の作業、のサイクルを徹底する。",
-    `- 検証の正本は \`bun run check\`。プロジェクト固有の制約は \`AGENTS.md §6\`（初期化: \`bun run setup --init-only\`）。`,
+    `- ${verificationNote(d)}プロジェクト固有の制約は \`AGENTS.md §6\`${
+      "init" in d.scripts ? "（初期化: `bun run setup --init-only`）" : ""
+    }。`,
     "",
     "## 構成",
     "",
@@ -163,7 +197,7 @@ export function renderProjectOverview(a: InitAnswers, d: Detected): string {
     "| `AGENTS.md` | Agent が必ず守る作業規約。§6 がプロジェクト固有 |",
     `| \`.agent/\` | Agent 設定（rules・skills ${d.skills.length} 件・hooks ${d.hooks.length} 件・agents ${d.agents.length} 件） |`,
     "| `docs/` | `task-list.md`（進捗の正本）・`arch/`（仕様）・`planning/`（計画）・`research/`（調査）・`audit/`（監査）・`ops/`（運用） |",
-    "| `scripts/` | 検証と初期化の CLI（Bun / TypeScript） |",
+    `| \`scripts/\` | ${gone(d, "scripts/setup.ts") ? "検証の" : "検証と初期化の"} CLI（Bun / TypeScript） |`,
     "| `README.md` | プロジェクトの概要と始め方 |",
     "| `LICENSE` | ライセンス |",
     "",
@@ -178,7 +212,9 @@ export function renderProjectOverview(a: InitAnswers, d: Detected): string {
     "- 開発規約: `AGENTS.md`（§6 はプロジェクト固有）",
     "- 文書の目次: `docs/README.md` / 仕様: `docs/arch/README.md` / 運用: `docs/ops/index.md`",
     "- ルール: `.agent/rules/` / スキル: `.agent/skills/` / フック: `.agent/hooks/`",
-    "- 初期化のやり直し: `.agent/skills/project-init/SKILL.md`（TUI の手順と確認項目）",
+    ...("init" in d.scripts
+      ? ["- 初期化のやり直し: `.agent/skills/project-init/SKILL.md`（TUI の手順と確認項目）"]
+      : ["- 初期化 CLI は削除済みです。本ファイルは手で更新してください。"]),
     "",
   ]
   return lines.join("\n")

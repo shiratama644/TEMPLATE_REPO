@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { type CleanupId, cleanupIds } from "./init-cleanup.ts"
 import {
   featureNames,
   type Language,
@@ -35,6 +36,7 @@ const initSchema = z.strictObject({
   sections: z.array(z.enum(["sandbox", "git", "impl", "style", "output"])).optional(),
   sectionText: z.record(z.string(), z.string()).optional(),
 })
+const cleanup = z.enum(cleanupIds as [CleanupId, ...CleanupId[]])
 const configSchema = z.strictObject({
   preset: preset.optional(),
   language: language.optional(),
@@ -43,6 +45,7 @@ const configSchema = z.strictObject({
   description: z.string().optional(),
   features: z.array(feature).optional(),
   init: initSchema.optional(),
+  cleanup: z.array(cleanup).optional(),
 })
 const choicesSchema = configSchema.superRefine((o, ctx) => {
   if (o.language && o.template && !templates[o.language].includes(o.template))
@@ -78,5 +81,10 @@ function validateSchema(input: unknown, schema: typeof configSchema | typeof cho
     throw new Error("プロジェクト名は英小文字で始まる kebab-case（最大 64 文字）にしてください")
   if (key === "description") throw new Error("説明は文字列で指定してください")
   if (key === "init") throw new Error(`init の指定が不正です: ${issue.message}`)
+  if (key === "cleanup")
+    throw new Error(
+      `cleanup は削除候補の id の配列で指定してください: ${JSON.stringify(value)}` +
+        `（指定できる id: ${cleanupIds.join(", ")}。空配列 [] は何も削除しない）`,
+    )
   throw new Error(`設定ファイルが不正です: ${issue.message}`)
 }

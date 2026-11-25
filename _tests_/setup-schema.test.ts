@@ -75,13 +75,23 @@ test("validateConfig accepts a full configuration and names each invalid key", (
       description: "説明",
       features: ["docker"],
       init: { owner: "octocat", licenseYear: "2026", sections: ["git"] },
+      cleanup: ["tests", "gates"],
     }),
   ).not.toThrow()
+  // 何も削除しない選択も正しい指定
+  expect(() => validateConfig({ cleanup: [] })).not.toThrow()
   expect(() => validateChoices({ name: "Bad Name" })).toThrow(
     "プロジェクト名は英小文字で始まる kebab-case（最大 64 文字）にしてください",
   )
   expect(() => validateChoices({ description: 42 })).toThrow("説明は文字列で指定してください")
   expect(() => validateConfig({ init: { licenseYear: "26" } })).toThrow("init の指定が不正です")
+  expect(() => validateConfig({ cleanup: ["agents"] })).toThrow(
+    'cleanup は削除候補の id の配列で指定してください: ["agents"]（指定できる id: template-tools, tests, gates, repo-ops, ci, workspace。空配列 [] は何も削除しない）',
+  )
+  // CLI の --cleanup と違い、設定ファイルは none / all の文字列を受け付けない
+  expect(() => validateConfig({ cleanup: "all" })).toThrow(
+    'cleanup は削除候補の id の配列で指定してください: "all"',
+  )
   // どの鍵にも当てはまらない不正（オブジェクトですらない）は一般のメッセージになる
   expect(() => validateConfig("not-an-object")).toThrow("設定ファイルが不正です")
   expect(() => validateConfig(null)).toThrow("設定ファイルが不正です")

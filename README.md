@@ -47,6 +47,8 @@ bun run setup                                 # 対話式。計画を表示し [
 bun run init                                  # テンプレート初期化だけ（= setup --init-only）
 bun run init -- --dry-run                     # 生成する内容を確認するだけ（読み取り専用）
 bun run setup --init-only --plan-json         # 計画を単一 JSON で出す（書き込みなし）
+bun run init -- --cleanup none                # テンプレート専用ファイルを何も削除しない
+bun run init -- --cleanup tests,gates         # 削除する候補を id で指定する（対話を省く）
 bun run setup --init-only --yes --apply --init-name my-app --owner octocat/my-app --purpose "問い合わせ対応を自動化する"
 bun run setup --preset vite-app --name my-app --dry-run
 bun run setup --plan-json --dir . --preset vite-app --name my-app
@@ -57,7 +59,20 @@ bun run verify:generated --dir . --template next --build # 明示した場合だ
 bun run check                                 # CI と同じ入口（型・単体テスト含む）
 ```
 
-**初期化フェーズ**は、対象ディレクトリがテンプレート（`AGENTS.md` と `docs/arch/product.md` と `.agent/skills/project-init/` がある）のとき自動的に先に走り、それ以外では何もしません（`--no-init` で明示的にスキップ）。計画（`~` 書き換え / `=` 変更なし / `-` 削除 / `!` 触らない）を表示し、`[y/N]` の承認後に適用します。退避ディレクトリは作らず、復元は Git（`git restore`）が担います。初期化ログの削除は Git 管理下のときだけ行います（Git 管理外では `!` と表示して残します）。同じ答えで再実行すると「初期化済みです」となり、ファイルは変わりません。非対話式は `--yes --apply` と `--init-name` / `--owner` / `--license-holder` / `--purpose` など、または `--config` の `init`（Zod で検証）で答えを渡します。
+**初期化フェーズ**は、対象ディレクトリがテンプレート（`AGENTS.md` と `docs/arch/product.md` と `.agent/skills/project-init/` がある）のとき自動的に先に走り、それ以外では何もしません（`--no-init` で明示的にスキップ）。計画（`~` 書き換え / `=` 変更なし / `-` 削除 / `!` 触らない。補足は `注意:` 行）を表示し、`[y/N]` の承認後に適用します。退避ディレクトリは作らず、復元は Git（`git restore`）が担います。初期化ログの削除は Git 管理下のときだけ行います（Git 管理外では `!` と表示して残します）。同じ答えで再実行すると「初期化済みです」となり、ファイルは変わりません。非対話式は `--yes --apply` と `--init-name` / `--owner` / `--license-holder` / `--purpose` など、または `--config` の `init`（Zod で検証）で答えを渡します。
+
+**テンプレート専用ファイルの削除**も初期化の一部で、**すべて選択制**です（強制削除はありません）。セットアップに使う対話式 TUI も、生成先のプロジェクトには残さないほうがよいテストも、候補から選んだ物だけ消えます。対話式は候補の複数選択（スペースで選択、Enter で確定）、非対話式は既定の候補 **template-tools** / **tests** / **workspace** を削除します。`--cleanup none` は削除なし、`--cleanup all` は全候補、`--cleanup tests,gates` は id 指定です（`--config` では `cleanup: ["tests", "gates"]`）。
+
+| id | 消す物 | 既定 |
+| :--- | :--- | :--- |
+| `template-tools` | `scripts/setup*.ts`・`init-*.ts`・`verify-generated.ts`・`safe-path.ts` とそのテスト、`bun run setup` / `init` / `verify:generated` | ON |
+| `tests` | `_tests_/` 一式・`scripts/check-coverage.ts`・`knip.jsonc`、ゲート「テストとカバレッジ」と CI の knip・native toolchain step | ON |
+| `gates` | `scripts/check*.ts`（`check-agents.ts` を除く）・`walk.ts`・`install-hooks.ts`・`.githooks/`・`Makefile`、CI の `bun run check` | off |
+| `repo-ops` | `scripts/github-settings.ts`・`git-report.ts`・`docs/ops/GITHUB_SETTINGS.md`・`docs/ops/main-ruleset.json` | off |
+| `ci` | `.github/workflows/`・`dependabot.yml`・`.github/fixtures/`・`.gitleaks.toml`（`SECURITY.md` は残る） | off |
+| `workspace` | `.tmp/`・`.setup-backup/`（再生成できる作業用ディレクトリ） | ON |
+
+**Agent の資産（`.agent/`・`AGENTS.md`・`.claude`・`CLAUDE.md`）と AGENTS.md の品質ゲート（`scripts/check-agents.ts`・`patches/`・`agents-md-lint`）は、どの候補にも入りません。** 削除に合わせて `package.json`（scripts と、使うファイルが全て消えた依存。残るスクリプトが叩く `typescript`（`tsc`）や `knip` は残します）・`scripts/check.ts`（import とゲート）・`.github/workflows/ci.yml`（step）・`Makefile`（ターゲットと `.PHONY`）を書き換え、生成する文書（`README.md`・`AGENTS.md §6`・`docs/`）は削除後に実在するコマンドだけを載せます。残すスクリプトが import するファイルは消さず `=`（保持）と表示し、Git 管理外のパスは復元できないので `!`（削除しません）と表示します（`.tmp/`・`.setup-backup/` は例外として消せます）。削除後に手で読んでほしい文書は `!` で一覧します。テンプレート本体（このリポジトリ）で初期化をやり直すときは `--cleanup none` を指定してください。
 
 対話式は `@clack/prompts` で選択・入力し、Zod で CLI/JSON 設定を検証します。入力名の既定値は出力先フォルダ名を kebab-case に正規化します。計画の提示後に `[y/N]` を尋ね、`y` / `yes` を入力したときだけ適用します。`N` または Enter のみなら変更しません。`--apply` は対話式では不要で、指定しても確認を省略しません。`--yes` のみではファイルを変更しません。非対話式の適用には **`--yes --apply` の両方**が必要です。`--dry-run` は常に読み取り専用です。既存の生成対象ファイルは保持し、変更する `package.json` は `.setup-backup/` に退避します。OS パッケージは対話式で**コマンドごとに yes と入力したときだけ**実行し、非対話式では手順の表示のみです。**文書やスキルの削除は自動では行わず、候補だけ案内します**。
 

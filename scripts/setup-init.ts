@@ -24,6 +24,17 @@ import {
   renderProduct,
 } from "./init-arch.ts"
 import {
+  applyCleanup,
+  type Cleanup,
+  type CleanupGroup,
+  type CleanupId,
+  cleanupChoices,
+  defaultCleanupIds,
+  noCleanup,
+  planCleanup,
+  withoutCleanup,
+} from "./init-cleanup.ts"
+import {
   type Detected,
   detect,
   findTraces,
@@ -125,6 +136,8 @@ export function answersFromOptions(
 export type Prompter = {
   text(message: string, initial: string, optional: boolean): Promise<string>
   pick(message: string, values: SectionId[], initial: SectionId[]): Promise<SectionId[]>
+  /** 削除するテンプレート専用ファイルの候補を選ぶ（選択なしも許す） */
+  choose(message: string, groups: CleanupGroup[], initial: CleanupId[]): Promise<CleanupId[]>
   confirm(message: string): Promise<boolean>
 }
 /** Clack の 3 呼び出しだけ。テストは偽物を差し替えて、キャンセルと整形の規則を検証する。 */
@@ -150,6 +163,16 @@ export function makeClackPrompter(ui: ClackUi): Prompter {
         message,
         options: values.map((id) => ({ value: id, label: sectionLabel(id) })),
         initialValues: initial,
+        required: false,
+      })
+      if (isCancel(picked)) throw new SetupCancelled()
+      return picked
+    },
+    async choose(message, groups, initial) {
+      const picked = await ui.multiselect<CleanupId>({
+        message,
+        options: groups.map((g) => ({ value: g.id, label: g.label, hint: g.hint })),
+        initialValues: initial.filter((id) => groups.some((g) => g.id === id)),
         required: false,
       })
       if (isCancel(picked)) throw new SetupCancelled()
@@ -271,6 +294,8 @@ export type InitPlan = {
   missing: string[]
   /** 触らない理由（例: タスク登録済みの task-list.md） */
   notes: string[]
+  /** 選ばれたテンプレート専用ファイルの削除（空なら何もしない） */
+  cleanup: Cleanup
 }
 
 /** 削除する文書を目次と木から除く（切れたリンクを残さない）。 */
@@ -282,11 +307,17 @@ export function withoutDeleted(d: Detected, deletes: string[]): Detected {
 }
 
 /** 計画を作る。実質同じ内容は書き換えない（冪等）。 */
-export function buildInitPlan(dir: string, a: InitAnswers, d: Detected): InitPlan {
+export function buildInitPlan(
+  dir: string,
+  a: InitAnswers,
+  d: Detected,
+  cleanup: Cleanup = noCleanup,
+): InitPlan {
   const logs = initLogs.filter((p) => existsSync(safe(dir, p)))
   const git = d.git || existsSync(join(dir, ".git"))
   const deletes = git ? logs : []
-  const rendered = renderAll(dir, a, withoutDeleted(d, deletes))
+  // 文書は「削除した後」の実物から作る（消えたコマンドやディレクトリを書かない）
+  const rendered = renderAll(dir, a, withoutCleanup(withoutDeleted(d, deletes), cleanup))
   const writes: InitFile[] = []
   const unchanged: string[] = []
   const missing: string[] = []
@@ -300,12 +331,12 @@ export function buildInitPlan(dir: string, a: InitAnswers, d: Detected): InitPla
     if (read(dir, path) === content) unchanged.push(path)
     else writes.push({ path, content })
   }
-  const notes: string[] = []
+  const notes: string[] = [...cleanup.notes]
   if (a.firstTask && skipped.includes("docs/task-list.md"))
     notes.push(
       "docs/task-list.md は既にタスクが登録されているため触りません。最初のタスクは手で追記してください",
     )
-  return { writes, unchanged, skipped, deletes, blocked: git ? [] : logs, missing, notes }
+  return { writes, unchanged, skipped, deletes, blocked: git ? [] : logs, missing, notes, cleanup }
 }
 
 export function printInitPlan(plan: InitPlan): void {
@@ -316,9 +347,12 @@ export function printInitPlan(plan: InitPlan): void {
   for (const path of plan.deletes) console.log(`- ${path} （初期化ログを削除）`)
   for (const path of plan.blocked) console.log(`! ${path} （Git 管理外のため削除しません）`)
   for (const path of plan.missing) console.log(`! ${path} （生成できなかったため触りません）`)
-  for (const note of plan.notes) console.log(`! ${note}`)
+  printCleanup(plan.cleanup)
+  for (const note of plan.notes) console.log(`注意: ${note}`)
   console.log(
-    `書き換え ${plan.writes.length} 件、変更なし ${plan.unchanged.length + plan.skipped.length} 件、削除 ${plan.deletes.length} 件`,
+    `書き換え ${plan.writes.length + plan.cleanup.editPaths.length} 件、変更なし ${
+      plan.unchanged.length + plan.skipped.length
+    } 件、削除 ${plan.deletes.length + plan.cleanup.paths.length} 件`,
   )
 }
 
@@ -326,7 +360,10 @@ export function printInitPlan(plan: InitPlan): void {
  * 計画どおりに書き換える。退避ディレクトリは作らない（利用者の方針）。
  * 復元は Git（`git restore <file>`）と、適用前の計画表示・`--dry-run` が担う。
  */
-export function applyInitPlan(dir: string, plan: InitPlan): { written: number; deleted: number } {
+export function applyInitPlan(
+  dir: string,
+  plan: InitPlan,
+): { written: number; deleted: number; edited: string[] } {
   let written = 0
   let deleted = 0
   for (const file of plan.writes) {
@@ -339,7 +376,32 @@ export function applyInitPlan(dir: string, plan: InitPlan): { written: number; d
     rmSync(safe(dir, path), { force: true })
     deleted++
   }
-  return { written, deleted }
+  // 削除は文書を書いた後（package.json を生成した後に scripts を除くため）
+  const cleanup = applyCleanup(dir, plan.cleanup)
+  return { written, deleted: deleted + cleanup.deleted, edited: cleanup.edited }
+}
+
+/** 選ばれた削除の計画を表示する（`-` 削除 / `~` 書き換え / `!` 手を付ける必要）。 */
+export function printCleanup(c: Cleanup): void {
+  if (!c.ids.length) return
+  for (const path of c.paths) console.log(`- ${path} （テンプレート専用ファイルを削除）`)
+  for (const path of c.editPaths) console.log(`~ ${path} （削除に合わせて書き換え）`)
+  for (const path of c.blocked) console.log(`! ${path} （Git 管理外のため削除しません）`)
+  for (const path of c.protectedPaths)
+    console.log(`= ${path} （残すスクリプトが import するため保持）`)
+  for (const path of c.review) console.log(`! ${path} （削除後に手で確認してください）`)
+}
+
+/** 削除するテンプレート専用ファイルを選ぶ。Agent の資産は候補に出さない。 */
+export async function askCleanup(dir: string, prompt: Prompter): Promise<CleanupId[]> {
+  const groups = cleanupChoices(dir)
+  if (!groups.length) return []
+  console.log(
+    "\n== テンプレート専用ファイルの削除（このリポジトリは別のプロジェクトになります） ==",
+  )
+  console.log("  Agent の資産（.agent/・AGENTS.md・.claude・CLAUDE.md）は候補に含めません")
+  console.log("  テンプレート本体で使うときは何も選ばないでください（--cleanup none と同じ）")
+  return prompt.choose("削除する候補（スペースで選択、Enter で確定）", groups, defaultCleanupIds())
 }
 
 /** 適用後に作者の痕跡が残っていないかを確かめる。 */
@@ -378,7 +440,10 @@ export async function initPhase(
     notes.push(...fromOptions.notes)
     if (!o.planJson) for (const note of notes) console.log(`注意: ${note}`)
   }
-  const plan = buildInitPlan(o.dir, answers, d)
+  // 削除はすべて選択制。非対話式は既定の候補（--cleanup で変えられる）
+  const ids = o.cleanup ?? (tty && !o.yes ? await askCleanup(o.dir, prompt) : defaultCleanupIds())
+  const cleanup = planCleanup(o.dir, ids, d.git || existsSync(join(o.dir, ".git")))
+  const plan = buildInitPlan(o.dir, answers, d, cleanup)
   // `--plan-json` の標準出力は単一 JSON。注意は JSON の中だけで返す。
   if (o.planJson) return { code: 0, plan, answers, detected: d, notes }
   if (o.dryRun) {
@@ -387,7 +452,12 @@ export async function initPhase(
     return { code: 0, plan, answers, detected: d }
   }
   printInitPlan(plan)
-  if (!plan.writes.length && !plan.deletes.length) {
+  if (
+    !plan.writes.length &&
+    !plan.deletes.length &&
+    !plan.cleanup.paths.length &&
+    !plan.cleanup.editPaths.length
+  ) {
     console.log("初期化済みです（書き換える内容がありません）")
     return { code: 0, plan, answers, detected: d }
   }
@@ -435,6 +505,16 @@ export function printInitPlanJson(outcome: InitOutcome): void {
           deletes: plan?.deletes ?? [],
           blocked: plan?.blocked ?? [],
           missing: plan?.missing ?? [],
+          cleanup: {
+            ids: plan?.cleanup.ids ?? [],
+            paths: plan?.cleanup.paths ?? [],
+            edits: plan?.cleanup.editPaths ?? [],
+            packageScripts: plan?.cleanup.packageScripts ?? [],
+            dependencies: plan?.cleanup.dependencies ?? [],
+            blocked: plan?.cleanup.blocked ?? [],
+            protected: plan?.cleanup.protectedPaths ?? [],
+            review: plan?.cleanup.review ?? [],
+          },
         },
       },
       null,

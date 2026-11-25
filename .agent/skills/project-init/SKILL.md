@@ -11,6 +11,8 @@ description: テンプレートから作った新規リポジトリの初回、A
 
 **書き換えの正本は TUI**: `bun run init`（= `bun run setup --init-only`）が対話で答えを集め、`README.md`・`LICENSE`・`package.json`・`AGENTS.md §6`・`docs/`（`README` / `task-list` / `arch/` / `ops/` / `planning/_TEMPLATE`）・`project-overview`・`project-template`・`.github/SECURITY.md` を生成し、作者の痕跡と初期化ログ（`INIT_PLAN.md` / `INIT_STATE.md`）を除く。**Agent はこれらの文書を手で書き換えない。** 役割は (1) 下のワークフローで答え（目的・対象・非目標・制約）を集め、(2) `--yes --apply --init-name ... --owner ... --purpose ...`（または `--config` の `init`）で TUI に渡し、(3) 出力の検証結果と `git diff` を確認すること。`--dry-run` は読み取り専用、`--plan-json` は計画の単一 JSON。プロジェクトのコード雛形まで作るなら `bun run setup`（初期化の後にプリセット・言語・機能を聞く）。CLI は OS 導入を毎回確認する。
 
+**テンプレート専用ファイルの削除は選択制**: 同じ `bun run init` が「このリポジトリは別のプロジェクトになる」前提で、セットアップに使う機械（対話式 TUI の実装 `scripts/setup*.ts`・`init-*.ts`・`verify-generated.ts`・`safe-path.ts`）と回帰テスト（`_tests_/`・`scripts/check-coverage.ts`・`knip.jsonc`）などの削除候補を複数選択で聞く。対話式の初期値は **template-tools** / **tests** / **workspace**（`.tmp/`・`.setup-backup/`）で、非対話式も同じ既定を削除する。`--cleanup none` は削除なし、`--cleanup all` は全候補、`--cleanup tests,gates` は id 指定（`--config` は `cleanup: ["tests", "gates"]` の配列だけ）。ほかの候補は **gates**（`scripts/check*.ts`・`walk.ts`・`install-hooks.ts`・`.githooks/`・`Makefile` と CI の `bun run check`）・**repo-ops**（`github-settings.ts`・`git-report.ts`・`docs/ops/GITHUB_SETTINGS.md`・`main-ruleset.json`）・**ci**（`.github/workflows/`・`dependabot.yml`・`.github/fixtures/`・`.gitleaks.toml`）。**Agent の資産（`.agent/`・`AGENTS.md`・`.claude`・`CLAUDE.md`）と AGENTS.md ゲート（`scripts/check-agents.ts`・`patches/`・`agents-md-lint`）は候補に出ない。** 削除は計画に `-`（削除）・`~`（削除に合わせた書き換え）・`=`（残すスクリプトが import するため保持）・`!`（Git 管理外で削除しない／削除後に手で確認）として出て、承認後にだけ適用される。`package.json` から依存を除いたときは、適用後に `bun install` で `bun.lock` を更新する。**テンプレート本体（本リポジトリ）の改善では `--cleanup none`**（機械を消すとテンプレートとして機能しなくなる）。
+
 ## いつ使うか
 
 - GitHub の「Use this template」直後の最初のセッション
@@ -457,12 +459,14 @@ flowchart TD
 
 `docs/examples/` のような存在しないパスを新たに書かない。
 
+文書の生成のあとに、**選択した削除**が適用されます（`applyInitPlan` → `applyCleanup`）。対象は `scripts/init-cleanup.ts` の候補グループだけで、Agent の資産は含まれません。削除すると `package.json`（scripts と、使うファイルが無くなった依存）・`scripts/check.ts`（import 行とゲート項目）・`.github/workflows/ci.yml`（step）・`Makefile`（ターゲットと `.PHONY:`）が自動的に書き換わり、README・`AGENTS.md §6`・`docs/` は削除後に実在するコマンドだけを載せます。`!` で一覧された文書（`AGENTS.md`・`docs/ops/index.md`・`.agent/commands/test.md`・`.agent/agents/test-writer.md` など）は、消えたコマンドへの言及を手で確認してください。
+
 ---
 
 ### 5. 検証・記録・停止
 
 1. [`docs-maintenance`](../docs-maintenance/SKILL.md)。内部リンクは `bash`、外部 URL は `fetch_page`。
-2. `make links`。§6.1 があればそれも（`make check`）。未記録のコマンドは捏造しない。
+2. `make links`。§6.1 があればそれも（`make check`）。未記録のコマンドは捏造しない。**ゲートを削除した場合は `make check` が無い**ので、残っているコマンド（`bun run test` など）だけで検証し、消えたコマンドを報告に書かない。
 3. `docs/task-list.md` を証拠つきで更新。
 4. `.agent/hooks/log-task.md`。
 5. 検証 PASS なら commit し、セッション固定ブランチへ push。
