@@ -32,8 +32,8 @@ TEMPLATE_REPO/
 │   ├── check-language.ts  # 日本語・英語ゲート
 │   └── check-commit.ts / conventional-commit.ts / git-report.ts # コミット形式・読み取り専用レポート
 ├── _tests_/               # セットアップ・スキーマ・npm bin・CI 負例の回帰テスト
-│   └── fixtures/          # CI の負例（invalid / unsafe workflow）
 ├── .github/               # CI・リリース・依存関係レビュー・OSV スキャン・dependabot
+│   └── fixtures/          # CI の負例（invalid / unsafe workflow）
 ├── .claude                # .agent/ への symlink
 ├── .agent/                # Agent の設定と知識（.claude はここへの symlink）
 │   ├── README.md          # .agent/ の説明

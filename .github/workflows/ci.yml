@@ -76,7 +76,7 @@ jobs:
           set -euo pipefail
           actionlint -version
           actionlint -color=false .github/workflows/*.yml
-          if actionlint -color=false _tests_/fixtures/invalid-workflow.yml > /tmp/actionlint-negative.log 2>&1; then
+          if actionlint -color=false .github/fixtures/invalid-workflow.yml > /tmp/actionlint-negative.log 2>&1; then
             echo '::error::actionlint accepted the invalid workflow'
             exit 1
           fi
@@ -98,7 +98,7 @@ jobs:
         continue-on-error: true
         uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3 # v0.9.0
         with:
-          inputs: _tests_/fixtures/unsafe-workflow.yml
+          inputs: .github/fixtures/unsafe-workflow.yml
           online-audits: false
           min-severity: medium
           advanced-security: false
