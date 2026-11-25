@@ -388,12 +388,12 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
         : "bun x vite --host 127.0.0.1 --port 4173 --strictPort"
       c.files["playwright.config.ts"] =
         `import { defineConfig } from "@playwright/test"\nexport default defineConfig({\n  testMatch: "**/e2e.ts",\n  webServer: {\n    command: "${command}",\n    cwd: "${appDir}",\n    url: "http://127.0.0.1:4173",\n    reuseExistingServer: false,\n    timeout: 60_000,\n  },\n})\n`
-      c.files["tests/e2e.ts"] =
+      c.files["_tests_/e2e.ts"] =
         `import { expect, test } from "@playwright/test"\n\ntest("serves the generated page", async ({ request }) => {\n  const response = await request.get("http://127.0.0.1:4173/")\n  expect(response.ok()).toBe(true)\n  expect(await response.text()).toContain("${c.name}")\n})\n`
     } else {
       c.files["playwright.config.ts"] =
         'import { defineConfig } from "@playwright/test"\nexport default defineConfig({ testMatch: "**/e2e.ts" })\n'
-      c.files["tests/e2e.ts"] =
+      c.files["_tests_/e2e.ts"] =
         'import { spawnSync } from "node:child_process"\nimport { expect, test } from "@playwright/test"\n\ntest("builds the generated package", () => {\n  expect(spawnSync("bun", ["run", "build"], { stdio: "inherit" }).status).toBe(0)\n})\n'
     }
   },
@@ -526,7 +526,7 @@ function addTestFiles(c: FeatureContext): void {
         : c.template === "monorepo"
           ? "apps/web/src/main"
           : "src/main"
-  c.files["tests/scaffold.test.ts"] =
+  c.files["_tests_/scaffold.test.ts"] =
     `import { existsSync, readFileSync } from "node:fs"\nimport { expect, test } from "vitest"\n\nconst path = ["${source}.tsx", "${source}.jsx"].find(existsSync)\ntest("generated project name is present", () => {\n  if (!path) throw new Error("Entry file is missing")\n  expect(readFileSync(path, "utf8")).toContain("${c.name}")\n})\n`
 }
 export function featureScaffold(features: Feature[], name: string, template: Template): Scaffold {

@@ -5,7 +5,7 @@ description: 機能の不具合を有限の反復で探索し、負例で再現�
 
 # 有界のバグ監査ループ
 
-根拠: `tests/agents.test.ts`・`tests/git-report.test.ts`・`tests/plan-verify.test.ts` の再現可能な負例。
+根拠: `_tests_/agents.test.ts`・`_tests_/git-report.test.ts`・`_tests_/plan-verify.test.ts` の再現可能な負例。
 
 ## 実行手順
 

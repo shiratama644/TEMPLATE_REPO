@@ -517,7 +517,7 @@ test("selected quality tools include runnable scaffolds and scoped configuration
   expect(pkg.devDependencies["@vitest/coverage-v8"]).toBe("^4.1.12")
   expect(pkg.scripts.e2e).toContain("playwright")
   expect(existsSync(join(d, "src/index.test.ts"))).toBe(true)
-  expect(existsSync(join(d, "tests/e2e.ts"))).toBe(true)
+  expect(existsSync(join(d, "_tests_/e2e.ts"))).toBe(true)
   const stale = readFileSync(join(d, ".github/workflows/stale.yml"), "utf8")
   expect(stale).toMatch(/uses: actions\/stale@[a-f\d]{40} # v10/)
   expect(stale).toContain("issues: write")
@@ -543,7 +543,7 @@ test("selected quality tools include runnable scaffolds and scoped configuration
       ).status,
     ).toBe(0)
     expect(readFileSync(join(web, "playwright.config.ts"), "utf8")).toContain("webServer")
-    expect(readFileSync(join(web, "tests/e2e.ts"), "utf8")).toContain("response.ok()")
+    expect(readFileSync(join(web, "_tests_/e2e.ts"), "utf8")).toContain("response.ok()")
   }
 })
 

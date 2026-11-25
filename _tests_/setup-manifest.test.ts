@@ -206,7 +206,7 @@ test("playwright serves web apps and only builds packages", () => {
   const web = featureScaffold(["playwright"], "demo", "vite-react")
   expect(web.files["playwright.config.ts"]).toContain("webServer")
   expect(web.files["playwright.config.ts"]).toContain("bun x vite --host 127.0.0.1 --port 4173")
-  expect(web.files["tests/e2e.ts"]).toContain("demo")
+  expect(web.files["_tests_/e2e.ts"]).toContain("demo")
 
   const next = featureScaffold(["playwright"], "demo", "next-monorepo")
   expect(next.files["playwright.config.ts"]).toContain("bun x next dev")
@@ -214,7 +214,7 @@ test("playwright serves web apps and only builds packages", () => {
 
   const pkg = featureScaffold(["playwright"], "demo", "plain-ts")
   expect(pkg.files["playwright.config.ts"]).not.toContain("webServer")
-  expect(pkg.files["tests/e2e.ts"]).toContain('spawnSync("bun", ["run", "build"]')
+  expect(pkg.files["_tests_/e2e.ts"]).toContain('spawnSync("bun", ["run", "build"]')
 })
 
 test("vitest and coverage add a smoke test that names the generated entry file", () => {
@@ -231,7 +231,7 @@ test("vitest and coverage add a smoke test that names the generated entry file",
     ["next-monorepo", "apps/web/app/page"],
   ]
   for (const [template, entry] of entries) {
-    const file = featureScaffold(["vitest"], "demo", template).files["tests/scaffold.test.ts"]
+    const file = featureScaffold(["vitest"], "demo", template).files["_tests_/scaffold.test.ts"]
     expect(file).toContain(`${entry}.tsx`)
     expect(file).toContain(`${entry}.jsx`)
     expect(file).toContain('"demo"')

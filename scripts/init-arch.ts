@@ -75,7 +75,7 @@ export function renderTree(a: InitAnswers, d: Detected): string[] {
     "├── .claude                # .agent/ への symlink",
     `├── .agent/                # rules・skills ${d.skills.length} 件・hooks ${d.hooks.length} 件・agents ${d.agents.length} 件`,
     `├── scripts/               # 検証と初期化の CLI（bun run の ${Object.keys(d.scripts).length} コマンド）`,
-    "├── tests/                 # 回帰テストと fixtures",
+    "├── _tests_/               # 回帰テストと fixtures",
     "└── docs/                  # 文書（目次は docs/README.md）",
     ...docsBranch(d),
     "```",
