@@ -7,12 +7,21 @@ import { join, resolve } from "node:path"
 import { safe } from "./safe-path.ts"
 import { scaffold, type Template, templates } from "./setup-manifest.ts"
 
-type Result = { check: string; status: "passed" | "failed" | "blocked"; detail?: string }
+export type Result = { check: string; status: "passed" | "failed" | "blocked"; detail?: string }
+/**
+ * ビルドの実行環境。道具の有無と実行を差し替えられるようにして、
+ * Go / Cargo / Python が無い機械でも「blocked と報告する」経路を検証できるようにする。
+ */
+export type BuildEnv = {
+  which(bin: string): string | null
+  run(cmd: string, args: string[], dir: string, env?: NodeJS.ProcessEnv): Result
+  platform: string
+}
 const known = new Set<Template>(Object.values(templates).flat())
 const help = `bun run verify:generated --dir <project> --template <id> [--build]
 Default: static file/manifest checks only. --build runs project code or local build tools and may write artifacts. No dependencies or OS packages are installed. Run only on trusted projects.`
 
-function argumentsFor(args: string[]) {
+export function argumentsFor(args: string[]) {
   let dir: string | undefined
   let template: Template | undefined
   let build = false
@@ -36,7 +45,7 @@ function argumentsFor(args: string[]) {
 }
 
 // The JavaScript Web variants rename the source and config files as a unit.
-function requiredFiles(template: Template, root: string): string[][] {
+export function requiredFiles(template: Template, root: string): string[][] {
   if (template === "vite-react") {
     const js = fileExists(root, "src/main.jsx")
     return [
@@ -55,12 +64,12 @@ function requiredFiles(template: Template, root: string): string[][] {
   }
   return Object.keys(scaffold(template, "verify-project").files).map((p) => [p])
 }
-function fileExists(root: string, path: string): boolean {
+export function fileExists(root: string, path: string): boolean {
   const full = safe(root, path)
   const stat = lstatSync(full, { throwIfNoEntry: false })
   return stat?.isFile() === true && !stat.isSymbolicLink()
 }
-function runCommand(cmd: string, args: string[], dir: string, env = process.env) {
+export function runCommand(cmd: string, args: string[], dir: string, env = process.env): Result {
   const result = spawnSync(cmd, args, {
     cwd: dir,
     encoding: "utf8",
@@ -78,20 +87,30 @@ function runCommand(cmd: string, args: string[], dir: string, env = process.env)
         : (result.stderr || result.error?.message || `exit ${result.status}`).trim().slice(0, 600),
   } as Result
 }
+export const buildEnv: BuildEnv = {
+  which: (bin) => Bun.which(bin),
+  run: runCommand,
+  platform: process.platform,
+}
 /** Go / Rust / Python のビルド。対象外のテンプレートでは undefined を返す。 */
-function buildNative(root: string, template: Template, temp: string): Result | undefined {
+export function buildNative(
+  root: string,
+  template: Template,
+  temp: string,
+  env: BuildEnv = buildEnv,
+): Result | undefined {
   if (template === "go-cli" || template === "go-http") {
-    if (!Bun.which("go")) return { check: "build", status: "blocked", detail: "go がありません" }
-    return runCommand("go", ["build", "-o", join(temp, "app"), "."], root, {
+    if (!env.which("go")) return { check: "build", status: "blocked", detail: "go がありません" }
+    return env.run("go", ["build", "-o", join(temp, "app"), "."], root, {
       ...process.env,
       GOPROXY: "off",
       GOSUMDB: "off",
     })
   }
   if (template === "rust-cli" || template === "rust-axum") {
-    if (!Bun.which("cargo"))
+    if (!env.which("cargo"))
       return { check: "build", status: "blocked", detail: "cargo がありません" }
-    const result = runCommand("cargo", ["check", "--offline"], root, {
+    const result = env.run("cargo", ["check", "--offline"], root, {
       ...process.env,
       CARGO_TARGET_DIR: join(temp, "target"),
     })
@@ -109,15 +128,11 @@ function buildNative(root: string, template: Template, temp: string): Result | u
     return result
   }
   if (template === "python-cli" || template === "python-fastapi") {
-    const executable = process.platform === "win32" ? "python" : "python3"
-    if (!Bun.which(executable))
+    const executable = env.platform === "win32" ? "python" : "python3"
+    if (!env.which(executable))
       return { check: "build", status: "blocked", detail: `${executable} がありません` }
-    if (template === "python-cli") return runCommand(executable, ["-B", "main.py"], root)
-    const venv = join(
-      root,
-      ".venv",
-      process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
-    )
+    if (template === "python-cli") return env.run(executable, ["-B", "main.py"], root)
+    const venv = join(root, ".venv", env.platform === "win32" ? "Scripts/python.exe" : "bin/python")
     if (
       lstatSync(join(root, ".venv"), { throwIfNoEntry: false })?.isSymbolicLink() ||
       !existsSync(venv)
@@ -127,12 +142,12 @@ function buildNative(root: string, template: Template, temp: string): Result | u
         status: "blocked",
         detail: ".venv の Python がありません（依存は自動導入しません）",
       }
-    return runCommand(venv, ["-B", "-c", "from app import app; assert app is not None"], root)
+    return env.run(venv, ["-B", "-c", "from app import app; assert app is not None"], root)
   }
   return undefined
 }
 /** 生成時の標準 build スクリプトかどうか。任意のスクリプトは実行しない。 */
-function checkBuildScripts(
+export function checkBuildScripts(
   root: string,
   template: Template,
   pkg: Record<string, unknown>,
@@ -200,19 +215,24 @@ function checkBuildScripts(
     return { check: "build", status: "blocked", detail: "typescript がローカルにありません" }
   return undefined
 }
-function buildProject(root: string, template: Template, pkg: Record<string, unknown>): Result {
+export function buildProject(
+  root: string,
+  template: Template,
+  pkg: Record<string, unknown>,
+  env: BuildEnv = buildEnv,
+): Result {
   const temp = mkdtempSync(join(tmpdir(), "verify-generated-"))
   try {
-    const native = buildNative(root, template, temp)
+    const native = buildNative(root, template, temp, env)
     if (native) return native
     const blocked = checkBuildScripts(root, template, pkg)
     if (blocked) return blocked
-    return runCommand("bun", ["run", "build"], root)
+    return env.run("bun", ["run", "build"], root)
   } finally {
     rmSync(temp, { recursive: true, force: true })
   }
 }
-export function verifyGenerated(args: string[]): number {
+export function verifyGenerated(args: string[], env: BuildEnv = buildEnv): number {
   const options = argumentsFor(args)
   if (options.help) {
     console.log(help)
@@ -251,7 +271,7 @@ export function verifyGenerated(args: string[]): number {
   }
   if (options.build && results.every((r) => r.status === "passed") && pkg) {
     try {
-      results.push(buildProject(root, template, pkg))
+      results.push(buildProject(root, template, pkg, env))
     } catch (e) {
       results.push({ check: "build", status: "failed", detail: String(e) })
     }
@@ -263,11 +283,14 @@ export function verifyGenerated(args: string[]): number {
       ? 2
       : 0
 }
-if (import.meta.main) {
+/** CLI 入口。引数の誤りは NG と終了コード 1 になり、例外を投げない。 */
+export function verifyEntry(args: string[]): number {
   try {
-    process.exit(verifyGenerated(process.argv.slice(2)))
+    return verifyGenerated(args)
   } catch (e) {
     console.error(`NG: ${e instanceof Error ? e.message : e}`)
-    process.exit(1)
+    return 1
   }
 }
+
+if (import.meta.main) process.exit(verifyEntry(process.argv.slice(2)))

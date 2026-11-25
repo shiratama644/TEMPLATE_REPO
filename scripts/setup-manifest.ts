@@ -305,14 +305,16 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
             : c.template.startsWith("rust")
               ? '["cargo", "run"]'
               : '["bun", "run", "dev"]'
-    const install =
-      c.template === "python-fastapi"
+    // 依存の導入はイメージの中にある道具だけを使う。python-cli は依存が無いので行を足さない
+    const install = c.js
+      ? "RUN bun install\n"
+      : c.template === "python-fastapi"
         ? "RUN pip install .\n"
         : c.template.startsWith("rust")
           ? "RUN cargo fetch\n"
           : c.template.startsWith("go")
             ? "RUN go mod download\n"
-            : "RUN bun install\n"
+            : ""
     c.files.Dockerfile = `FROM ${image}\nWORKDIR /app\nCOPY . .\n${install}CMD ${command}\n`
     c.files[".dockerignore"] = ".git\nnode_modules\n.venv\ntarget\ndist\n.next\n.setup-backup\n"
   },
@@ -324,13 +326,16 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
         : c.template.startsWith("rust")
           ? "rust:1"
           : "oven/bun:1"
+    // docker と同じ基準で依存の導入コマンドを決める。python-cli は依存が無いので書かない
     const postCreateCommand = c.js
       ? "bun install"
       : c.template === "python-fastapi"
         ? "python3 -m venv .venv && .venv/bin/python -m pip install -e ."
-        : c.template === "rust-axum"
+        : c.template.startsWith("rust")
           ? "cargo fetch"
-          : undefined
+          : c.template.startsWith("go")
+            ? "go mod download"
+            : undefined
     c.files[".devcontainer/devcontainer.json"] =
       `${JSON.stringify({ name: c.name, image, postCreateCommand }, null, 2)}\n`
   },
@@ -494,6 +499,16 @@ const featureBuilders: Partial<Record<Feature, (c: FeatureContext) => void>> = {
       "bun -e \"console.log(Boolean(process.env.PREFIX?.includes('com.termux')))\""
   },
 }
+/**
+ * husky の pre-commit が呼ぶ `check` を、生成後に実在する script だけで組む。
+ * 無い script を呼ぶフックは commit のたびに失敗するので、ここで存在を確認する。
+ */
+function addCheckScript(c: FeatureContext): void {
+  if (!c.scripts["husky:install"]) return
+  const base = scaffold(c.template, c.name).scripts ?? {}
+  const gates = ["build", "test", "spell", "knip"].filter((name) => base[name] || c.scripts[name])
+  c.scripts.check = gates.map((name) => `bun run ${name}`).join(" && ")
+}
 /** vitest / coverage を選んだときの、生成物の名前を確認するテスト。 */
 function addTestFiles(c: FeatureContext): void {
   if (!(c.js && (c.features.includes("vitest") || c.features.includes("coverage")))) return
@@ -532,6 +547,7 @@ export function featureScaffold(features: Feature[], name: string, template: Tem
     build(c)
   }
   addTestFiles(c)
+  addCheckScript(c)
   if (features.includes("commitlint") && features.includes("husky"))
     c.files[".husky/commit-msg"] = 'bun run lint:commit "$1"\n'
   c.files[".gitignore"] = "node_modules/\n.venv/\ntarget/\ndist/\n.next/\n.turbo/\n.setup-backup/\n"

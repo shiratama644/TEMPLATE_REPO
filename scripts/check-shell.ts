@@ -63,8 +63,8 @@ export function shellTargets(base = root): string[] {
     ...list(join(base, ".githooks"), () => true),
   ]
 }
-export function checkShell(base = root): number {
-  if (process.platform === "win32") {
+export function checkShell(base = root, platform = process.platform): number {
+  if (platform === "win32") {
     console.log("SKIP: POSIX sh が無いため構文検査は未実施（Windows）")
     return 0
   }

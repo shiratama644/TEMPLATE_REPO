@@ -5,6 +5,7 @@ import ts from "typescript"
 import { files, root } from "./walk.ts"
 
 export const MAX_LINES = 100
+export const REPORT_ROWS = 12
 export type LongFunction = { file: string; name: string; lines: number; line: number }
 const isFunctionLike = (node: ts.Node): node is ts.FunctionLikeDeclaration =>
   ts.isFunctionDeclaration(node) ||
@@ -59,10 +60,12 @@ export function checkFunctionLength(base = root): number {
   )
   return 0
 }
-if (import.meta.main) {
-  const report = process.argv.includes("--report")
-  if (report)
-    for (const f of functionLengths().slice(0, 12))
-      console.log(`${f.lines}\t${f.file}:${f.line}\t${f.name}`)
-  else process.exit(checkFunctionLength())
+/** CLI 入口。`--report` は長い順の一覧を出すだけで、ゲート判定はしない。 */
+export function functionLengthEntry(argv: string[]): number {
+  if (!argv.includes("--report")) return checkFunctionLength()
+  for (const f of functionLengths().slice(0, REPORT_ROWS))
+    console.log(`${f.lines}\t${f.file}:${f.line}\t${f.name}`)
+  return 0
 }
+
+if (import.meta.main) process.exit(functionLengthEntry(process.argv))

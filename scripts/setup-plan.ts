@@ -7,6 +7,17 @@ import type { Resolved } from "./setup-options.ts"
 import { suggestions } from "./setup-options.ts"
 import { json } from "./setup-package.ts"
 
+/** 計画表示が使う OS の事実。テストは偽物を渡して平台に依存しない出力を検証する。 */
+export type PlanEnv = {
+  manager(): { name: string; packages: Record<string, string> } | null
+  has(bin: string): boolean
+  platform: string
+}
+export const planEnv: PlanEnv = {
+  manager: () => detectPackageManager(),
+  has: (bin) => available(bin),
+  platform: process.platform,
+}
 export type PlanFile = {
   path: string
   action: "create" | "retain" | "update"
@@ -26,6 +37,7 @@ export function buildSetupPlan(
   const configDest = o.saveConfig ? safe(o.dir, o.saveConfig) : undefined
   if (configDest && existsSync(configDest))
     throw new Error(`既存の設定ファイルを上書きできません: ${o.saveConfig}`)
+  // 適用時に退避先を作れるかを計画の段階で確かめる（symlink での逃走はここで止まる）
   if (pkgChanged && existsSync(pkgPath)) safe(o.dir, ".setup-backup/check")
   const files: PlanFile[] = [
     ...create.map(([path]) => ({ path, action: "create" as const })),
@@ -45,8 +57,9 @@ export function printPlanJson(
   requires: string[],
   incompatible: string[],
   init?: InitOutcome | null,
+  env: PlanEnv = planEnv,
 ): void {
-  const manager = detectPackageManager()
+  const manager = env.manager()
   console.log(
     json({
       schemaVersion: 1,
@@ -62,10 +75,10 @@ export function printPlanJson(
       files,
       prerequisites: {
         runtime: requires,
-        missing: requires.filter((bin) => !available(bin)),
+        missing: requires.filter((bin) => !env.has(bin)),
         osPackageManager: manager?.name ?? null,
         osPackages: requires
-          .filter((bin) => !available(bin))
+          .filter((bin) => !env.has(bin))
           .map((bin) => {
             const name = manager?.packages[bin]
             return {
@@ -95,11 +108,16 @@ export function printPlanJson(
     }),
   )
 }
-export function printPlan(o: Resolved, files: PlanFile[], requires: string[]): void {
+export function printPlan(
+  o: Resolved,
+  files: PlanFile[],
+  requires: string[],
+  env: PlanEnv = planEnv,
+): void {
   console.log(`\nセットアップ計画: ${o.name} / ${o.language} / ${o.template} / ${o.preset}`)
   console.log(`機能: ${o.features.join(", ") || "なし"}`)
   console.log(
-    `OS: ${process.platform} / ${detectPackageManager()?.name ?? "未対応"}  必要: ${requires.join(", ") || "Bun"}`,
+    `OS: ${env.platform} / ${env.manager()?.name ?? "未対応"}  必要: ${requires.join(", ") || "Bun"}`,
   )
   for (const file of files) {
     if (file.action === "retain") console.log(`= ${file.path} （既存を保持）`)

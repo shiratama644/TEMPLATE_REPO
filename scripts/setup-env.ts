@@ -32,9 +32,11 @@ export function osCommand(m: string, p: string): string[] {
   if (m === "pkg") return ["pkg", "install", "-y", p]
   return ["winget", "install", "--id", p, "--exact"]
 }
-const runtimeBinary = (bin: string) =>
-  process.platform === "win32" && bin === "python3" ? "python" : bin
-export const available = (bin: string) => Bun.which(runtimeBinary(bin)) !== null
+/** Windows には `python3` が無く `python` だけがある。platform はテストから差し替えられる。 */
+export const runtimeBinary = (bin: string, platform = process.platform): string =>
+  platform === "win32" && bin === "python3" ? "python" : bin
+export const available = (bin: string, platform = process.platform): boolean =>
+  Bun.which(runtimeBinary(bin, platform)) !== null
 export function nativeInstallSteps(
   template: Template,
   dir: string,

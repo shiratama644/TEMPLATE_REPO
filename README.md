@@ -81,7 +81,7 @@ bun run check                                 # CI と同じ入口（型・単�
 ## 運用の考え方
 
 - 目的を確認して小さく実装 → 検証 → 記録（`AGENTS.md §1.3`）。
-- `bun run check` が 10 ゲート（文書・言語・入口整合・POSIX sh・関数長 100 行・Biome・型・テストと行カバレッジ 55%）の正本。独立した未使用コード検査は `bun run knip`。Actions の構文/安全監査と `bun.lock` の既知脆弱性スキャン（PR では新規脆弱性のみ、main への push と毎週では全体）は CI で実行します。依存更新は Dependabot（月次・リリースから 7 日待つ・1 PR にグループ化）が PR を出し、CI が成功した Dependabot PR は自動マージします。CI では Go/Rust ツールチェーンを要求し、実ビルドの skip を許可しません（ローカルにツールがない場合はスキップと明示します）。読み取り専用 Git/PR レポートは `bun run git:report --json`。使い方と未確認時の扱いは [`docs/ops/index.md`](docs/ops/index.md)。個別には `bun run links` / `mermaid` / `lang` / `agents` / `index` / `shell` / `length` / `coverage` / `test`。
+- `bun run check` が 10 ゲート（文書・言語・入口整合・POSIX sh・関数長 100 行・Biome・型・テストと行カバレッジ 100%）の正本。独立した未使用コード検査は `bun run knip`。Actions の構文/安全監査と `bun.lock` の既知脆弱性スキャン（PR では新規脆弱性のみ、main への push と毎週では全体）は CI で実行します。依存更新は Dependabot（月次・リリースから 7 日待つ・1 PR にグループ化）が PR を出し、CI が成功した Dependabot PR は自動マージします。CI では Go/Rust ツールチェーンを要求し、実ビルドの skip を許可しません（ローカルにツールがない場合はスキップと明示します）。読み取り専用 Git/PR レポートは `bun run git:report --json`。使い方と未確認時の扱いは [`docs/ops/index.md`](docs/ops/index.md)。個別には `bun run links` / `mermaid` / `lang` / `agents` / `index` / `shell` / `length` / `coverage` / `test`。
 - `fast-check` は開発用依存で、名前・パス保護の再現可能な生成テストに使います（生成先アプリへ自動追加はしません）。
 - `agents-md-lint@1.0.1` は npm bin の無出力成功を防ぐ依存パッチを Bun の `patchedDependencies` で適用します。`bun install --frozen-lockfile` 後に利用してください。`bun run check` の回帰テストでは Node.js 18 以降で npm bin を起動します（上流の npm パッケージ自体には未反映）。
 - 進捗の正本は `docs/task-list.md`。検証結果と成果物の証拠を残します。

@@ -11,7 +11,7 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { checkCommitFile } from "../scripts/check-commit.ts"
+import { checkCommitEntry, checkCommitFile } from "../scripts/check-commit.ts"
 import { classifyCommit, validateCommitMessage } from "../scripts/conventional-commit.ts"
 
 const dirs: string[] = []
@@ -88,4 +88,35 @@ posix("actual git commit-msg hook rejects bad headers and accepts valid messages
   expect(git("rev-list", "--all", "--count").stdout.trim()).toBe("0")
   expect(commit("feat(core)!: 日本語の件名\n\nBREAKING CHANGE: 説明").status).toBe(0)
   expect(git("rev-list", "--all", "--count").stdout.trim()).toBe("1")
+})
+
+test("the commit gate CLI shows usage, accepts a valid header and rejects an invalid one", () => {
+  const d = dir()
+  const errors: string[] = []
+  const original = console.error
+  console.error = (message: string) => errors.push(message)
+  try {
+    expect(checkCommitEntry(["bun", "scripts/check-commit.ts"])).toBe(1)
+    expect(checkCommitEntry(["bun", "scripts/check-commit.ts", ""])).toBe(1)
+    const ok = join(d, "ok")
+    writeFileSync(ok, "fix: 有効な件名\n")
+    expect(checkCommitEntry(["bun", "scripts/check-commit.ts", ok])).toBe(0)
+    const bad = join(d, "bad")
+    writeFileSync(bad, "invalid header\n")
+    expect(checkCommitEntry(["bun", "scripts/check-commit.ts", bad])).toBe(1)
+  } finally {
+    console.error = original
+  }
+  const text = errors.join("\n")
+  expect(text).toContain("使用方法: bun scripts/check-commit.ts")
+  expect(text).toContain("Conventional Commits 形式が必要です")
+})
+
+test("classifyCommit fails closed when the parser disagrees with the header pattern", () => {
+  const header = "feat(core): 件名"
+  expect(classifyCommit(header, () => ({ type: "fix", subject: "件名" })).type).toBeNull()
+  expect(classifyCommit(header, () => ({ type: "feat", subject: "別の件名" })).type).toBeNull()
+  expect(classifyCommit(header, () => ({})).type).toBeNull()
+  expect(classifyCommit(header, () => ({ type: "feat", subject: "件名" })).type).toBe("feat")
+  expect(classifyCommit(header).type).toBe("feat")
 })

@@ -4,8 +4,10 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import {
   checkFunctionLength,
+  functionLengthEntry,
   type LongFunction,
   MAX_LINES,
+  REPORT_ROWS,
 } from "../scripts/check-function-length.ts"
 
 const dirs: string[] = []
@@ -65,4 +67,23 @@ test("arrow functions and object methods are measured", async () => {
   const names = functionLengths(base).map((f: LongFunction) => f.name)
   expect(names).toContain("f")
   expect(names).toContain("m")
+})
+
+test("the CLI entry prints a longest-first report with --report and gates without it", () => {
+  const logs: string[] = []
+  const original = console.log
+  console.log = (message: string) => logs.push(message)
+  try {
+    expect(functionLengthEntry(["bun", "scripts/check-function-length.ts", "--report"])).toBe(0)
+    expect(functionLengthEntry(["bun", "scripts/check-function-length.ts"])).toBe(0)
+  } finally {
+    console.log = original
+  }
+  const rows = logs.filter((line) => line.includes("\t"))
+  expect(rows.length).toBeGreaterThan(0)
+  expect(rows.length).toBeLessThanOrEqual(REPORT_ROWS)
+  expect(rows[0].split("\t")[1]).toContain("scripts/")
+  const lengths = rows.map((row) => Number(row.split("\t")[0]))
+  expect(lengths).toEqual([...lengths].sort((a, b) => b - a))
+  expect(logs.join("\n")).toContain(`上限 ${MAX_LINES} 行`)
 })

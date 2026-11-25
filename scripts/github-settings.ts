@@ -42,6 +42,8 @@ export type Check = { id: string; label: string; verdict: Verdict; detail: strin
 export type Options = { repo: string; apply: boolean; check: boolean; help: boolean }
 export type Action = { id: string; label: string; commands: () => string[][] }
 type GhResult = { status: number | null; stdout: string; stderr: string }
+/** `gh api` の実行。テストは偽物を差し替えて、実際の API を叩かずに経路を検証する。 */
+export type GhRunner = (args: string[]) => GhResult
 
 export const rulesetPath = join(root, "docs/ops/main-ruleset.json")
 export const rulesetName = "main-protection"
@@ -55,12 +57,13 @@ const usage = `bun run github:settings [options]
 Dependabot alerts / Dependabot security updates / Secret scanning + Push protection /
 Private vulnerability reporting / main の ruleset（docs/ops/main-ruleset.json）を設定します。
 `
-const gh = (args: string[]): GhResult => {
+export const ghApi: GhRunner = (args) => {
   const r = spawnSync("gh", ["api", ...args], { encoding: "utf8" })
   return { status: r.status, stdout: r.stdout ?? "", stderr: r.stderr ?? "" }
 }
 const http = (r: GhResult) => Number(/HTTP (\d{3})/.exec(`${r.stderr}${r.stdout}`)?.[1] ?? 0)
-function explain(r: GhResult): string {
+/** 失敗の理由を人が読める形にする。403 と 422 は次の行動が分かる言葉を足す。 */
+export function explain(r: GhResult): string {
   const text = (r.stderr || r.stdout).trim().split("\n")[0] || `exit ${r.status}`
   const code = http(r)
   if (code === 403) return `${text}（管理者権限が必要です）`
@@ -95,14 +98,14 @@ export function repoFromRemote(url: string): string | null {
   const m = /[:/]([^/:]+)\/([^/]+?)(?:\.git)?$/.exec(trimmed)
   return m ? `${m[1]}/${m[2]}` : null
 }
-export function existingRulesetId(repo: string): number | null {
+export function existingRulesetId(repo: string, run: GhRunner = ghApi): number | null {
   const list = json<Array<{ id: number; name: string }>>(
-    gh(["-X", "GET", `repos/${repo}/rulesets`]),
+    run(["-X", "GET", `repos/${repo}/rulesets`]),
   )
   return list?.find((r) => r.name === rulesetName)?.id ?? null
 }
 /** ruleset は同名が既にあれば更新（PUT）、無ければ作成（POST）する。 */
-export function plan(repo: string, rulesetId = existingRulesetId(repo)): Action[] {
+export function plan(repo: string, rulesetId?: number | null, ruleset = rulesetPath): Action[] {
   return [
     {
       id: "alerts",
@@ -143,27 +146,27 @@ export function plan(repo: string, rulesetId = existingRulesetId(repo)): Action[
           rulesetId ? "PUT" : "POST",
           `repos/${repo}/rulesets${rulesetId ? `/${rulesetId}` : ""}`,
           "--input",
-          rulesetPath,
+          ruleset,
         ],
       ],
     },
   ]
 }
-export function applyAll(actions: Action[]): Check[] {
+export function applyAll(actions: Action[], run: GhRunner = ghApi): Check[] {
   return actions.map((action) => {
     const failed = action
       .commands()
-      .map(gh)
+      .map(run)
       .find((r) => r.status !== 0)
     return failed
       ? { id: action.id, label: action.label, verdict: "fail", detail: explain(failed) }
       : { id: action.id, label: action.label, verdict: "pass", detail: "適用しました" }
   })
 }
-export function verify(repo: string): Check[] {
+export function verify(repo: string, run: GhRunner = ghApi): Check[] {
   const checks: Check[] = []
   const on = (endpoint: string, label: string) => {
-    const r = gh(["-X", "GET", `repos/${repo}/${endpoint}`])
+    const r = run(["-X", "GET", `repos/${repo}/${endpoint}`])
     const verdict: Verdict = r.status === 0 ? "pass" : http(r) === 404 ? "fail" : "unknown"
     checks.push({
       id: endpoint,
@@ -175,7 +178,7 @@ export function verify(repo: string): Check[] {
   on("vulnerability-alerts", "Dependabot alerts")
   on("automated-security-fixes", "Dependabot security updates")
   const pvr = json<{ enabled?: boolean }>(
-    gh(["-X", "GET", `repos/${repo}/private-vulnerability-reporting`]),
+    run(["-X", "GET", `repos/${repo}/private-vulnerability-reporting`]),
   )
   checks.push({
     id: "pvr",
@@ -184,7 +187,7 @@ export function verify(repo: string): Check[] {
     detail: pvr ? (pvr.enabled ? "有効" : "無効") : "取得できませんでした",
   })
   const security = json<SecurityState>(
-    gh([
+    run([
       "-X",
       "GET",
       `repos/${repo}`,
@@ -198,7 +201,7 @@ export function verify(repo: string): Check[] {
     ...secretVerdict(security),
   })
   const rules = json<Array<{ type: string }>>(
-    gh(["-X", "GET", `repos/${repo}/rules/branches/main`]),
+    run(["-X", "GET", `repos/${repo}/rules/branches/main`]),
   )
   const types = new Set(rules?.map((r) => r.type) ?? [])
   const wanted = ["deletion", "non_fast_forward", "pull_request", "required_status_checks"]
@@ -229,17 +232,26 @@ export function printChecks(checks: Check[]): void {
   ].filter(Boolean)
   console.log(parts.length ? `\n${parts.join("、")}` : "\nすべて確認できました")
 }
-export function main(argv: string[]): number {
+/** Git remote の URL を読む。テストは偽物を差し替える。 */
+export type RemoteReader = () => string
+export const originRemote: RemoteReader = () =>
+  spawnSync("git", ["remote", "get-url", "origin"], { encoding: "utf8" }).stdout ?? ""
+
+export function main(
+  argv: string[],
+  run: GhRunner = ghApi,
+  readRemote: RemoteReader = originRemote,
+  ruleset = rulesetPath,
+): number {
   const o = parseArgs(argv)
   if (o.help) {
     console.log(usage)
     return 0
   }
-  const remote = spawnSync("git", ["remote", "get-url", "origin"], { encoding: "utf8" })
-  const repo = o.repo || repoFromRemote(remote.stdout ?? "")
+  const repo = o.repo || repoFromRemote(readRemote())
   if (!repo) throw new Error("--repo owner/name を指定するか Git remote を設定してください")
-  if (!existsSync(rulesetPath)) throw new Error(`${relative(root, rulesetPath)} がありません`)
-  const actions = plan(repo)
+  if (!existsSync(ruleset)) throw new Error(`${relative(root, ruleset)} がありません`)
+  const actions = plan(repo, existingRulesetId(repo, run), ruleset)
   if (o.check) console.log(`対象: ${repo}（確認のみ）`)
   else {
     console.log(`対象: ${repo}（${o.apply ? "適用" : "dry-run"}）`)
@@ -247,7 +259,7 @@ export function main(argv: string[]): number {
       for (const command of action.commands()) console.log(`  gh api ${command.join(" ")}`)
   }
   if (o.check) {
-    const checks = verify(repo)
+    const checks = verify(repo, run)
     printChecks(checks)
     return checks.every((c) => c.verdict === "pass") ? 0 : 1
   }
@@ -255,7 +267,7 @@ export function main(argv: string[]): number {
     console.log("\n変更していません。実行するときは --apply を付けてください。")
     return 0
   }
-  const checks = [...applyAll(actions), ...verify(repo)]
+  const checks = [...applyAll(actions, run), ...verify(repo, run)]
   printChecks(checks)
   return checks.every((c) => c.verdict === "pass") ? 0 : 1
 }

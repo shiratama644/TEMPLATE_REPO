@@ -36,19 +36,36 @@ export function blocks(text: string): Array<[number, string[], boolean]> {
   if (body !== null) result.push([start, body, false])
   return result
 }
-export function checkMermaid(base = root): number {
-  const fixtures: Array<[string[], number]> = [
-    [["flowchart TD", "  A --> B"], 0],
-    [["gitGraph", "  commit"], 0],
-    [["flowchart TD", "flowchart TD"], 1],
-    [["classDef ok fill:#fff", "  A --> B"], 1],
-    [[""], 1],
-  ]
-  for (const [body, expected] of fixtures)
-    if (checkBlock(body).length !== expected) {
-      console.error("NG: Mermaid 自己検査に失敗")
-      return 1
-    }
+/** 自己検査の期待値。判定規則を変えたときに古くなった fixtures を検出する。 */
+export const selfFixtures: Array<[string[], number]> = [
+  [["flowchart TD", "  A --> B"], 0],
+  [["gitGraph", "  commit"], 0],
+  [["flowchart TD", "flowchart TD"], 1],
+  [["classDef ok fill:#fff", "  A --> B"], 1],
+  [[""], 1],
+]
+/** 判定関数が期待値と一致するかを確かめ、食い違いを人が読める形で返す。 */
+export function selfCheck(check: (body: string[]) => string[] = checkBlock): string[] {
+  const mismatches: string[] = []
+  for (const [body, expected] of selfFixtures) {
+    const found = check(body).length
+    if (found !== expected)
+      mismatches.push(`${JSON.stringify(body)} は ${found} 件（期待 ${expected} 件）`)
+  }
+  return mismatches
+}
+
+/** `check` を差し替えられるのは、自己検査の失敗経路を検証できるようにするため。 */
+export function checkMermaid(
+  base = root,
+  check: (body: string[]) => string[] = checkBlock,
+): number {
+  const mismatches = selfCheck(check)
+  if (mismatches.length) {
+    console.error("NG: Mermaid 自己検査に失敗")
+    for (const mismatch of mismatches) console.error(`  ${mismatch}`)
+    return 1
+  }
   let count = 0,
     scanned = 0,
     errors = 0
@@ -62,7 +79,7 @@ export function checkMermaid(base = root): number {
         console.error(`${display(path, base)}:${line}: Mermaid ブロックが閉じられていません`)
         errors++
       }
-      for (const issue of checkBlock(body)) {
+      for (const issue of check(body)) {
         console.error(`${display(path, base)}:${line}: ${issue}`)
         errors++
       }

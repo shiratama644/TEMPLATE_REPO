@@ -38,8 +38,8 @@ export function applyPlan(
       created.push(target)
     }
     if (pkgChanged) {
-      if (existsSync(pkgPath)) {
-        if (!backup) throw new Error("バックアップの作成に失敗しました")
+      // backup は上で必ず作られている。無いのは package.json が無かったときだけ
+      if (backup) {
         copyFileSync(pkgPath, join(backup, "package.json"))
         changed.push(pkgPath)
       }

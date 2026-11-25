@@ -58,3 +58,22 @@ posix("POSIX character classes and comments are not bashisms", () => {
   })
   expect(checkShell(base)).toBe(0)
 })
+
+posix("the gate skips on Windows and reports a shell syntax error", () => {
+  const logs: string[] = []
+  const errors: string[] = []
+  const originalLog = console.log
+  const originalError = console.error
+  console.log = (message: string) => logs.push(message)
+  console.error = (message: string) => errors.push(message)
+  try {
+    expect(checkShell(".", "win32")).toBe(0)
+    const base = fixture({ ".agent/hooks/broken.sh": "#!/bin/sh\nif true; then\n" })
+    expect(checkShell(base)).toBe(1)
+  } finally {
+    console.log = originalLog
+    console.error = originalError
+  }
+  expect(logs.join("\n")).toContain("SKIP: POSIX sh が無いため構文検査は未実施")
+  expect(errors.join("\n")).toContain("-n が失敗")
+})

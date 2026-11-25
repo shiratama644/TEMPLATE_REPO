@@ -1,7 +1,16 @@
 /** テンプレート初期化。作者の作業痕跡を利用者の値で生成し直す（dry-run 既定・承認後に適用）。 */
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
-import { confirm, isCancel, multiselect, text } from "@clack/prompts"
+import {
+  type CANCEL_SYMBOL,
+  type ConfirmOptions,
+  confirm,
+  isCancel,
+  type MultiSelectOptions,
+  multiselect,
+  type TextOptions,
+  text,
+} from "@clack/prompts"
 import {
   renderAgentsSection,
   renderProjectOverview,
@@ -118,33 +127,42 @@ export type Prompter = {
   pick(message: string, values: SectionId[], initial: SectionId[]): Promise<SectionId[]>
   confirm(message: string): Promise<boolean>
 }
-export const clackPrompter: Prompter = {
-  async text(message, initial, optional) {
-    const value = required(
-      await text({
-        message: optional ? `${message}（任意。Enter で省略）` : message,
-        initialValue: initial,
-        defaultValue: initial,
-      }),
-    )
-    return value.trim()
-  },
-  async pick(message, values, initial) {
-    const picked = await multiselect<SectionId>({
-      message,
-      options: values.map((id) => ({ value: id, label: sectionLabel(id) })),
-      initialValues: initial,
-      required: false,
-    })
-    if (isCancel(picked)) throw new SetupCancelled()
-    return picked
-  },
-  async confirm(message) {
-    const ok = await confirm({ message, initialValue: false, active: "y", inactive: "N" })
-    if (isCancel(ok)) throw new SetupCancelled()
-    return ok
-  },
+/** Clack の 3 呼び出しだけ。テストは偽物を差し替えて、キャンセルと整形の規則を検証する。 */
+export type ClackUi = {
+  text(opts: TextOptions): Promise<string | typeof CANCEL_SYMBOL>
+  multiselect<Value>(opts: MultiSelectOptions<Value>): Promise<Value[] | typeof CANCEL_SYMBOL>
+  confirm(opts: ConfirmOptions): Promise<boolean | typeof CANCEL_SYMBOL>
 }
+export function makeClackPrompter(ui: ClackUi): Prompter {
+  return {
+    async text(message, initial, optional) {
+      const value = required(
+        await ui.text({
+          message: optional ? `${message}（任意。Enter で省略）` : message,
+          initialValue: initial,
+          defaultValue: initial,
+        }),
+      )
+      return value.trim()
+    },
+    async pick(message, values, initial) {
+      const picked = await ui.multiselect<SectionId>({
+        message,
+        options: values.map((id) => ({ value: id, label: sectionLabel(id) })),
+        initialValues: initial,
+        required: false,
+      })
+      if (isCancel(picked)) throw new SetupCancelled()
+      return picked
+    },
+    async confirm(message) {
+      const ok = await ui.confirm({ message, initialValue: false, active: "y", inactive: "N" })
+      if (isCancel(ok)) throw new SetupCancelled()
+      return ok
+    },
+  }
+}
+export const clackPrompter: Prompter = makeClackPrompter({ text, multiselect, confirm })
 
 /** 対話式 TUI。既定値は検出結果から埋め、空回答は「書かない」として扱う。 */
 export async function askInitAnswers(

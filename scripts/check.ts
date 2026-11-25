@@ -8,7 +8,9 @@ import { checkLanguage } from "./check-language.ts"
 import { checkMermaid } from "./check-mermaid.ts"
 import { checkShell } from "./check-shell.ts"
 
-const commands: Array<[string, () => number]> = [
+export type Gate = [name: string, run: () => number]
+/** 検証の正本。順序は表示どおりで、失敗した所で止める。 */
+export const gates: Gate[] = [
   ["内部リンク", checkLinks],
   ["Mermaid 宣言", checkMermaid],
   ["日本語・英語ゲート", () => checkLanguage()],
@@ -20,11 +22,18 @@ const commands: Array<[string, () => number]> = [
   ["型検査", () => spawnSync("bun", ["run", "typecheck"], { stdio: "inherit" }).status ?? 1],
   ["テストとカバレッジ", () => checkCoverage()],
 ]
-for (const [name, run] of commands) {
-  console.log(`== ${name}`)
-  if (run() !== 0) {
-    console.error(`NG: ${name}`)
-    process.exit(1)
+
+/** ゲートを順に実行し、最初の失敗で止めて 1 を返す。全部通れば 0。 */
+export function runGates(list: Gate[] = gates): number {
+  for (const [name, run] of list) {
+    console.log(`== ${name}`)
+    if (run() !== 0) {
+      console.error(`NG: ${name}`)
+      return 1
+    }
   }
+  console.log(`OK: ${list.length} ゲートが通りました`)
+  return 0
 }
-console.log(`OK: ${commands.length} ゲートが通りました`)
+
+if (import.meta.main) process.exit(runGates())

@@ -87,3 +87,53 @@ test("archive without Git is not broken by postinstall; explicit install fails",
   expect(installHooks(d, true)).toBe(0)
   expect(installHooks(d)).toBe(1)
 })
+
+posix("a .githooks file that is missing or not executable fails closed", () => {
+  const { d, git } = fixture()
+  const errors: string[] = []
+  const original = console.error
+  console.error = (message: string) => errors.push(message)
+  try {
+    chmodSync(join(d, ".githooks/pre-commit"), 0o644)
+    expect(installHooks(d)).toBe(1)
+    // 実行権限を戻し、別のフックを消しても同じように止まることを確かめる
+    chmodSync(join(d, ".githooks/pre-commit"), 0o755)
+    rmSync(join(d, ".githooks/commit-msg"))
+    expect(installHooks(d)).toBe(1)
+  } finally {
+    console.error = original
+  }
+  const text = errors.join("\n")
+  expect(text).toContain("実行可能な .githooks/pre-commit が必要です")
+  expect(text).toContain("実行可能な .githooks/commit-msg が必要です")
+  expect(git("config", "--local", "--get", "core.hooksPath").status).toBe(1)
+})
+
+posix("non-executable leftovers are ignored, self-referencing and non-file hooks are not", () => {
+  const errors: string[] = []
+  const original = console.error
+  console.error = (message: string) => errors.push(message)
+  try {
+    // 実行権限の無い残骸は Git も実行しないので、引き継ぎの対象外（失敗させない）
+    const ignored = fixture()
+    writeFileSync(join(ignored.d, ".git/hooks/pre-push"), "#!/bin/sh\nexit 0\n")
+    chmodSync(join(ignored.d, ".git/hooks/pre-push"), 0o644)
+    expect(installHooks(ignored.d)).toBe(0)
+
+    // 新フック自身を指す symlink は連鎖するので拒む
+    const selfLink = fixture()
+    symlinkSync(join(selfLink.d, ".githooks/pre-commit"), join(selfLink.d, ".git/hooks/pre-commit"))
+    expect(installHooks(selfLink.d)).toBe(1)
+
+    // 通常ファイルではない（ディレクトリの）フックも拒む
+    const notFile = fixture()
+    mkdirSync(join(notFile.d, ".git/hooks/pre-commit"), { recursive: true })
+    chmodSync(join(notFile.d, ".git/hooks/pre-commit"), 0o755)
+    expect(installHooks(notFile.d)).toBe(1)
+  } finally {
+    console.error = original
+  }
+  const text = errors.join("\n")
+  expect(text).toContain("既存フック pre-commit が新フック自身を指しています")
+  expect(text).toContain("既存フック pre-commit は通常のファイルではありません")
+})

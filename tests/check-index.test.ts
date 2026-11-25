@@ -42,3 +42,18 @@ test("a skill directory without SKILL.md and a missing index are reported", () =
 test("the repository itself satisfies the entry-index gate", () => {
   expect(checkIndex()).toBe(0)
 })
+
+test("a tree without the agent directories reports all three missing indexes", () => {
+  const { base } = fixture()
+  const errors: string[] = []
+  const original = console.error
+  console.error = (message: string) => errors.push(message)
+  try {
+    expect(checkIndex(base)).toBe(1)
+  } finally {
+    console.error = original
+  }
+  const text = errors.join("\n")
+  for (const label of [".agent/skills/index.md", ".agent/rules/index.md", ".agent/hooks/index.md"])
+    expect(text).toContain(`${label} がありません`)
+})

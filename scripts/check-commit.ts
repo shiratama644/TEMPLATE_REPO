@@ -18,9 +18,13 @@ export function checkCommitFile(path: string): number {
   }
 }
 
-if (import.meta.main) {
-  if (process.argv.length !== 3 || !process.argv[2]) {
+/** CLI 入口。引数の形が違えば使い方を示して失敗する（fail closed）。 */
+export function checkCommitEntry(argv: string[]): number {
+  if (argv.length !== 3 || !argv[2]) {
     console.error("使用方法: bun scripts/check-commit.ts <commit-message-file>")
-    process.exitCode = 1
-  } else process.exitCode = checkCommitFile(process.argv[2])
+    return 1
+  }
+  return checkCommitFile(argv[2])
 }
+
+if (import.meta.main) process.exitCode = checkCommitEntry(process.argv)
