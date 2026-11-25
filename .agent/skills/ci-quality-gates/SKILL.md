@@ -43,7 +43,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | `.github/SECURITY.md` | 脆弱性の報告窓口（Security タブの Report a vulnerability）。派生プロジェクトでは書き換える |
 | `docs/ops/main-ruleset.json` | `main` の ruleset 雛形（削除・force push 禁止、PR 必須、CI チェック必須）。適用は `bun run github:settings --apply`（gh で 5 設定を一括適用、`--check` で状態確認）、画面で同じ内容を設定するなら `docs/ops/GITHUB_SETTINGS.md` |
 
-`bun run hooks:install` は Git の `core.hooksPath` を設定する。**既存の commit-msg / pre-commit フックがある場合は停止**し、手動で統合する。この作業環境の trailer フックは上書きしない。
+`bun run hooks:install` は Git の `core.hooksPath` を設定する。**既存の commit-msg / pre-commit フックがある場合は停止**し、手動で統合する。この作業環境の trailer フックは上書きしない。実行中のフックがある別の `core.hooksPath` も勝手に置き換えない（`--force` で置き換える。以前のディレクトリは残る）。実行可能なフックの無い `core.hooksPath` は古い設定として `.githooks` に切り替える。`bun install` の postinstall は導入できないときも警告だけで、`bun install` を失敗させない。
 
 ## 派生プロジェクトに固有の検証を追加する
 
@@ -60,6 +60,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | `bun install --frozen-lockfile` が失敗 | `package.json` と `bun.lock` を揃え、意図した依存変更だけを commit |
 | Biome が失敗 | ソースの差分を確認し `bun run format` で修正して再検証 |
 | 既存の Git フックがある | `hooks:install` が止まるのが正しい。既存の処理を壊さず手動で統合 |
+| `bun install` が postinstall で失敗する | 失敗を返すのは `hooks:install` の明示実行だけ。postinstall は警告して終了するので、理由を読んで `--force` か手動統合を選ぶ |
 | gitleaks が手元にない | CI の secrets ジョブを確認。未実施を PASS と書かない |
 
 ## 関連

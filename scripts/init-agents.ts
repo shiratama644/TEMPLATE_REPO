@@ -40,7 +40,10 @@ export function renderCommandsSection(a: InitAnswers, d: Detected): string[] {
       ? []
       : [
           "- **Git フック**: `bun install` の postinstall が `.githooks` を有効化する。" +
-            "既存の commit-msg / pre-commit は上書きせず連鎖実行し、再実行は `bun run hooks:install`。",
+            "既存の commit-msg / pre-commit は上書きせず連鎖実行し、再実行は `bun run hooks:install`。" +
+            "実行可能なフックの無い `core.hooksPath`（Husky を外したあとの残骸など）は旧値と戻し方を表示して切り替え、" +
+            "実行中のフックがある `core.hooksPath` は変えずに止まる（置き換えは `bun run hooks:install --force`）。" +
+            "postinstall は導入できないときも警告だけで `bun install` を失敗させない。詳細は `docs/ops/index.md`。",
         ]),
     ...("init" in d.scripts
       ? [

@@ -91,7 +91,7 @@ bun run check                                 # CI と同じ入口（型・単�
 
 選択した言語やテンプレートに使えない機能は、明示指定時はエラーで停止し、プリセット由来なら除外した機能を表示します。`library` プリセットは型宣言・publint・size-limit を使える生成物を作りますが、公開やリリースは自動では行いません。Husky を選択した場合も Git フックは自動登録せず、生成先で既存フックを確認してから `bun run husky:install` を明示実行します（既存フックがあれば停止）。Vitest と Playwright の初期テストは生成物の動作確認用のスモークテストです。本格的なブラウザ操作やアプリ固有のテストは派生プロジェクト側で追加してください。
 
-`bun install` の postinstall で、このリポジトリの `.githooks` を自動有効化します（再実行は冪等）。既存の `.git/hooks/commit-msg` と `pre-commit` はファイルを上書きせず、検査後に連鎖実行します。別の `core.hooksPath` や引き継げない種類の実行可能フックがある場合は停止して理由を表示します。Git 管理外のアーカイブでは導入を省略します。再実行は `bun run hooks:install`。形式だけを調べる場合は `bun run commit:check <メッセージファイル>`。派生プロジェクトの Husky は別の設定で、こちらの自動導入の対象ではありません。
+`bun install` の postinstall で、このリポジトリの `.githooks` を自動有効化します（再実行は冪等）。既存の `.git/hooks/commit-msg` と `pre-commit` はファイルを上書きせず、検査後に連鎖実行します。`core.hooksPath` が別の場所を指すとき、そこに**実行可能なフックが無ければ**（Husky を外したあとの `.husky/_` など）旧値と戻し方（`git config core.hooksPath <旧値>`）を表示して `.githooks` に切り替えます。実行中のフックがある場合は設定を変えずに停止し、置き換えるには `bun run hooks:install --force`（以前のディレクトリは消しません）。引き継げない種類の実行可能フック（`pre-push` など）がある場合も停止します。**postinstall は `bun install` を失敗させません**: 導入できないときは理由を警告して終了し、失敗を返すのは `bun run hooks:install` の明示実行だけです。Git 管理外のアーカイブでは導入を省略します。再実行は `bun run hooks:install`。形式だけを調べる場合は `bun run commit:check <メッセージファイル>`。派生プロジェクトの Husky は別の設定で、こちらの自動導入の対象ではありません。
 
 ## 運用の考え方
 
