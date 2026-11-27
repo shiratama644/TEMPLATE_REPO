@@ -60,16 +60,24 @@ export function installHooks(base = root, options: HooksOptions = {}): number {
     return 0
   }
   if (current) {
-    const foreign = hookFiles(resolve(base, current))
-    if (foreign.length > 0 && !options.force)
+    const dir = resolve(base, current)
+    const foreign = hookFiles(dir)
+    // Husky v9 は `.husky/_` に全フック種類の shim を自動生成し、実体は `.husky/<name>` が持つ。
+    // 実体が無ければ shim は何もせずに終わるので、古い設定として .githooks に引き継ぐ。
+    const shim = foreign.length > 0 && current.endsWith("husky/_")
+    const live = shim ? hookFiles(resolve(dir, "..")) : foreign
+    if (live.length > 0 && !options.force)
       return refuse(
-        `既存の Git hooksPath を上書きしません: ${current}（実行中のフック: ${foreign.join(", ")}）。` +
+        `既存の Git hooksPath を上書きしません: ${current}` +
+          `（${shim ? "Husky のフック" : "実行中のフック"}: ${live.join(", ")}）。` +
           "置き換えるには bun run hooks:install --force",
         options,
       )
     console.log(
-      `core.hooksPath を ${current} から .githooks に切り替えます` +
-        `（${foreign.join(", ") || "実行可能なフックはありません"}）`,
+      `core.hooksPath を ${current} から .githooks に切り替えます（${
+        live.join(", ") ||
+        (shim ? "Husky の shim だけで実体がありません" : "実行可能なフックはありません")
+      }）`,
     )
     console.log(`${current} は消しません。戻すには git config core.hooksPath ${current}`)
   }

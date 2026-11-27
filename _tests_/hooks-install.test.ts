@@ -35,16 +35,23 @@ function fixture() {
   writeFileSync(join(d, "package.json"), '{"scripts":{"check":"bun -e \'process.exit(0)\'"}}\n')
   return { d, git }
 }
-/** 稼働中の husky（`.husky/_` に実行可能なフックがある）を再現する。 */
-function huskyFixture() {
+/** Husky v9 の自動生成物: `.husky/_` の shim だけ（実体が無いので何も実行されない）。 */
+function huskyShims() {
   const f = fixture()
   mkdirSync(join(f.d, ".husky/_"), { recursive: true })
-  for (const name of ["pre-commit", "commit-msg"]) {
-    writeFileSync(join(f.d, ".husky/_", name), "#!/bin/sh\nexit 0\n")
+  for (const name of ["pre-commit", "commit-msg", "pre-push"]) {
+    writeFileSync(join(f.d, ".husky/_", name), "#!/usr/bin/env sh\nexit 0\n")
     chmodSync(join(f.d, ".husky/_", name), 0o755)
   }
   writeFileSync(join(f.d, ".husky/_/.gitignore"), "*\n")
   expect(f.git("config", "--local", "core.hooksPath", ".husky/_").status).toBe(0)
+  return f
+}
+/** 実体のある Husky: shim が `.husky/pre-commit` を呼ぶ。 */
+function huskyFixture() {
+  const f = huskyShims()
+  writeFileSync(join(f.d, ".husky/pre-commit"), "#!/bin/sh\nbun run check\n")
+  chmodSync(join(f.d, ".husky/pre-commit"), 0o755)
   return f
 }
 type Captured = { log: string[]; error: string[]; warn: string[] }
@@ -161,7 +168,7 @@ posix("a live husky install is kept unless --force is given", () => {
   const refused = capture(() => installHooks(explicit.d))
   expect(refused.value).toBe(1)
   expect(text(refused.out)).toContain("既存の Git hooksPath を上書きしません: .husky/_")
-  expect(text(refused.out)).toContain("実行中のフック: commit-msg, pre-commit")
+  expect(text(refused.out)).toContain("Husky のフック: pre-commit")
   expect(text(refused.out)).toContain("bun run hooks:install --force")
   expect(explicit.git("config", "--local", "--get", "core.hooksPath").stdout.trim()).toBe(
     ".husky/_",
@@ -181,7 +188,19 @@ posix("a live husky install is kept unless --force is given", () => {
   expect(forced.git("config", "--local", "--get", "core.hooksPath").stdout.trim()).toBe(".githooks")
   expect(existsSync(join(forced.d, ".husky/_/pre-commit"))).toBe(true)
   expect(text(took.out)).toContain("core.hooksPath を .husky/_ から .githooks に切り替えます")
-  expect(text(took.out)).toContain("commit-msg, pre-commit")
+  expect(text(took.out)).toContain("pre-commit")
+  expect(existsSync(join(forced.d, ".husky/pre-commit"))).toBe(true)
+})
+
+posix("husky shims without bodies are stale and taken over", () => {
+  const shimmed = huskyShims()
+  const took = capture(() => installHooks(shimmed.d, { optionalGit: true }))
+  expect(took.value).toBe(0)
+  expect(shimmed.git("config", "--local", "--get", "core.hooksPath").stdout.trim()).toBe(
+    ".githooks",
+  )
+  expect(text(took.out)).toContain("Husky の shim だけで実体がありません")
+  expect(existsSync(join(shimmed.d, ".husky/_/pre-commit"))).toBe(true)
 })
 
 posix("a .githooks file that is missing or not executable fails closed", () => {
