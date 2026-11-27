@@ -1,6 +1,6 @@
 # ドキュメント索引
 
-この `docs/` は派生プロジェクトの仕様・計画・進捗・判断を記録するための初期構成です。テンプレート自体を作ったときのタスクや監査履歴は含みません。概要と使い方は [README.md](../README.md) を参照してください。
+この `docs/` は派生プロジェクトの仕様・計画・進捗・判断を記録するための初期構成です。テンプレート自体を作ったときのタスクや監査履歴は含みません。概要は [README.md](../README.md)（最小限）と [`AGENTS.md`](../AGENTS.md) を、初期設定の手順は [`project-init`](../.agent/skills/project-init/SKILL.md) を参照してください。
 
 | 場所 | 内容 |
 |---|---|
@@ -10,7 +10,7 @@
 | [`planning/`](./planning/README.md) | 計画書の作り方と [`_TEMPLATE.md`](./planning/_TEMPLATE.md) |
 | [`research/`](./research/README.md) | 調査結果と採否の記録 |
 | [`audit/`](./audit/index.md) | 新たに発見した問題・差分の記録 |
-| [`ops/`](./ops/index.md) | Bun の品質ゲートと運用手順 |
+| [`ops/`](./ops/index.md) | Bun の品質ゲートと運用手順。GitHub 側の設定は Web UI の手順 [`ops/GITHUB_SETTINGS.md`](./ops/GITHUB_SETTINGS.md) と `main` の ruleset 雛形 [`ops/main-ruleset.json`](./ops/main-ruleset.json) |
 
 ## 利用時の手順
 

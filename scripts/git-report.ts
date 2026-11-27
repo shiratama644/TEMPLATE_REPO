@@ -2,9 +2,9 @@
 
 import { Octokit } from "@octokit/rest"
 import { simpleGit } from "simple-git"
-import { classifyCommit } from "./conventional_commit.ts"
+import { classifyCommit } from "./conventional-commit.ts"
 
-export { classifyCommit } from "./conventional_commit.ts"
+export { classifyCommit } from "./conventional-commit.ts"
 
 type Verdict = "pass" | "fail" | "unknown"
 export interface Report {
@@ -125,8 +125,37 @@ export async function localReport(dir: string, expectedBranch?: string): Promise
 export interface PRClient {
   getPR(owner: string, repo: string, number: number): Promise<PRData>
 }
-function octokitClient(token: string): PRClient {
-  const api = new Octokit({ auth: token })
+/** このスクリプトが使う octokit の 3 呼び出しだけ（テストから差し替えられる形）。 */
+export type GitHubApi = {
+  pulls: {
+    get(o: {
+      owner: string
+      repo: string
+      pull_number: number
+    }): Promise<{ data: { head: { ref: string; sha: string }; state: "open" | "closed" } }>
+  }
+  checks: {
+    listForRef(o: { owner: string; repo: string; ref: string; per_page: number }): Promise<{
+      data: {
+        total_count: number
+        check_runs: Array<{ status: string; conclusion: string | null }>
+      }
+    }>
+  }
+  repos: {
+    getCombinedStatusForRef(o: {
+      owner: string
+      repo: string
+      ref: string
+      per_page: number
+    }): Promise<{ data: { total_count: number; state: string; statuses: unknown[] } }>
+  }
+}
+
+/** octokit の型は巨大なので、使う 3 呼び出しの形に合わせて読み替える。 */
+const githubApi = (token: string): GitHubApi => new Octokit({ auth: token }) as unknown as GitHubApi
+
+export function octokitClient(token: string, api: GitHubApi = githubApi(token)): PRClient {
   return {
     async getPR(owner, repo, number) {
       const { data: pr } = await api.pulls.get({ owner, repo, pull_number: number })
@@ -184,8 +213,12 @@ export async function buildReport(
   }
 }
 
-if (import.meta.main) {
-  const args = process.argv.slice(2)
+/** CLI 入口。引数の形を検証し、`--json` か人の読む形で報告して終了コードを返す。 */
+export async function reportEntry(
+  args: string[],
+  env: Record<string, string | undefined> = process.env,
+  cwd = process.cwd(),
+): Promise<number> {
   const value = (key: string) => {
     const i = args.indexOf(key)
     return i < 0 ? undefined : args[i + 1]
@@ -196,10 +229,10 @@ if (import.meta.main) {
   if ((number && !value("--repo")) || (!number && value("--repo")))
     throw new Error("--pr と --repo は一緒に指定してください")
   const report = await buildReport(
-    value("--dir") ?? process.cwd(),
+    value("--dir") ?? cwd,
     value("--branch"),
     number
-      ? { repo: value("--repo") as string, number: Number(number), token: process.env.GITHUB_TOKEN }
+      ? { repo: value("--repo") as string, number: Number(number), token: env.GITHUB_TOKEN }
       : undefined,
   )
   if (args.includes("--json")) console.log(JSON.stringify(report, null, 2))
@@ -207,5 +240,7 @@ if (import.meta.main) {
     console.log(
       `Git/PR: ${report.verdict}\nbranch: ${report.branch ?? "unknown"}\nHEAD: ${report.head ?? "unknown"}\n${report.reasons.join("\n")}`,
     )
-  if (report.verdict !== "pass") process.exitCode = 1
+  return report.verdict === "pass" ? 0 : 1
 }
+
+if (import.meta.main) process.exitCode = await reportEntry(process.argv.slice(2))

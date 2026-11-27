@@ -5,7 +5,7 @@
 >
 > **指示ファイルの正本 `AGENTS.md` はツール非依存の公開標準**（Linux Foundation の Agentic AI Foundation が管理。Codex / Claude Code / Cursor / Copilot coding agent ほか 24+ ツールが読む）。`.agent/` の構成は Claude Code 準拠だが、`AGENTS.md` 側は特定ツールの書式に寄せない。どちらが何を読むかは `AGENTS.md §8.2` とリポジトリ直下 `README.md` の「どのツールで読まれるか」を参照。
 >
-> `.agent/hooks/` の Claude Code フックは `sh` と標準的な Unix コマンドで動く。検証・セットアップ・Git フックは Bun を前提とする（`bun run check` / `bun run setup`）。
+> `.agent/hooks/` の Claude Code フックは `sh` と標準的な Unix コマンドで動く。検証・セットアップ・Git フックは Bun を前提とする（`bun run check` / `bun run hooks:install`）。
 
 ## ディレクトリ構成
 
@@ -17,14 +17,16 @@
 ├── rules/                     # トピック別ルール（pathsで発火条件を絞れる）。入口は rules/index.md
 │   ├── index.md
 │   └── common/                # ECC 由来の共通規約 10 件（一部は paths でコード系に限定）
-├── skills/<name>/SKILL.md     # 再利用プロンプト（46 件。入口は skills/index.md）
+├── skills/<name>/SKILL.md     # 再利用プロンプト（47 件。入口は skills/index.md）
 ├── agents/                    # サブエージェント定義（planner, architect, code-explorer, docs-lookup ほか）
 ├── hooks/                     # フック手順(.md) + 実行スクリプト(.sh)
 │   ├── index.md
 │   ├── session-start.sh       # SessionStart: 作業状態の注入
 │   ├── block-dangerous-git.sh # PreToolUse(Bash): 破壊的 git 操作のブロック
+│   ├── block-secret-read.sh   # PreToolUse(Bash): .env / secrets へのアクセスと再帰 rm のブロック
 │   ├── pre-edit-guard.sh      # PreToolUse(Edit/Write): 編集禁止領域ブロック
-│   └── post-edit-verify.sh    # PostToolUse: 事後検証
+│   ├── post-edit-verify.sh    # PostToolUse: 事後検証
+│   └── stop-verify.sh         # Stop: §5 の停止条件（clean・push 済み）を確認
 ├── commands/                  # スラッシュコマンド（commit, test, code-review, checkpoint, plan, update-docs, project-init）
 ├── output-styles/             # 出力スタイル（concise, detailed）
 ├── workflows/                 # 動的ワークフロー（複数サブエージェントを束ねる）
@@ -64,13 +66,15 @@
 |---|---|---|---|
 | `SessionStart` | `startup\|resume\|clear\|compact` | `hooks/session-start.sh` | 正本と自律ルール（目的・安全境界・報告）、ブランチ・直近コミット・未コミット変更・未完了サマリーを注入 |
 | `PreToolUse` | `Bash` | `hooks/block-dangerous-git.sh` | force push・`reset --hard`・main への push 等をブロック（`permissionDecision: deny` の JSON） |
+| `PreToolUse` | `Bash` | `hooks/block-secret-read.sh` | `cat .env` 等、`.env` / `secrets` を参照するコマンドと `rm` の再帰削除をブロック（`Read(.env)` の deny を Bash で迂回させない） |
 | `PreToolUse` | `Edit\|MultiEdit\|Write` | `hooks/pre-edit-guard.sh` | 編集禁止領域（`.git/`・依存・生成物）をブロック |
 | `PostToolUse` | `Edit\|MultiEdit\|Write` | `hooks/post-edit-verify.sh` | 編集後の事後検証 |
+| `Stop` | — | `hooks/stop-verify.sh` | `AGENTS.md §5` の停止条件（working tree が clean・上流へ push 済み）を確認 |
 
 フックの動作確認例:
 
 ```bash
-echo '{"tool_input":{"command":"git push --force origin x"}}' | sh .agent/hooks/block-dangerous-git.sh; echo $?   # 2（ブロック）
+echo '{"tool_input":{"command":"git push --force origin x"}}' | sh .agent/hooks/block-dangerous-git.sh; echo $?   # 0（ブロックは JSON の permissionDecision で判定）
 sh .agent/hooks/session-start.sh | head -c 200                                                                  # JSON（hookSpecificOutput）
 ```
 
@@ -96,5 +100,5 @@ Agent に任せる（推奨）: 「初期設定して」と依頼し、[`.agent/
 3. `.agent/skills/project-overview/SKILL.md` をプロジェクト用に書き換え
 4. `README.md` をプロジェクト用に書き換え
 5. `docs/` を必要に応じて整理（`docs/README.md` の目次も更新）
-6. 分野に合わない skill（例: Web 専用の `e2e`、ソフトウェア専用の `import-boundaries`）は削除してよい（独断では削らない）
-7. ファイル名は短く正確、ハイフン最大1つ（例: `yaml-top.test.ts` OK）
+6. 分野に合わない skill（例: ソフトウェア専用の `import-boundaries`）は削除してよい（独断では削らない）
+7. ファイル名は短く正確、単語の区切りはハイフン 1 つ（`--` のような連続は使わない。例: `yaml-top.test.ts` / `post-edit-verify.sh` OK）

@@ -3,7 +3,7 @@ name: project-overview
 description: このリポジトリの全体像（目的・構成・ドキュメント・進捗管理）を掴む。テンプレートのままなら新規セッションの最初に読む。実プロジェクトへ合わせる初期設定は project-init。プロジェクト固有の内容は AGENTS.md §6 を参照。Use when starting a new session or needing overall context.
 ---
 
-# Project Overview — 汎用エージェント作業テンプレート
+# Project Overview — Bun / TypeScript 用の空テンプレート
 
 > このリポジトリは、AI Agent に**ソフトウェア開発だけでなく、文書作成・調査・データ整理・設定作業などを規律立てて進めさせる**ためのテンプレートです。
 > GitHub の「Use this template」から新しいリポジトリを作成し、プロジェクトごとに書き換えて使うことを想定しています。
@@ -24,10 +24,15 @@ description: このリポジトリの全体像（目的・構成・ドキュメ�
 | `AGENTS.md` | Agent が必ず守る作業規約。§1〜§5・§7・§8 は汎用、§6 はプロジェクトごとに記入 |
 | `.agent/` | Agent 設定（rules / skills / hooks / agents など） |
 | `docs/` | ドキュメント一式。`task-list.md`（進捗の正本）・`arch/`（仕様）・`planning/`（計画）・`research/`（調査）・`audit/`（監査）・`ops/`（運用） |
-| `README.md` | プロジェクトの概要（テンプレート利用時に書き換える） |
+| `README.md` | 最小限の stub（テンプレート利用時に書き換える） |
+| `scripts/` | 検証ゲート（`bun run check` の 9 本）・コミットメッセージ検査・Git フック導入・OS 判定・GitHub 設定と Git レポートの CLI |
+| `.githooks/` | `pre-commit`（`bun run check`）と `commit-msg`（言語・形式）。既存フックは連鎖実行 |
+| `.github/` | CI（check・gitleaks・actionlint/zizmor・OSV）・依存レビュー・Dependabot |
+| `Makefile` | `make check` などの互換入口（中身は `bun run`） |
+| `package.json` / `bun.lock` | Bun の依存とコマンドの正本 |
 | `LICENSE` | ライセンス |
 
-テンプレートのセットアップ CLI と検証には Bun を使います。生成先のアプリコードとプロジェクト固有の設定は、初期設定で選択・追加します（`tech-stack` スキル参照）。
+検証と CLI には Bun と TypeScript を使います（`bun run check` の 9 ゲートと `bun run knip`）。**アプリのコード・テスト・サンプルは同梱しません**。プロジェクト固有の設定と技術選定は初期設定で追加します（[`tech-stack`](../tech-stack/SKILL.md) 参照）。
 
 ## ドキュメント構成
 
@@ -57,3 +62,5 @@ docs/
 - スキル: `.agent/skills/`（ノウハウ・手順）
 - フック: `.agent/hooks/`（トリガー別の定型手順）
 - 記録: `docs/task-list.md`（進捗・証拠）と `docs/adr/`（判断）
+- 検証: `bun run check`（9 ゲート）と `bun run knip`。個別には `bun run links` / `mermaid` / `agents` / `lang` / `index` / `shell` / `length`
+- 運用: `docs/ops/index.md`（CI・Dependabot・GitHub 設定・Git フック）

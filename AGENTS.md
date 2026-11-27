@@ -111,17 +111,18 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 - [ ] 適切なメッセージで commit が完了している
 - [ ] working tree が clean である（`git status` で確認）
 - [ ] `git push origin <セッション固定ブランチ>` が完了している（§4.4）
+- [ ] `main` 向け PR を作成し、URL を報告している（§4.4）
 
 ## 6. プロジェクト固有の遵守事項（テンプレート利用時に追記する）
 
 > この節だけ**プロジェクトごとに書き換える**。過去に踏んだ地雷・確立した運用ルールの集約場所。計画書と矛盾すれば計画書を優先し、それ以外は本節を厳守する。不要な小節は削除してよい。
 
 ### 6.1 環境・ツールチェーン・検証コマンド（Commands / Setup）
-- **検証の正本**: `bun run check`（TypeScript の文書・言語・指示品質・Biome・型・テスト）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang`。CI も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check` を実行する。
-- **Git フック**: `bun install` 後に `.githooks` を自動有効化。既存の commit-msg/pre-commit は上書きせず連鎖実行。他の実行可能フックや別の `core.hooksPath` があれば安全のため導入を停止する（詳細は `docs/ops/index.md`）。
-- **セットアップ**: Bun が前提。対話式・非対話式の `bun run setup [引数]`（対話式は計画後に `[y/N]` 承認、`--apply` は不要。非対話式は `--yes --apply` で適用、`--dry-run` は不変更）。OS パッケージは対話式でコマンドごとに承認を要し、文書削除は候補の案内のみ。生成先 Python FastAPI は `.venv` の pip、Rust Axum は `cargo fetch`、Go は標準ライブラリで扱い、`--no-install` は依存導入をスキップする。
+- **検証の正本**: `bun run check`（内部リンク・Mermaid・日本語/英語・AGENTS.md・入口整合・POSIX sh・関数長・Biome・型検査の 9 ゲート）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang` / `index` / `shell` / `length`。未使用コード・依存は `bun run knip`。CI も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check` と `bun run knip` を実行する。CI 専用ゲート（actionlint / zizmor・OSV-Scanner・gitleaks）と Dependabot・GitHub 設定の運用は `docs/ops/index.md` を参照。**テストはまだ無い**: アプリのコードと一緒に追加し、`package.json` の `test` と `scripts/check.ts` のゲートに載せてから本節に書く。
+- **Git フック**: `bun install` の postinstall が `.githooks` を有効化する。既存の commit-msg / pre-commit は上書きせず連鎖実行し、再実行は `bun run hooks:install`。実行可能なフックの無い `core.hooksPath`（Husky を外したあとの残骸など）は旧値と戻し方を表示して切り替え、実行中のフックがある `core.hooksPath` は変えずに止まる（置き換えは `bun run hooks:install --force`）。postinstall は導入できないときも警告だけで `bun install` を失敗させない。詳細は `docs/ops/index.md`。
+- **セットアップ**: Bun 1.4.4 以降が前提（`package.json` の `packageManager`）。依存は `bun install --frozen-lockfile` で固定し、postinstall が `.githooks` を有効化する。**このリポジトリは空のテンプレート**で、アプリのコードもテストもサンプルも入っていない。初期設定（README・本節・`docs/`・`project-overview` の書き換え）は対話 UI や生成 CLI を使わず、`.agent/skills/project-init/SKILL.md` の手順で Agent が直接書く。OS とパッケージマネージャの判定（Termux / apt / Homebrew / winget）は `scripts/setup-env.ts`、GitHub 側の一括設定は `bun run github:settings --apply`（画面手順は `docs/ops/GITHUB_SETTINGS.md`）、読み取り専用の Git/PR レポートは `bun run git:report -- --json`。
 - 初期セットアップ手順 / 言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
-- **検証コマンド**（§3.1 の正本。例: 型チェック `tsc --noEmit`・Lint `biome check`・テスト `vitest run`・ビルド `npm run build` を実物に置き換えて記入）
+- **検証コマンド**（§3.1 の正本。追加した検査は `bun run check` のゲートと本節の両方に書く）
 
 ### 6.2 サンドボックス制約（乗り越えず、迂回する）
 （例）外部 API に到達不可 / ブラウザバイナリの install 不可 等、修正対象ではない恒常的制約とその対処。
@@ -140,7 +141,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 
 ### 6.7 ドキュメント運用
 - 目次と運用ルール `docs/README.md` / 進捗の正本 `docs/task-list.md`（状態定義・証拠記録のルールは冒頭）/ 仕様 `docs/arch/` / 計画 `docs/planning/`（`docs/planning/_TEMPLATE.md` 形式）/ 調査 `docs/research/` / 監査 `docs/audit/` / 運用 `docs/ops/`
-- ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する。ファイル名は短く正確、ハイフン最大 1 つ。
+- ドキュメントを追加・削除・移動したら `docs/README.md` の目次を必ず更新する。ファイル名は短く正確、単語の区切りはハイフン 1 つ（`--` のような連続は使わない）。
 
 ## 7. コミュニケーション規約（要点）
 
@@ -161,7 +162,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 Agent の**知識・定型手順**を `.agent/` に永続化し、セッションをまたいで継承する（再調査を省く）。
 
 ### 8.1 ディレクトリ構成と入口（Project Structure）
-ツリーと役割表の正本は `.agent/README.md`、読み込みの流れは `docs/arch/architecture.md`。各ディレクトリ直下の入口ファイル（`.agent/rules/index.md`・`.agent/skills/index.md`・`.agent/hooks/index.md` は必須）から該当ファイルだけを読む。
+ツリーと役割表の正本は `.agent/README.md`。リポジトリの構成は `docs/arch/architecture.md`（初期設定で埋める）。各ディレクトリ直下の入口ファイル（`.agent/rules/index.md`・`.agent/skills/index.md`・`.agent/hooks/index.md` は必須）から該当ファイルだけを読む。
 
 ### 8.2 公式構成との対応（クロスツール標準）
 - `AGENTS.md` は OpenAI 起点で Linux Foundation の **Agentic AI Foundation** が管理する公開標準。Codex / Claude Code / Cursor / Copilot coding agent ほか 24+ ツールが原生対応し、Claude Code は v2.1.277 以降 `CLAUDE.md` が無い場合に本ファイルを読む。
@@ -171,7 +172,8 @@ Agent の**知識・定型手順**を `.agent/` に永続化し、セッショ�
 ### 8.3 入口起点のピンポイント読込（核心ワークフロー）
 - **セッション開始時**: `SessionStart` フック（`.agent/hooks/session-start.sh`）が正本の所在・ブランチ・直近 commit・未コミット変更・未完了サマリーを注入する。
 - **タスク開始時**: `.agent/hooks/pre-task.md` の手順で現状把握し、`.agent/skills/index.md` の読み方ガイドから**該当スキルだけ**を読む（全スキルを常時読み込まない）。
-- **ツール実行時**: Bash 前は `.agent/hooks/block-dangerous-git.sh`、編集前は `.agent/hooks/pre-edit-guard.sh`、編集後は `.agent/hooks/post-edit-verify.sh`。トリガー発生時は `.agent/hooks/index.md` の対応表で特定する。
+- **ツール実行時**: Bash 前は `.agent/hooks/block-dangerous-git.sh` と `.agent/hooks/block-secret-read.sh`（`.env` / `secrets` へのアクセス・再帰 `rm`）、編集前は `.agent/hooks/pre-edit-guard.sh`、編集後は `.agent/hooks/post-edit-verify.sh`。トリガー発生時は `.agent/hooks/index.md` の対応表で特定する。
+- **停止時**: `.agent/hooks/stop-verify.sh` が §5 の停止条件（working tree が clean・上流へ push 済み）を確認する。
 
 ### 8.4 記憶の同期（書き込みワークフロー）
 - **タスク完了時**: `.agent/hooks/log-task.md` に従い、`docs/task-list.md` の状態・検証結果・未確認事項を更新する。作業用ログは Git に含めない。

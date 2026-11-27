@@ -1,13 +1,17 @@
 name: CI
 on:
   push:
+    branches:
+      - main
   pull_request:
+  merge_group: # merge queue は merge 結果でも必須チェックを完走させる（AGENTS.md §2）
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # PR は番号ごとに 1 実行（push と PR で同じ commit が競合しない）。main への push は打ち切らない。
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   check:
     name: bun run check（全ゲート）
@@ -19,21 +23,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: "22" # npm bin の Node 実行経路を回帰テストする
+          node-version: "24" # npm bin の Node 実行経路を回帰テストする
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.4.4
       - run: bun install --frozen-lockfile
-      - name: Require native build toolchains (no skipped Go/Rust tests)
-        run: |
-          go version
-          cargo --version
-          python3 --version
-          script --version
-          stty --version
       - run: bun run check
-        env:
-          CI_REQUIRE_NATIVE: "1"
       - run: bun run knip
   secrets:
     name: 秘密情報の検出（gitleaks）
@@ -51,6 +46,8 @@ jobs:
     name: actionlint / zizmor
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -70,40 +67,61 @@ jobs:
           set -euo pipefail
           actionlint -version
           actionlint -color=false .github/workflows/*.yml
-          if actionlint -color=false tests/fixtures/invalid-workflow.yml > /tmp/actionlint-negative.log 2>&1; then
+          if actionlint -color=false .github/fixtures/invalid-workflow.yml > /tmp/actionlint-negative.log 2>&1; then
             echo '::error::actionlint accepted the invalid workflow'
             exit 1
           fi
           grep -q 'unexpected key' /tmp/actionlint-negative.log || { cat /tmp/actionlint-negative.log; exit 1; }
-      - name: Install pinned zizmor
+      # zizmor-action はハッシュ検証済みの wheel を PyPI から取り、版は action の版に同梱される lock で決まる
+      # （Dependabot が action の SHA を更新する）。GHAS (SARIF) モードは findings で失敗しないので off にする。
+      - name: Audit workflows (zizmor, offline, fails on findings)
+        uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3 # v0.9.0
+        with:
+          inputs: .
+          online-audits: false
+          strict-collection: true
+          min-severity: medium
+          advanced-security: false
+          annotations: true
+          color: false
+      - name: zizmor must reject the unsafe fixture (this step is expected to fail)
+        id: zizmor-negative
+        continue-on-error: true
+        uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3 # v0.9.0
+        with:
+          inputs: .github/fixtures/unsafe-workflow.yml
+          online-audits: false
+          min-severity: medium
+          advanced-security: false
+          annotations: false
+          color: false
+          fail-on-no-inputs: false
+      - name: Assert the unsafe fixture was rejected
         shell: bash
-        run: |
-          python3 -m venv "$RUNNER_TEMP/zizmor"
-          "$RUNNER_TEMP/zizmor/bin/pip" install 'zizmor==1.31.1'
-          echo "$RUNNER_TEMP/zizmor/bin" >> "$GITHUB_PATH"
-      - name: Audit workflows and negative fixture (offline)
-        shell: bash
+        env:
+          OUTCOME: ${{ steps.zizmor-negative.outcome }}
         run: |
           set -euo pipefail
-          zizmor --version
-          zizmor --offline --strict-collection --min-severity medium .
-          if zizmor --offline --min-severity medium tests/fixtures/unsafe-workflow.yml > /tmp/zizmor-negative.log 2>&1; then
-            echo '::error::zizmor accepted the unsafe workflow'
+          if [[ "$OUTCOME" != "failure" ]]; then
+            echo '::error::zizmor accepted the unsafe workflow (outcome: '"$OUTCOME"')'
             exit 1
           fi
-          grep -q 'template-injection' /tmp/zizmor-negative.log || { cat /tmp/zizmor-negative.log; exit 1; }
-  osv-lockfile:
-    name: OSV bun.lock full scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+          echo 'zizmor rejected the unsafe workflow as expected'
+  # PR では base との差分で「新規」の脆弱性だけを失敗させる。全体スキャンは osv-scan.yml（main / 毎週）。
+  # reusable 側は GITHUB_BASE_REF（pull_request 専用）で base を checkout するため、merge_group では
+  # 実行しない（skip は必須チェックとして成功扱い）。merge 結果は main への push 時の全体スキャンが担保する。
+  osv-pr:
+    name: OSV bun.lock 新規脆弱性（PR 差分）
+    if: github.event_name != 'merge_group'
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - name: Scan bun.lock with OSV-Scanner v2.7.0
-        uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
-        with:
-          scan-args: |-
-            --lockfile=bun.lock
+      actions: read # reusable workflow uploads the scan artifact
+      # reusable workflow の job が宣言するため呼び出し側も必要（宣言が足りないと起動時に invalid workflow）。
+      # upload-sarif: false なので実際には使われない。
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+    with:
+      scan-args: |-
+        --lockfile=bun.lock
+      upload-sarif: false
+      fail-on-vuln: true

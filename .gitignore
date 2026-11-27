@@ -13,10 +13,6 @@
 # ローカルの生成サイト・実動作検証（公開テンプレートには含めない）
 /.tmp/
 
-# Python（scripts/ の検証スクリプトを import したときに出る生成物）
-__pycache__/
-*.py[cod]
-
 # OS
 .DS_Store
 Thumbs.db
@@ -36,14 +32,7 @@ Thumbs.db
 .agent/agent-memory/
 .claude/projects/
 
-# Bun / setup
+# Bun
 node_modules/
 .bun/
-.setup-backup/
-.setup-pkg-*.tmp
-
-# Generated language runtimes and build outputs
-.venv/
-target/
-.next/
-.turbo/
+dist/

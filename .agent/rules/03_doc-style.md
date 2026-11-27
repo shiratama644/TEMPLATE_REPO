@@ -13,8 +13,8 @@ paths:
 
 - 本文は**日本語**。コード識別子・技術固有名詞は英語のまま。
 - 使える言語は**日本語と英語のみ**（コミットメッセージも同じ）。簡体字・ハングル・キリルなどは
-  `bun run lang`（`scripts/check_language.ts`）が error で止める。日本語の表外漢字は warn として報告される。
-  判定の詳細は `scripts/check_language.ts` と `tests/setup.test.ts` の負例を参照する。
+  `bun run lang`（`scripts/check-language.ts`）が error で止める。日本語の表外漢字は warn として報告される。
+  判定の詳細は `scripts/check-language.ts` を参照する。
 - **違反例を文書に書くときはコードポイントで書く**（`U+52A8` のように）。字面で書くとその文書自身がゲートに止まる。
 - 「〜です/ます」調。計画書の完了条件などは断定形「〜する」。
 - 絵文字は既存ファイルのパターンに従う。新規の飾り絵文字は増やさない（可読性優先）。
@@ -24,17 +24,19 @@ paths:
 | 場所 | 内容 | 形式 |
 |---|---|---|
 | `docs/task-list.md` | 進捗の正本 | 固定名 |
-| `docs/arch/` | 仕様・構成・判断の記録 | `kebab-case.md` |
+| `docs/arch/` | 仕様・構成の記録（判断は `docs/adr/`） | `kebab-case.md` |
 | `docs/planning/` | 個別タスクの計画 | `_TEMPLATE.md` 準拠 |
 | `docs/research/` | 調査結果 | `<TOPIC>_RESEARCH.md` |
-| `docs/audit/` | 差分・問題・活動の記録 | `diff-{context}.md` / `issues-{context}.md` / `activity.md` |
-| `docs/ops/` | 運用手順 | 大文字スネークケース（例: `RELEASE.md`） |
+| `docs/audit/` | 差分・問題・活動の記録 | `index.md`（入口）/ `diff-{context}.md` / `issues-{context}.md` / `activity.md` |
+| `docs/ops/` | 運用手順 | `index.md`（入口）/ 大文字スネークケース（例: `RELEASE.md`） |
 
 計画書の必須セクション: 開始前確認、目的、変更範囲、禁止事項、完了条件、停止条件、実績と証拠。
 
+各ディレクトリ直下の `index.md` は入口として固定名にする（`docs/audit/index.md`・`docs/ops/index.md`）。
+
 ## 3. 命名規約
 
-ハイフンは最大 1 つ。短く、内容が正確に分かる名前にする。
+単語の区切りはハイフン 1 つ（`--` のような連続は使わない）。短く、内容が正確に分かる名前にする。
 
 | 種類 | 命名規則 | 例 |
 |---|---|---|
@@ -47,6 +49,8 @@ paths:
 | ルール | `NN_kebab-case.md` または `kebab-case.md` | `project-template.md` |
 | フック手順 | `kebab-case.md` | `verify-commit.md` |
 | フックスクリプト | `kebab-case.sh` | `post-edit-verify.sh` |
+| 検査スクリプト | `kebab-case.ts` | `check-language.ts` |
+| テスト | 対象と同じ名前の `kebab-case.test.ts` | `git-report.test.ts` |
 
 ## 4. リンク規約
 

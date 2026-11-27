@@ -3,7 +3,7 @@ import { resolve } from "node:path"
 import iconv from "iconv-lite"
 import { display, files } from "./walk.ts"
 
-type Issue = {
+export type Issue = {
   line: number
   level: "error" | "warn"
   character: string
@@ -74,10 +74,16 @@ export function classify(ch: string): { level: "error" | "warn"; reason: string 
     return japan(ch) ? null : { level: "error", reason: "日本語でも英語でもない文字" }
   return null
 }
+/**
+ * コミットメッセージからコメントとはさみ行以降を落とす。
+ * Git の verbose テンプレートは「# ------------------------ >8 ------------------------」の
+ * 形ではさみ行を書き、その後ろに差分を置く。コメント記号付きの形もここで切らないと、
+ * 差分の本文をコミットメッセージと間違えて検査してしまう。
+ */
 export function stripCommit(text: string): string {
   const lines: string[] = []
   for (const line of text.split(/\r?\n/)) {
-    if (/^-{8,}\s*>8\s*-{8,}$/.test(line)) break
+    if (/^\s*(?:#|\/\/)?\s*-{8,}\s*>8\s*-{8,}\s*$/.test(line)) break
     if (/^\s*(#|\/\/)/.test(line)) continue
     lines.push(line)
   }
@@ -103,16 +109,19 @@ export function findIssues(text: string): Issue[] {
   }
   return issues
 }
-function selfTest(): boolean {
-  const fixtures: Array<[string, number, number]> = [
-    ["日本語の文章です。English is allowed. 髙﨑 德 禮 ✅ → ①", 0, 0],
-    [`手${String.fromCodePoint(0x52a8)}で実行`, 1, 0],
-    [String.fromCodePoint(0xd55c), 1, 0],
-    [String.fromCodePoint(0x41f), 1, 0],
-    [String.fromCodePoint(0x20b9f), 0, 1],
-  ]
-  for (const [text, errors, warnings] of fixtures) {
-    const found = findIssues(text)
+/** 自己検査の期待値（error 件数, warn 件数）。判定規則を変えたときに古さを検出する。 */
+export const languageFixtures: Array<[string, number, number]> = [
+  ["日本語の文章です。English is allowed. 髙﨑 德 禮 ✅ → ①", 0, 0],
+  [`手${String.fromCodePoint(0x52a8)}で実行`, 1, 0],
+  [String.fromCodePoint(0xd55c), 1, 0],
+  [String.fromCodePoint(0x41f), 1, 0],
+  [String.fromCodePoint(0x20b9f), 0, 1],
+]
+
+/** 判定関数が期待値と一致するか。`judge` を差し替えて失敗経路も検証できる。 */
+export function selfTest(judge: (text: string) => Issue[] = findIssues): boolean {
+  for (const [text, errors, warnings] of languageFixtures) {
+    const found = judge(text)
     if (
       found.filter((i) => i.level === "error").length !== errors ||
       found.filter((i) => i.level === "warn").length !== warnings

@@ -6,13 +6,21 @@ name: Dependency Review
 
 on:
   pull_request:
+  merge_group: # merge queue でも必須チェックを揃える（job は pull_request だけで走る）
 
 permissions:
   contents: read
 
+concurrency:
+  # 同じ PR の連続 push は前の実行を打ち切る
+  group: dependency-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   dependency-review:
     name: 依存関係の差分レビュー
+    # action は PR の base/head を読むため、merge_group では走らない（skip は必須チェックとして成功扱い）。
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -1,8 +1,19 @@
-# Full lockfile scan; PR dependency-review remains the separate delta gate.
+# bun.lock 全体の既知脆弱性スキャン。main への push（依存ファイルの変更時）・毎週・手動で実行し、
+# 結果を SARIF として Code scanning へ提出する。PR の差分（新規脆弱性のみ）は ci.yml の osv-pr が担う。
+# DB 通信不能・スキャン失敗を「脆弱性 0 件」と読まない。定期/手動 workflow はデフォルトブランチに
+# 反映された後に実行を確認すること。Code scanning が使えない repository（GHAS の無い private）では
+# upload-sarif を false にする。
 name: OSV Scanner
 on:
   schedule:
     - cron: "23 4 * * 1"
+  push:
+    branches:
+      - main
+    paths:
+      - "bun.lock"
+      - "package.json"
+      - ".github/workflows/osv-scan.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,9 +23,10 @@ jobs:
     permissions:
       contents: read
       actions: read # reusable workflow uploads the scan artifact
+      security-events: write # SARIF → Code scanning
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
     with:
       scan-args: |-
         --lockfile=bun.lock
-      upload-sarif: false
+      upload-sarif: true
       fail-on-vuln: true

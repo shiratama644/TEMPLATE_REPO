@@ -9,7 +9,11 @@ description: テンプレートから作った新規リポジトリの初回、A
 > 流れは **事実確認 → 要件確定 → 計画承認 → 実行 → 検証**。混ぜない。
 > 製品機能は実装しない。
 
-**Bun CLI 入口**: 人間が初期設定するなら `bun run setup --help`、対話式 `bun run setup`、自動化は `bun run setup --yes --apply ...`。CLI は OS 導入を毎回確認し、文書は削除せず整理候補を案内する。Agent と進める場合は以下の計画承認ワークフローを使う。
+**書き換えは Agent が直接行う**: 初期化の CLI も対話 UI も無い。対象は `README.md`（今は最小限の stub）・`LICENSE`（著作権者名）・`package.json`（`name` / `description`）・`AGENTS.md §6`・`docs/`（`README` / `task-list` / `arch/` / `ops/` / `planning/_TEMPLATE`）・`.agent/skills/project-overview/SKILL.md`・`.agent/rules/project-template.md`・`.github/SECURITY.md`。役割は (1) 下のワークフローで答え（目的・対象・非目標・制約）を集め、(2) 計画に「どのファイルへ何を書くか」を出して承認を取り、(3) 書いたあと `bun run check`（9 ゲート）と `bun run knip` を通し、`git diff` で変更範囲が計画どおりか確認すること。**存在しないコマンドやパスを書かない**（このテンプレートに `bun run test` は無い）。
+
+**このテンプレートは空**: アプリのコード・テスト・サンプルは同梱しない。残っているのは作業規約（`AGENTS.md`・`.agent/`）、検証ゲート（`bun run check` の 9 ゲートと `bun run knip`）、Git フック（`.githooks/`・`bun run hooks:install`）、CI と Dependabot（`.github/`）、`docs/` の枠、運用 CLI（`bun run github:settings`・`bun run git:report`）、OS とパッケージマネージャの判定（`scripts/setup-env.ts`）だけ。**何かを削除・追加したら手で追随させる**: `package.json`（scripts と依存）・`scripts/check.ts`（ゲート）・`.github/workflows/ci.yml`（step）・`Makefile`（ターゲットと `.PHONY:`）・`.agent/skills/index.md` と `.agent/rules/index.md`（入口整合ゲートが見る）・`bun.lock`（`bun install` で更新）。
+
+**作者の痕跡は手で除く**: リポジトリ名と所有者（`TEMPLATE_REPO`・`shiratama644`）・`LICENSE` の著作権者名・かっこ書きの「例」で始まるプレースホルダ・`20XX-XX-XX 実測` の形の日付ノート・外部ブログへの出典リンク。探すときは `bash` で `grep -rn "TEMPLATE_REPO" README.md AGENTS.md docs .agent` のように対象を絞る（初期化 CLI がしていた検査は無い）。`docs/ops/index.md` にある運用の事実（Dependabot・OSV・ruleset・フックの挙動）は痕跡ではないので残す。
 
 ## いつ使うか
 
@@ -281,6 +285,7 @@ flowchart TD
 | 確認 | 未初期化の目安 |
 | :--- | :--- |
 | `README.md` 先頭 | `# TEMPLATE_REPO` のまま |
+| 作者の痕跡 | `bash` の `grep -rn "TEMPLATE_REPO" README.md AGENTS.md docs .agent` が見つかる（0 件なら初期化済み） |
 | `AGENTS.md §6.1` | 「（例）」や空の検証コマンド |
 | `project-overview/SKILL.md` | 「汎用エージェント作業テンプレート」 |
 | `docs/planning/INIT_PLAN.md` | 無い |
@@ -438,6 +443,8 @@ flowchart TD
 
 順:
 
+次の表は初期化で内容が変わるファイルの一覧です。**Agent がこの順で書く**（CLI は無い）。1 ファイルずつ書き、最後にまとめて検証する。
+
 | 順 | ファイル | 書くこと |
 | ---: | :--- | :--- |
 | 1 | `docs/planning/INIT_PLAN.md` | 承認済み計画 |
@@ -454,12 +461,14 @@ flowchart TD
 
 `docs/examples/` のような存在しないパスを新たに書かない。
 
+ファイルを追加・削除した場合は、冒頭の「手で追随させる」一覧を同じ変更で更新してください。入口整合ゲート（`bun run index`）は `.agent/skills/index.md` と `.agent/rules/index.md` のずれを検出し、内部リンクゲート（`bun run links`）は存在しないパスへのリンクを検出します。
+
 ---
 
 ### 5. 検証・記録・停止
 
 1. [`docs-maintenance`](../docs-maintenance/SKILL.md)。内部リンクは `bash`、外部 URL は `fetch_page`。
-2. `make links`。§6.1 があればそれも（`make check`）。未記録のコマンドは捏造しない。
+2. `bun run check`（9 ゲート）と `bun run knip`。未記録のコマンドは捏造しない。ゲートを削除した派生先では、残っているコマンドだけで検証し、消えたコマンドを報告に書かない。
 3. `docs/task-list.md` を証拠つきで更新。
 4. `.agent/hooks/log-task.md`。
 5. 検証 PASS なら commit し、セッション固定ブランチへ push。
@@ -474,7 +483,8 @@ flowchart TD
 - [ ] `INIT_PLAN.md` があり、`INIT_STATE.approved` が true、`plan_hash` が一致
 - [ ] 変更ファイルが許可リストと一致し、snapshots から未承認の変化が無い
 - [ ] `AGENTS.md` の汎用節が無関係に変わっていない
-- [ ] `make links` が PASS
+- [ ] `bun run check`（9 ゲート）と `bun run knip` が PASS
+- [ ] 作者の痕跡（リポジトリ名・著作権者名・日付ノート・出典リンク）が残っていない
 - [ ] 製品機能は実装していない
 
 ## よくある失敗
@@ -493,3 +503,5 @@ flowchart TD
 | 修正のたびに全件検索 | 変わったスロットと `depends_on` だけ |
 | 承認前に README を書く | `INIT_STATE.md` 以外は触らない |
 | 再実行でタスク行を増やす | 既存行の状態更新のみ |
+| 文書だけ書いて入口 index を更新しない | `.agent/skills/index.md` と `.agent/rules/index.md` を同じ変更で更新（`bun run index`） |
+| 無いコマンドを §6.1 に書く | 実在するコマンドだけ。テストは追加してから載せる |

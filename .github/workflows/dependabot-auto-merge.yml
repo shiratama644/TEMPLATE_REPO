@@ -1,0 +1,45 @@
+# Dependabot が作った PR を、CI が成功したあと全チェックの完了を待って squash merge する。
+# workflow_run はデフォルトブランチのこの workflow を書き込み権限で動かす。PR のコードは checkout も
+# 実行もせず、gh に渡すのは PR 番号だけ。対象は Dependabot 本人の PR（author と head branch を検証）。
+# 失敗するチェックがあれば何もせず終わる（PR は人手のレビューに残る）。
+name: Dependabot auto-merge
+on:
+  # zizmor: ignore[dangerous-triggers] workflow_run は特権付きで動くが、PR のコードを checkout も実行もせず gh に PR 番号だけを渡す
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - "dependabot/**"
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+jobs:
+  merge:
+    name: Dependabot PR を squash merge
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Wait for every check, then merge
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          BASE: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$BRANCH" --state open \
+            --json number,author --jq '.[] | select(.author.login == "dependabot[bot]") | .number')
+          if [[ -z "$pr" ]]; then
+            echo "open Dependabot PR not found for $BRANCH; nothing to merge"
+            exit 0
+          fi
+          echo "PR #$pr: waiting for all checks"
+          gh pr checks "$pr" --repo "$GITHUB_REPOSITORY" --watch
+          gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
+          echo "merged PR #$pr"
