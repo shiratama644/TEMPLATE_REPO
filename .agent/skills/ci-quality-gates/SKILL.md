@@ -22,7 +22,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | 指示 | `bun run agents`（上流 CLI の symlink no-op を避け、実体を起動） |
 | 入口 | `bun run index`（`.agent/` の skills / rules / hooks の index と実物の整合） |
 | コード | `bun x biome check .`、`bun run typecheck` |
-| 回帰 | `bun test`（異常 fixture と CLI の非破壊性を含む） |
+| 回帰 | テストはまだ無い。追加したら `bun test` を `scripts/check.ts` のゲートに載せ、この表に戻す |
 | 秘密情報 | CI の gitleaks ジョブ（ローカルでは秘密情報を commit しない） |
 
 ## 構成
@@ -30,11 +30,10 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 | ファイル | 役割 |
 | :--- | :--- |
 | `scripts/check.ts` | すべての検査の入口。失敗時は exit 1 |
-| `scripts/check_*.ts` | 文書・言語・コミットメッセージ・品質の検査（Bun / TypeScript） |
+| `scripts/check-*.ts` | 文書・言語・コミットメッセージ・品質の検査（Bun / TypeScript） |
 | `package.json` / `bun.lock` | ランタイム・依存・検証コマンドの正本 |
 | `.githooks/` | `pre-commit` で `bun run check`、`commit-msg` で言語と Conventional Commits |
 | `.github/workflows/ci.yml` | main への push・PR・merge queue・手動。4 ジョブ: `check`（`bun run check` + `bun run knip`）/ `secrets`（gitleaks）/ `workflow-audit`（actionlint / zizmor-action）/ `osv-pr`（OSV-Scanner の PR 差分・新規脆弱性のみ）。PR の連続 push は前の実行を打ち切る |
-| `.github/workflows/release.yml` | `verify`（CI と同じ check + knip、読み取り専用）→ `release`（`contents: write` はこのジョブだけ）の分離 |
 | `.github/workflows/dependency-review.yml` | Dependency graph が有効なときの PR 差分検査 |
 | `.github/workflows/osv-scan.yml` | main への push（`bun.lock` 変更時）・毎週・手動の `bun.lock` 全体スキャン（SARIF を Code scanning へ） |
 | `.github/workflows/dependency-submission.yml` | `bun.lock` を Dependency graph へ提出（推移依存の Dependabot alert 用） |
@@ -49,7 +48,7 @@ description: Bun の検証を手元・Git フック・CI の同じ入口に揃�
 
 1. `AGENTS.md §6.1` に実在するコマンドを記録する。
 2. `package.json` の script を定義し、`scripts/check.ts` に追加する。
-3. 成功・失敗 fixture を `_tests_/` に追加して `bun run check` で確認する。
+3. 成功・失敗の fixture をテストとして追加し、`scripts/check.ts` のゲートに載せて `bun run check` で確認する（このリポジトリにテストは無い）。
 4. CI 上でも `bun install --frozen-lockfile` → `bun run check` を確かめる。OS 固有の検証が実行不能なら理由を報告する。
 
 ## よくある失敗

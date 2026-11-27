@@ -9,9 +9,11 @@ description: テンプレートから作った新規リポジトリの初回、A
 > 流れは **事実確認 → 要件確定 → 計画承認 → 実行 → 検証**。混ぜない。
 > 製品機能は実装しない。
 
-**書き換えの正本は TUI**: `bun run init`（= `bun run setup --init-only`）が対話で答えを集め、`README.md`・`LICENSE`・`package.json`・`AGENTS.md §6`・`docs/`（`README` / `task-list` / `arch/` / `ops/` / `planning/_TEMPLATE`）・`project-overview`・`project-template`・`.github/SECURITY.md` を生成し、作者の痕跡と初期化ログ（`INIT_PLAN.md` / `INIT_STATE.md`）を除く。**Agent はこれらの文書を手で書き換えない。** 役割は (1) 下のワークフローで答え（目的・対象・非目標・制約）を集め、(2) `--yes --apply --init-name ... --owner ... --purpose ...`（または `--config` の `init`）で TUI に渡し、(3) 出力の検証結果と `git diff` を確認すること。`--dry-run` は読み取り専用、`--plan-json` は計画の単一 JSON。プロジェクトのコード雛形まで作るなら `bun run setup`（初期化の後にプリセット・言語・機能を聞く）。CLI は OS 導入を毎回確認する。
+**書き換えは Agent が直接行う**: 初期化の CLI も対話 UI も無い。対象は `README.md`（今は最小限の stub）・`LICENSE`（著作権者名）・`package.json`（`name` / `description`）・`AGENTS.md §6`・`docs/`（`README` / `task-list` / `arch/` / `ops/` / `planning/_TEMPLATE`）・`.agent/skills/project-overview/SKILL.md`・`.agent/rules/project-template.md`・`.github/SECURITY.md`。役割は (1) 下のワークフローで答え（目的・対象・非目標・制約）を集め、(2) 計画に「どのファイルへ何を書くか」を出して承認を取り、(3) 書いたあと `bun run check`（9 ゲート）と `bun run knip` を通し、`git diff` で変更範囲が計画どおりか確認すること。**存在しないコマンドやパスを書かない**（このテンプレートに `bun run test` は無い）。
 
-**テンプレート専用ファイルの削除は選択制**: 同じ `bun run init` が「このリポジトリは別のプロジェクトになる」前提で、セットアップに使う機械（対話式 TUI の実装 `scripts/setup*.ts`・`init-*.ts`・`verify-generated.ts`・`safe-path.ts`）と回帰テスト（`_tests_/`・`scripts/check-coverage.ts`・`knip.jsonc`）などの削除候補を複数選択で聞く。対話式の初期値は **template-tools** / **tests** / **workspace**（`.tmp/`・`.setup-backup/`）で、非対話式も同じ既定を削除する。`--cleanup none` は削除なし、`--cleanup all` は全候補、`--cleanup tests,gates` は id 指定（`--config` は `cleanup: ["tests", "gates"]` の配列だけ）。ほかの候補は **gates**（`scripts/check*.ts`・`walk.ts`・`install-hooks.ts`・`.githooks/`・`Makefile` と CI の `bun run check`）・**repo-ops**（`github-settings.ts`・`git-report.ts`・`docs/ops/GITHUB_SETTINGS.md`・`main-ruleset.json`）・**ci**（`.github/workflows/`・`dependabot.yml`・`.github/fixtures/`・`.gitleaks.toml`）。**Agent の資産（`.agent/`・`AGENTS.md`・`.claude`・`CLAUDE.md`）と AGENTS.md ゲート（`scripts/check-agents.ts`・`patches/`・`agents-md-lint`）は候補に出ない。** 削除は計画に `-`（削除）・`~`（削除に合わせた書き換え）・`=`（残すスクリプトが import するため保持）・`!`（Git 管理外で削除しない／削除後に手で確認）として出て、承認後にだけ適用される。`package.json` から依存を除いたときは、適用後に `bun install` で `bun.lock` を更新する。**テンプレート本体（本リポジトリ）の改善では `--cleanup none`**（機械を消すとテンプレートとして機能しなくなる）。
+**このテンプレートは空**: アプリのコード・テスト・サンプルは同梱しない。残っているのは作業規約（`AGENTS.md`・`.agent/`）、検証ゲート（`bun run check` の 9 ゲートと `bun run knip`）、Git フック（`.githooks/`・`bun run hooks:install`）、CI と Dependabot（`.github/`）、`docs/` の枠、運用 CLI（`bun run github:settings`・`bun run git:report`）、OS とパッケージマネージャの判定（`scripts/setup-env.ts`）だけ。**何かを削除・追加したら手で追随させる**: `package.json`（scripts と依存）・`scripts/check.ts`（ゲート）・`.github/workflows/ci.yml`（step）・`Makefile`（ターゲットと `.PHONY:`）・`.agent/skills/index.md` と `.agent/rules/index.md`（入口整合ゲートが見る）・`bun.lock`（`bun install` で更新）。
+
+**作者の痕跡は手で除く**: リポジトリ名と所有者（`TEMPLATE_REPO`・`shiratama644`）・`LICENSE` の著作権者名・かっこ書きの「例」で始まるプレースホルダ・`20XX-XX-XX 実測` の形の日付ノート・外部ブログへの出典リンク。探すときは `bash` で `grep -rn "TEMPLATE_REPO" README.md AGENTS.md docs .agent` のように対象を絞る（初期化 CLI がしていた検査は無い）。`docs/ops/index.md` にある運用の事実（Dependabot・OSV・ruleset・フックの挙動）は痕跡ではないので残す。
 
 ## いつ使うか
 
@@ -283,7 +285,7 @@ flowchart TD
 | 確認 | 未初期化の目安 |
 | :--- | :--- |
 | `README.md` 先頭 | `# TEMPLATE_REPO` のまま |
-| `bun run init -- --dry-run` | 「作者の作業痕跡 N 件」と計画が出る（0 件なら初期化済み） |
+| 作者の痕跡 | `bash` の `grep -rn "TEMPLATE_REPO" README.md AGENTS.md docs .agent` が見つかる（0 件なら初期化済み） |
 | `AGENTS.md §6.1` | 「（例）」や空の検証コマンド |
 | `project-overview/SKILL.md` | 「汎用エージェント作業テンプレート」 |
 | `docs/planning/INIT_PLAN.md` | 無い |
@@ -441,7 +443,7 @@ flowchart TD
 
 順:
 
-次の表は初期化で内容が変わるファイルの一覧です。**実際には `bun run init`（TUI）が生成するので、Agent は手で書かない**（表は生成範囲の確認用）。
+次の表は初期化で内容が変わるファイルの一覧です。**Agent がこの順で書く**（CLI は無い）。1 ファイルずつ書き、最後にまとめて検証する。
 
 | 順 | ファイル | 書くこと |
 | ---: | :--- | :--- |
@@ -459,14 +461,14 @@ flowchart TD
 
 `docs/examples/` のような存在しないパスを新たに書かない。
 
-文書の生成のあとに、**選択した削除**が適用されます（`applyInitPlan` → `applyCleanup`）。対象は `scripts/init-cleanup.ts` の候補グループだけで、Agent の資産は含まれません。削除すると `package.json`（scripts と、使うファイルが無くなった依存）・`scripts/check.ts`（import 行とゲート項目）・`.github/workflows/ci.yml`（step）・`Makefile`（ターゲットと `.PHONY:`）が自動的に書き換わり、README・`AGENTS.md §6`・`docs/` は削除後に実在するコマンドだけを載せます。`!` で一覧された文書（`AGENTS.md`・`docs/ops/index.md`・`.agent/commands/test.md`・`.agent/agents/test-writer.md` など）は、消えたコマンドへの言及を手で確認してください。
+ファイルを追加・削除した場合は、冒頭の「手で追随させる」一覧を同じ変更で更新してください。入口整合ゲート（`bun run index`）は `.agent/skills/index.md` と `.agent/rules/index.md` のずれを検出し、内部リンクゲート（`bun run links`）は存在しないパスへのリンクを検出します。
 
 ---
 
 ### 5. 検証・記録・停止
 
 1. [`docs-maintenance`](../docs-maintenance/SKILL.md)。内部リンクは `bash`、外部 URL は `fetch_page`。
-2. `make links`。§6.1 があればそれも（`make check`）。未記録のコマンドは捏造しない。**ゲートを削除した場合は `make check` が無い**ので、残っているコマンド（`bun run test` など）だけで検証し、消えたコマンドを報告に書かない。
+2. `bun run check`（9 ゲート）と `bun run knip`。未記録のコマンドは捏造しない。ゲートを削除した派生先では、残っているコマンドだけで検証し、消えたコマンドを報告に書かない。
 3. `docs/task-list.md` を証拠つきで更新。
 4. `.agent/hooks/log-task.md`。
 5. 検証 PASS なら commit し、セッション固定ブランチへ push。
@@ -481,7 +483,8 @@ flowchart TD
 - [ ] `INIT_PLAN.md` があり、`INIT_STATE.approved` が true、`plan_hash` が一致
 - [ ] 変更ファイルが許可リストと一致し、snapshots から未承認の変化が無い
 - [ ] `AGENTS.md` の汎用節が無関係に変わっていない
-- [ ] `make links` が PASS
+- [ ] `bun run check`（9 ゲート）と `bun run knip` が PASS
+- [ ] 作者の痕跡（リポジトリ名・著作権者名・日付ノート・出典リンク）が残っていない
 - [ ] 製品機能は実装していない
 
 ## よくある失敗
@@ -500,3 +503,5 @@ flowchart TD
 | 修正のたびに全件検索 | 変わったスロットと `depends_on` だけ |
 | 承認前に README を書く | `INIT_STATE.md` 以外は触らない |
 | 再実行でタスク行を増やす | 既存行の状態更新のみ |
+| 文書だけ書いて入口 index を更新しない | `.agent/skills/index.md` と `.agent/rules/index.md` を同じ変更で更新（`bun run index`） |
+| 無いコマンドを §6.1 に書く | 実在するコマンドだけ。テストは追加してから載せる |

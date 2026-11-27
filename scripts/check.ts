@@ -1,6 +1,5 @@
 import { spawnSync } from "node:child_process"
 import { checkAgents } from "./check-agents.ts"
-import { checkCoverage } from "./check-coverage.ts"
 import { checkLinks } from "./check-doc-links.ts"
 import { checkFunctionLength } from "./check-function-length.ts"
 import { checkIndex } from "./check-index.ts"
@@ -20,7 +19,6 @@ export const gates: Gate[] = [
   ["関数長", () => checkFunctionLength()],
   ["Biome", () => spawnSync("bun", ["x", "biome", "check", "."], { stdio: "inherit" }).status ?? 1],
   ["型検査", () => spawnSync("bun", ["run", "typecheck"], { stdio: "inherit" }).status ?? 1],
-  ["テストとカバレッジ", () => checkCoverage()],
 ]
 
 /** ゲートを順に実行し、最初の失敗で止めて 1 を返す。全部通れば 0。 */

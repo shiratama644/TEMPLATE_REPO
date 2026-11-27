@@ -5,9 +5,6 @@
   "type": "module",
   "packageManager": "bun@1.4.4",
   "scripts": {
-    "setup": "bun scripts/setup.ts",
-    "init": "bun scripts/setup.ts --init-only",
-    "verify:generated": "bun scripts/verify-generated.ts",
     "check": "bun scripts/check.ts",
     "links": "bun scripts/check-doc-links.ts",
     "mermaid": "bun scripts/check-mermaid.ts",
@@ -16,9 +13,7 @@
     "index": "bun scripts/check-index.ts",
     "shell": "bun scripts/check-shell.ts",
     "length": "bun scripts/check-function-length.ts",
-    "coverage": "bun scripts/check-coverage.ts",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
     "format": "biome check --write .",
     "build": "bun run typecheck",
     "hooks:install": "bun scripts/install-hooks.ts",
@@ -29,9 +24,7 @@
     "postinstall": "bun scripts/install-hooks.ts --if-git"
   },
   "dependencies": {
-    "@clack/prompts": "1.9.0",
-    "iconv-lite": "^0.7.2",
-    "zod": "4.6.7"
+    "iconv-lite": "^0.7.2"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -40,7 +33,6 @@
     "@types/node": "^24.0.0",
     "agents-md-lint": "1.0.1",
     "conventional-commits-parser": "7.1.3",
-    "fast-check": "4.10.3",
     "knip": "6.43.0",
     "simple-git": "4.0.2",
     "typescript": "^6.0.0"

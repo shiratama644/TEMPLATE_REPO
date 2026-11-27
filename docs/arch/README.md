@@ -2,7 +2,7 @@
 
 ここはテンプレートの **目的と構成** の説明です。派生先では利用者の仕様に書き換えてください。進捗は `../task-list.md`、個別の計画は `../planning/`。
 
-TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進捗管理・ドキュメントの土台**を提供するテンプレートです。ソフトウェア開発に限らず、文書作成・調査・データ整理・設定作業など、分野を問わず使えることを目指しています。
+TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進捗管理・ドキュメントの土台**を提供する、Bun と TypeScript 用の空テンプレートです。ソフトウェア開発に限らず、文書作成・調査・データ整理・設定作業など、分野を問わず使えることを目指しています。アプリのコード・テスト・サンプルは同梱しません（派生先で追加します）。
 
 ## 実装・変更時に守ること
 
@@ -16,7 +16,7 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 | 状況 | 最初に読むもの |
 |---|---|
 | テンプレートの目的を知りたい | [product.md](./product.md) |
-| 構成と読み込みの流れを知りたい | [architecture.md](./architecture.md) |
+| 構成を知りたい | [architecture.md](./architecture.md)（初期設定で埋める。今は最小限） |
 | 新規プロジェクトを実プロジェクトへ合わせたい | [`../../.agent/skills/project-init/SKILL.md`](../../.agent/skills/project-init/SKILL.md) |
 | なぜそうなっているか知りたい | [`../adr/`](../adr/README.md) |
 | 派生プロジェクトの進捗を知りたい | [`../task-list.md`](../task-list.md) |
@@ -26,4 +26,4 @@ TEMPLATE_REPO は、AI Agent に作業を任せる際の**規約・知識・進�
 | ファイル | 内容 |
 |---|---|
 | [product.md](./product.md) | テンプレートの目的・対象・用語 |
-| [architecture.md](./architecture.md) | ディレクトリ構成・Agent の読み込みの流れ・責務の分担 |
+| [architecture.md](./architecture.md) | ディレクトリ構成と責務の分担（初期設定で埋める） |

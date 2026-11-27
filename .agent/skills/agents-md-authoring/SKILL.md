@@ -5,7 +5,7 @@ description: AGENTS.md や CLAUDE.md などの指示ファイルを書いたり�
 
 # AGENTS.md Authoring — 指示ファイルを予算内に書くスキル
 
-> 正本: `AGENTS.md`（規約そのもの）、`.agent/rules/`（詳細ルール）、`docs/arch/architecture.md`（読込の流れ）
+> 正本: `AGENTS.md`（規約そのもの）、`.agent/rules/`（詳細ルール）、`docs/arch/architecture.md`（リポジトリの構成）
 > 関連スキル: [`context-budget`](../context-budget/SKILL.md)（コンテキスト全体の予算）、[`writing-for-agents`](../writing-for-agents/SKILL.md)（読み手の迷いを減らす書き方）、[`ci-quality-gates`](../ci-quality-gates/SKILL.md)（ゲートの組み込み）
 
 ## いつ使うか
@@ -102,7 +102,7 @@ make check                                    # 全ゲート（CI と同じ入�
 
 - 既定では **error のみで失敗**する（warn では失敗しない）。`--strict` は付けない。理由は日本語文書に対する英語キーワード照合の限界と、Windsurf 固有の字数上限を常に満たせるとは限らないため
 - 参照パスは**リポジトリ根からのフルパス**で書く。裸のファイル名（`index.md`、`SKILL.md`）は AMC-PATH が「実在しない」と error にする
-- **上流 `agents-md-lint@1.0.1` の bin は symlink 経由だと no-op になる**。`cli.js` のエントリポイント判定が `pathToFileURL(process.argv[1]).href === import.meta.url` で、Node は `import.meta.url` を realpath に解決する一方 `argv[1]` は symlink のままなので一致せず、本体が一度も実行されない。npm bin は必ず symlink なので `npx` 経由でも同じ（**無出力・exit 0 で黙って成功する**）。本リポジトリは Bun の `patchedDependencies` で npm bin のエントリポイントを realpath 比較へ修正した。`scripts/check-agents.ts` は OS 別 bin shim を避けるため実体を起動する。`_tests_/agents.test.ts` は Node で npm bin symlink を起動し、正常系の有出力と超過系の XP-007・exit 1 を確認する。パッチはリポジトリ内で Bun install した依存にのみ効き、上流 npm 配布物そのものは未修正
+- **上流 `agents-md-lint@1.0.1` の bin は symlink 経由だと no-op になる**。`cli.js` のエントリポイント判定が `pathToFileURL(process.argv[1]).href === import.meta.url` で、Node は `import.meta.url` を realpath に解決する一方 `argv[1]` は symlink のままなので一致せず、本体が一度も実行されない。npm bin は必ず symlink なので `npx` 経由でも同じ（**無出力・exit 0 で黙って成功する**）。本リポジトリは Bun の `patchedDependencies` で npm bin のエントリポイントを realpath 比較へ修正した。`scripts/check-agents.ts` は OS 別 bin shim を避けるため実体を起動する。`scripts/check-agents.ts` は node_modules の実体を明示パスで起動し、正常系の有出力と超過系の XP-007・exit 1 を確認する。パッチはリポジトリ内で Bun install した依存にのみ効き、上流 npm 配布物そのものは未修正
 - **ゲートを入れたら必ず負のテストをする**。上限を超えたフィクスチャで実際に失敗することを確認しないと、「緑に見えるのに何も守らない」状態に気づけない
 
 ## 8. レビューのチェックリスト

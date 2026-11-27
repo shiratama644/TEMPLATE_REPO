@@ -118,11 +118,11 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 > この節だけ**プロジェクトごとに書き換える**。過去に踏んだ地雷・確立した運用ルールの集約場所。計画書と矛盾すれば計画書を優先し、それ以外は本節を厳守する。不要な小節は削除してよい。
 
 ### 6.1 環境・ツールチェーン・検証コマンド（Commands / Setup）
-- **検証の正本**: `bun run check`（文書・言語・指示品質・入口整合・POSIX sh・関数長・Biome・型・テストとカバレッジの 10 ゲート）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang` / `index` / `shell` / `length` / `coverage`。未使用コード・依存は `bun run knip`。CI と Release の検証も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check`（`CI_REQUIRE_NATIVE=1`）と `bun run knip` を実行する。CI 専用ゲート（actionlint / zizmor・OSV-Scanner・gitleaks）と Dependabot の運用は `docs/ops/index.md` を参照。
+- **検証の正本**: `bun run check`（内部リンク・Mermaid・日本語/英語・AGENTS.md・入口整合・POSIX sh・関数長・Biome・型検査の 9 ゲート）。`make check` は同じ入口。個別検査は `bun run links` / `mermaid` / `agents` / `lang` / `index` / `shell` / `length`。未使用コード・依存は `bun run knip`。CI も Bun 1.4.4 と `bun install --frozen-lockfile` の後に `bun run check` と `bun run knip` を実行する。CI 専用ゲート（actionlint / zizmor・OSV-Scanner・gitleaks）と Dependabot・GitHub 設定の運用は `docs/ops/index.md` を参照。**テストはまだ無い**: アプリのコードと一緒に追加し、`package.json` の `test` と `scripts/check.ts` のゲートに載せてから本節に書く。
 - **Git フック**: `bun install` の postinstall が `.githooks` を有効化する。既存の commit-msg / pre-commit は上書きせず連鎖実行し、再実行は `bun run hooks:install`。実行可能なフックの無い `core.hooksPath`（Husky を外したあとの残骸など）は旧値と戻し方を表示して切り替え、実行中のフックがある `core.hooksPath` は変えずに止まる（置き換えは `bun run hooks:install --force`）。postinstall は導入できないときも警告だけで `bun install` を失敗させない。詳細は `docs/ops/index.md`。
-- **セットアップ**: Bun が前提。対話式・非対話式の `bun run setup [引数]`（対話式は計画後に `[y/N]` 承認、`--apply` は不要。非対話式は `--yes --apply` で適用、`--dry-run` は不変更）。**テンプレート初期化**は `bun run setup --init-only`（`bun run init`）で、README・LICENSE・`package.json`・本節・`docs/`・`project-overview` を答えから生成し、作者の痕跡と初期化ログ（`docs/planning/INIT_*.md`）を除く。対象がテンプレートのときは `bun run setup` の最初に自動で走り、`--no-init` でスキップする。上書き前の本文は setup のバックアップ先（Git 管理外）に退避され、初期化ログの削除は Git 管理下のときだけ行う。OS パッケージは対話式でコマンドごとに承認を要し、文書削除は候補の案内のみ。**テンプレート専用ファイルの削除**も初期化の一部で、すべて選択制（`--cleanup none` / `all` / `tests,gates` のような id 列。非対話式の既定は template-tools・tests・workspace）。候補は、テンプレート生成の機械（`scripts/setup.ts` ほか setup と init の実装・`scripts/verify-generated.ts`・`scripts/safe-path.ts` とそのテスト）、回帰テスト（`_tests_/`・`scripts/check-coverage.ts`・`knip.jsonc`）、検証ゲート（`scripts/check.ts` ほか check 群と `scripts/walk.ts`・`scripts/install-hooks.ts`・`.githooks`・`Makefile`）、GitHub 運用 CLI（`scripts/github-settings.ts`・`scripts/git-report.ts`・`docs/ops/GITHUB_SETTINGS.md`・`docs/ops/main-ruleset.json`）、CI（`.github/workflows`・`.github/dependabot.yml`・`.github/fixtures`・`.gitleaks.toml`）、作業用ディレクトリ（`.tmp`・`.setup-backup`）。**Agent の資産（`.agent/`・`AGENTS.md`・`.claude`・`CLAUDE.md`）と AGENTS.md ゲート（`scripts/check-agents.ts`・`patches/`）はどの候補にも含めない。** 削除に合わせて `package.json`（scripts と、使うファイルが無くなった依存）・`scripts/check.ts`（import とゲート）・`.github/workflows/ci.yml`（step）・`Makefile`（ターゲットと `.PHONY`）を書き換え、生成する文書は削除後に実在するコマンドだけを載せる。残すスクリプトが import するファイルは保持（`=`）、Git 管理外は復元できないため削除しない（`!`）。生成先 Python FastAPI は `.venv` の pip、Rust Axum は `cargo fetch`、Go は標準ライブラリで扱い、`--no-install` は依存導入をスキップする。
+- **セットアップ**: Bun 1.4.4 以降が前提（`package.json` の `packageManager`）。依存は `bun install --frozen-lockfile` で固定し、postinstall が `.githooks` を有効化する。**このリポジトリは空のテンプレート**で、アプリのコードもテストもサンプルも入っていない。初期設定（README・本節・`docs/`・`project-overview` の書き換え）は対話 UI や生成 CLI を使わず、`.agent/skills/project-init/SKILL.md` の手順で Agent が直接書く。OS とパッケージマネージャの判定（Termux / apt / Homebrew / winget）は `scripts/setup-env.ts`、GitHub 側の一括設定は `bun run github:settings --apply`（画面手順は `docs/ops/GITHUB_SETTINGS.md`）、読み取り専用の Git/PR レポートは `bun run git:report -- --json`。
 - 初期セットアップ手順 / 言語・ランタイムのバージョン / パッケージマネージャ / 主要ライブラリのバージョン方針
-- **検証コマンド**（§3.1 の正本。例: 型チェック `tsc --noEmit`・Lint `biome check`・テスト `vitest run`・ビルド `npm run build` を実物に置き換えて記入）
+- **検証コマンド**（§3.1 の正本。追加した検査は `bun run check` のゲートと本節の両方に書く）
 
 ### 6.2 サンドボックス制約（乗り越えず、迂回する）
 （例）外部 API に到達不可 / ブラウザバイナリの install 不可 等、修正対象ではない恒常的制約とその対処。
@@ -162,7 +162,7 @@ Git は履歴管理ではなく**「実行環境消失・セッション切断�
 Agent の**知識・定型手順**を `.agent/` に永続化し、セッションをまたいで継承する（再調査を省く）。
 
 ### 8.1 ディレクトリ構成と入口（Project Structure）
-ツリーと役割表の正本は `.agent/README.md`、読み込みの流れは `docs/arch/architecture.md`。各ディレクトリ直下の入口ファイル（`.agent/rules/index.md`・`.agent/skills/index.md`・`.agent/hooks/index.md` は必須）から該当ファイルだけを読む。
+ツリーと役割表の正本は `.agent/README.md`。リポジトリの構成は `docs/arch/architecture.md`（初期設定で埋める）。各ディレクトリ直下の入口ファイル（`.agent/rules/index.md`・`.agent/skills/index.md`・`.agent/hooks/index.md` は必須）から該当ファイルだけを読む。
 
 ### 8.2 公式構成との対応（クロスツール標準）
 - `AGENTS.md` は OpenAI 起点で Linux Foundation の **Agentic AI Foundation** が管理する公開標準。Codex / Claude Code / Cursor / Copilot coding agent ほか 24+ ツールが原生対応し、Claude Code は v2.1.277 以降 `CLAUDE.md` が無い場合に本ファイルを読む。

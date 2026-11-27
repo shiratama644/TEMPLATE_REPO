@@ -28,16 +28,7 @@ jobs:
         with:
           bun-version: 1.4.4
       - run: bun install --frozen-lockfile
-      - name: Require native build toolchains (no skipped Go/Rust tests)
-        run: |
-          go version
-          cargo --version
-          python3 --version
-          script --version
-          stty --version
       - run: bun run check
-        env:
-          CI_REQUIRE_NATIVE: "1"
       - run: bun run knip
   secrets:
     name: 秘密情報の検出（gitleaks）
